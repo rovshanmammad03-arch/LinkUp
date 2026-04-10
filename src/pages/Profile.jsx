@@ -1,0 +1,754 @@
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { DB, initials } from '../services/db';
+import { Icon } from '@iconify/react';
+import { useScrollLock } from '../hooks/useScrollLock';
+import PostCard from '../components/feed/PostCard';
+
+const SKILL_LEVELS = ['Başlanğıc', 'Orta', 'Qabaqcıl'];
+const LINK_TYPES = ['Portfolio', 'GitHub', 'LinkedIn', 'Twitter', 'Kaggle', 'Behance', 'Digər'];
+
+export default function Profile({ params, onNavigate }) {
+    const { currentUser, setCurrentUser, refreshUser } = useAuth();
+    const [tab, setTab] = useState('posts');
+    const [posts, setPosts] = useState([]);
+    const [stats, setStats] = useState({ posts: 0, following: 0, followers: 0 });
+    const [editOpen, setEditOpen] = useState(false);
+    const [selectedPost, setSelectedPost] = useState(null);
+    const [userList, setUserList] = useState({ open: false, type: '', data: [] });
+    const [targetUser, setTargetUser] = useState(null);
+
+    // Edit form state
+    const [form, setForm] = useState({});
+    const [skills, setSkills] = useState([]);
+    const [links, setLinks] = useState([]);
+    const [newSkillName, setNewSkillName] = useState('');
+    const [newSkillLevel, setNewSkillLevel] = useState('Orta');
+    const [newLinkType, setNewLinkType] = useState('Portfolio');
+    const [newLinkVal, setNewLinkVal] = useState('');
+
+    // Custom Dropdown States
+    const [isLevelOpen, setIsLevelOpen] = useState(false);
+    const [isNewSkillLevelOpen, setIsNewSkillLevelOpen] = useState(false);
+    const [isNewLinkTypeOpen, setIsNewLinkTypeOpen] = useState(false);
+
+    useScrollLock(editOpen || !!selectedPost || userList.open);
+
+    const isOwnProfile = !params?.userId || params.userId === currentUser?.id;
+
+    useEffect(() => {
+        if (isOwnProfile) {
+            setTargetUser(currentUser);
+        } else {
+            const user = DB.get('users').find(u => u.id === params.userId);
+            setTargetUser(user);
+        }
+    }, [params?.userId, currentUser]);
+
+    useEffect(() => {
+        if (!targetUser) return;
+        
+        const allPosts = DB.get('posts');
+        let filtered = [];
+        
+        if (tab === 'posts') {
+            filtered = allPosts.filter(p => p.authorId === targetUser.id);
+        } else if (tab === 'liked') {
+            filtered = allPosts.filter(p => p.likes?.includes(targetUser.id));
+        }
+        
+        setPosts(filtered);
+        
+        // Stats are based on user's own posts, regardless of active tab view
+        setStats({
+            posts: allPosts.filter(p => p.authorId === targetUser.id).length,
+            following: targetUser.following?.length || 0,
+            followers: targetUser.followers?.length || 0
+        });
+    }, [targetUser?.id, tab]);
+
+    const handleFollow = (uid) => {
+        const targetId = uid || targetUser.id;
+        if (!currentUser || targetId === currentUser.id) return;
+        
+        const allUsers = DB.get('users');
+        const meIdx = allUsers.findIndex(u => u.id === currentUser.id);
+        const targetIdx = allUsers.findIndex(u => u.id === targetId);
+        
+        if (meIdx === -1 || targetIdx === -1) return;
+
+        const isFollowing = allUsers[meIdx].following?.includes(targetId);
+
+        if (isFollowing) {
+            allUsers[meIdx].following = allUsers[meIdx].following.filter(id => id !== targetId);
+            allUsers[targetIdx].followers = allUsers[targetIdx].followers?.filter(id => id !== currentUser.id) || [];
+        } else {
+            allUsers[meIdx].following = [...(allUsers[meIdx].following || []), targetId];
+            allUsers[targetIdx].followers = [...(allUsers[targetIdx].followers || []), currentUser.id];
+        }
+
+        DB.set('users', allUsers);
+        
+        // Update local state for targetUser if we are on their page
+        if (targetId === targetUser.id) {
+            setTargetUser({ ...allUsers[targetIdx] });
+        }
+        
+        // Update userList data if modal is open to reflect live changes
+        if (userList.open) {
+            setUserList(prev => ({ ...prev })); // Trigger re-render
+        }
+        
+        refreshUser();
+    };
+
+    const openUserList = (type) => {
+        const ids = type === 'followers' ? (targetUser.followers || []) : (targetUser.following || []);
+        setUserList({
+            open: true,
+            type: type === 'followers' ? 'İzləyicilər' : 'İzlədikləri',
+            data: ids
+        });
+    };
+
+    const openEdit = () => {
+        setForm({
+            name: currentUser?.name || '',
+            bio: currentUser?.bio || '',
+            field: currentUser?.field || '',
+            university: currentUser?.university || '',
+            level: currentUser?.level || 'Orta',
+        });
+        setSkills([...(currentUser?.skills || [])]);
+        setLinks([...(currentUser?.links || [])]);
+        setEditOpen(true);
+    };
+
+    const saveEdit = () => {
+        const users = DB.get('users');
+        const idx = users.findIndex(u => u.id === currentUser.id);
+        if (idx === -1) return;
+        users[idx] = {
+            ...users[idx],
+            ...form,
+            skills,
+            links,
+        };
+        DB.set('users', users);
+        setCurrentUser({ ...users[idx] });
+        setEditOpen(false);
+    };
+
+    const handleAvatarUpload = () => {
+        if (!isOwnProfile) return;
+        const inp = document.createElement('input');
+        inp.type = 'file'; inp.accept = 'image/*';
+        inp.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const users = DB.get('users');
+                const idx = users.findIndex(u => u.id === currentUser.id);
+                users[idx].avatar = ev.target.result;
+                DB.set('users', users);
+                setCurrentUser({ ...users[idx] });
+            };
+            reader.readAsDataURL(file);
+        };
+        inp.click();
+    };
+
+    const handleCoverUpload = () => {
+        if (!isOwnProfile) return;
+        const inp = document.createElement('input');
+        inp.type = 'file'; inp.accept = 'image/*';
+        inp.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const users = DB.get('users');
+                const idx = users.findIndex(u => u.id === currentUser.id);
+                users[idx].cover = ev.target.result;
+                DB.set('users', users);
+                setCurrentUser({ ...users[idx] });
+            };
+            reader.readAsDataURL(file);
+        };
+        inp.click();
+    };
+
+    const addSkill = () => {
+        const name = newSkillName.trim();
+        if (!name) return;
+        if (skills.some(s => s.n.toLowerCase() === name.toLowerCase())) return;
+        setSkills([...skills, { n: name, l: newSkillLevel }]);
+        setNewSkillName('');
+        setIsNewSkillLevelOpen(false);
+    };
+
+    const removeSkill = (i) => setSkills(skills.filter((_, idx) => idx !== i));
+
+    const addLink = () => {
+        const val = newLinkVal.trim();
+        if (!val) return;
+        setLinks([...links, { t: newLinkType, v: val }]);
+        setNewLinkVal('');
+        setIsNewLinkTypeOpen(false);
+    };
+
+    const removeLink = (i) => setLinks(links.filter((_, idx) => idx !== i));
+
+    if (!targetUser) return <div className="p-20 text-center text-neutral-500">Yüklənir...</div>;
+
+    const isFollowing = currentUser?.following?.includes(targetUser.id);
+
+    return (
+        <>
+            <div className="max-w-4xl mx-auto px-6 anim-up">
+                {/* Cover & Avatar */}
+                <div className="relative mb-24">
+                    {/* Cover */}
+                    <div 
+                        className={`relative h-48 md:h-64 w-full rounded-3xl overflow-hidden shadow-2xl border border-white/5 group ${isOwnProfile ? 'cursor-pointer' : ''}`} 
+                        onClick={handleCoverUpload}
+                    >
+                        {targetUser?.cover ? (
+                            <img src={targetUser.cover} className="w-full h-full object-cover" alt="Cover" />
+                        ) : (
+                            <div className={`w-full h-full bg-gradient-to-br ${targetUser?.grad} opacity-80`} />
+                        )}
+                        {/* Hover overlay */}
+                        {isOwnProfile && (
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                                <Icon icon="mdi:image-edit-outline" className="text-white text-3xl" />
+                                <span className="text-white text-xs font-medium">Arxa fon şəklini dəyiş</span>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Avatar */}
+                    <div className="absolute -bottom-16 left-8 flex items-end gap-6">
+                        <div
+                            onClick={handleAvatarUpload}
+                            className={`w-32 h-32 md:w-36 md:h-36 rounded-3xl bg-gradient-to-br ${targetUser?.grad} border-4 border-black flex items-center justify-center text-4xl font-bold shadow-2xl shrink-0 group relative ${isOwnProfile ? 'cursor-pointer overflow-hidden' : ''}`}
+                        >
+                            {targetUser?.avatar ? (
+                                <img src={targetUser.avatar} className="w-full h-full object-cover rounded-2xl" />
+                            ) : (
+                                initials(targetUser?.name)
+                            )}
+                            {isOwnProfile && (
+                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <Icon icon="mdi:camera" className="text-white text-2xl" />
+                                </div>
+                            )}
+                        </div>
+                        <div className="mb-2">
+                            <div className="inline-flex items-center gap-2 mb-1">
+                                <h1 className="text-2xl md:text-3xl font-bold text-white">{targetUser?.name}</h1>
+                                <Icon icon="mdi:check-decagram" className="text-brand-400 text-xl" />
+                            </div>
+                            <p className="text-neutral-400 text-sm font-medium">{targetUser?.field} · {targetUser?.university}</p>
+                        </div>
+                    </div>
+
+                    {/* Actions Button */}
+                    <div className="absolute top-4 right-4 flex gap-2">
+                        {isOwnProfile ? (
+                            <button
+                                onClick={openEdit}
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest bg-black/50 backdrop-blur-md border border-white/10 text-white hover:bg-white/10 transition-all shadow-xl"
+                            >
+                                <Icon icon="mdi:pencil-outline" className="text-brand-400" />
+                                Profili Düzəlt
+                            </button>
+                        ) : (
+                            <>
+                                <button
+                                    onClick={() => onNavigate('messages', { userId: targetUser.id })}
+                                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-white/5 backdrop-blur-md border border-white/10 text-white hover:bg-white/10 transition-all shadow-xl"
+                                >
+                                    <Icon icon="mdi:chat-processing-outline" className="text-brand-400 text-lg" />
+                                    Söhbətə Başla
+                                </button>
+                                <button
+                                    onClick={() => handleFollow()}
+                                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-xl ${isFollowing ? 'bg-white/10 text-white border border-white/10' : 'bg-brand-500 text-white'}`}
+                                >
+                                    <Icon icon={isFollowing ? "mdi:account-check" : "mdi:account-plus"} className="text-lg" />
+                                    {isFollowing ? 'Təqib Edilir' : 'Təqib Et'}
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </div>
+
+                {/* Stats + Content grid */}
+                <div className="grid md:grid-cols-[1fr,2fr] gap-8">
+                    {/* Sidebar */}
+                    <div className="space-y-5">
+                        <div className="glass-card rounded-3xl p-6">
+                            <h3 className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4">Haqqımda</h3>
+                            <p className="text-[13px] text-neutral-400 leading-relaxed font-light mb-5">
+                                {currentUser?.bio || 'Hələ bioqrafiya əlavə edilməyib.'}
+                            </p>
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-3 text-neutral-400">
+                                    <Icon icon="mdi:school-outline" className="text-lg text-brand-400 shrink-0" />
+                                    <span className="text-xs">{currentUser?.university || '—'}</span>
+                                </div>
+                                <div className="flex items-center gap-3 text-neutral-400">
+                                    <Icon icon="mdi:briefcase-outline" className="text-lg text-brand-400 shrink-0" />
+                                    <span className="text-xs">{currentUser?.level} · {currentUser?.field}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Skills */}
+                        {currentUser?.skills?.length > 0 && (
+                            <div className="glass-card rounded-3xl p-6">
+                                <h3 className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4">Bacarıqlar</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {currentUser.skills.map((s, i) => (
+                                        <span key={i} className="text-[11px] px-3 py-1 rounded-full bg-white/5 border border-white/8 text-neutral-300">
+                                            {s.n} <span className="text-neutral-600">· {s.l}</span>
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Links */}
+                        {currentUser?.links?.length > 0 && (
+                            <div className="glass-card rounded-3xl p-6">
+                                <h3 className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4">Linklər</h3>
+                                <div className="space-y-2">
+                                    {currentUser.links.map((l, i) => (
+                                        <a
+                                            key={i}
+                                            href={`https://${l.v.replace(/^https?:\/\//, '')}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-2 text-xs text-brand-400 hover:text-brand-300 transition-colors"
+                                        >
+                                            <Icon icon="mdi:link-variant" className="text-sm" />
+                                            {l.t}: {l.v}
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Statistics */}
+                        <div className="glass-card rounded-3xl p-6">
+                            <h3 className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4">Statistika</h3>
+                            <div className="grid grid-cols-3 gap-2">
+                                <div className="text-center">
+                                    <div className="text-xl font-bold text-white">{stats.posts}</div>
+                                    <div className="text-[9px] text-neutral-600 font-bold uppercase tracking-widest">Post</div>
+                                </div>
+                                <div 
+                                    className="text-center cursor-pointer hover:bg-white/5 rounded-xl py-1 transition-colors"
+                                    onClick={() => openUserList('followers')}
+                                >
+                                    <div className="text-xl font-bold text-white">{stats.followers}</div>
+                                    <div className="text-[9px] text-neutral-600 font-bold uppercase tracking-widest underline decoration-brand-500/30">İzləyici</div>
+                                </div>
+                                <div 
+                                    className="text-center cursor-pointer hover:bg-white/5 rounded-xl py-1 transition-colors"
+                                    onClick={() => openUserList('following')}
+                                >
+                                    <div className="text-xl font-bold text-white">{stats.following}</div>
+                                    <div className="text-[9px] text-neutral-600 font-bold uppercase tracking-widest underline decoration-brand-500/30">İzlədiyi</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Tab Navigation */}
+                    <div className="flex items-center gap-8 border-b border-white/5 mb-8">
+                        <button 
+                            onClick={() => setTab('posts')}
+                            className={`pb-4 text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-2 transition-all relative ${tab === 'posts' ? 'text-white' : 'text-neutral-500 hover:text-neutral-300'}`}
+                        >
+                            <Icon icon="mdi:view-grid-outline" className={tab === 'posts' ? 'text-brand-400' : ''} />
+                            Paylaşımlar
+                            {tab === 'posts' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" />}
+                        </button>
+                        <button 
+                            onClick={() => setTab('liked')}
+                            className={`pb-4 text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-2 transition-all relative ${tab === 'liked' ? 'text-white' : 'text-neutral-500 hover:text-neutral-300'}`}
+                        >
+                            <Icon icon="mdi:heart-outline" className={tab === 'liked' ? 'text-rose-500' : ''} />
+                            Bəyəndiklərim
+                            {tab === 'liked' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" />}
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 anim-up">
+                        {posts.length > 0 ? (
+                            posts.map((p, i) => (
+                                <div 
+                                    key={p.id} 
+                                    onClick={() => setSelectedPost(p)}
+                                    className="aspect-square bg-white/5 border border-white/5 rounded-[32px] overflow-hidden group relative cursor-pointer shadow-lg hover:border-white/10 transition-all"
+                                >
+                                    {p.image ? (
+                                        <img src={p.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                    ) : (
+                                        <div className="w-full h-full flex flex-col items-center justify-center bg-brand-500/5 text-brand-400/40 p-6 text-center">
+                                            <Icon icon={p.type === 'code' ? 'mdi:code-braces' : p.type === 'design' ? 'mdi:palette-outline' : 'mdi:format-quote-close'} className="text-4xl mb-3" />
+                                            <p className="text-[10px] font-medium leading-relaxed italic line-clamp-3">"{p.caption}"</p>
+                                        </div>
+                                    )}
+                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6 backdrop-blur-[2px]">
+                                        <div className="flex items-center gap-2 text-white font-bold">
+                                            <Icon icon="mdi:heart" className="text-xl text-rose-500" />
+                                            {p.likes?.length || 0}
+                                        </div>
+                                        <div className="flex items-center gap-2 text-white font-bold">
+                                            <Icon icon="mdi:comment" className="text-xl text-brand-400" />
+                                            {p.comments?.length || 0}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="col-span-2 bg-white/5 border border-white/10 border-dashed rounded-[40px] py-20 flex flex-col items-center justify-center gap-4 text-neutral-500">
+                                <Icon icon={tab === 'posts' ? "mdi:image-off-outline" : "mdi:heart-off-outline"} className="text-5xl opacity-20" />
+                                <p className="text-sm font-light">
+                                    {tab === 'posts' ? 'Hələ heç bir paylaşım yoxdur.' : 'Hələ heç nə bəyənilməyib.'}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Edit Profile Redesigned Modal */}
+            {editOpen && (
+                <div
+                    className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+                    onClick={(e) => { if (e.target === e.currentTarget) setEditOpen(false); }}
+                >
+                    <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl w-full max-w-2xl flex flex-col shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] my-auto" style={{ animation: 'fadeInUp 0.3s ease-out' }}>
+                        {/* Header */}
+                        <div className="px-8 pt-8 pb-4">
+                            <h2 className="text-2xl font-bold text-white tracking-tight">Profilim</h2>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="px-8 py-4 space-y-6">
+                            {/* Ad ve Soyad */}
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest ml-1">Ad və Soyad</label>
+                                <input
+                                    value={form.name}
+                                    onChange={e => setForm({ ...form, name: e.target.value })}
+                                    className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:border-brand-500/50 outline-none transition-all"
+                                    placeholder="Ad Soyad"
+                                />
+                            </div>
+
+                            {/* Uni & Field Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest ml-1">Universitet</label>
+                                    <input
+                                        value={form.university}
+                                        onChange={e => setForm({ ...form, university: e.target.value })}
+                                        className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:border-brand-500/50 outline-none transition-all"
+                                        placeholder="Universitet"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest ml-1">Sahə</label>
+                                    <input
+                                        value={form.field}
+                                        onChange={e => setForm({ ...form, field: e.target.value })}
+                                        className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:border-brand-500/50 outline-none transition-all"
+                                        placeholder="Sahə"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Level Custom Dropdown */}
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest ml-1">Təcrübə Səviyyəsi</label>
+                                <div className="relative">
+                                    <button 
+                                        onClick={() => setIsLevelOpen(!isLevelOpen)}
+                                        className={`w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3 text-sm text-white flex items-center justify-between transition-all hover:border-white/10 ${isLevelOpen ? 'border-brand-500/50 ring-2 ring-brand-500/10' : ''}`}
+                                    >
+                                        <span>{form.level}</span>
+                                        <Icon icon="mdi:chevron-down" className={`text-neutral-500 transition-transform ${isLevelOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+                                    
+                                    {isLevelOpen && (
+                                        <>
+                                            <div className="fixed inset-0 z-40" onClick={() => setIsLevelOpen(false)} />
+                                            <div className="absolute top-full left-0 w-full mt-2 bg-[#121212] border border-white/10 rounded-xl overflow-hidden z-50 shadow-2xl anim-up">
+                                                {SKILL_LEVELS.map(l => (
+                                                    <div 
+                                                        key={l}
+                                                        onClick={() => {
+                                                            setForm({ ...form, level: l });
+                                                            setIsLevelOpen(false);
+                                                        }}
+                                                        className={`px-4 py-3 text-sm cursor-pointer transition-all flex items-center justify-between group ${form.level === l ? 'bg-brand-500/10 text-brand-400' : 'text-neutral-400 hover:bg-white/5 hover:text-white'}`}
+                                                    >
+                                                        {l}
+                                                        {form.level === l && <Icon icon="mdi:check" className="text-brand-400" />}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Bio */}
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest ml-1">Bio</label>
+                                <textarea
+                                    value={form.bio}
+                                    onChange={e => setForm({ ...form, bio: e.target.value })}
+                                    className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:border-brand-500/50 outline-none transition-all resize-none h-24"
+                                    placeholder="Özünüz haqqında qısa məlumat..."
+                                />
+                            </div>
+
+                            {/* Skills */}
+                            <div className="space-y-3">
+                                <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest ml-1">Bacarıqlar</label>
+                                <div className="flex flex-wrap gap-2 mb-3">
+                                    {skills.map((s, i) => (
+                                        <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-[#171717] border border-white/5 rounded-lg text-[12px] text-neutral-300">
+                                            {s.n} · {s.l}
+                                            <button onClick={() => removeSkill(i)} className="hover:text-red-400 transition-colors">✕</button>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="flex gap-2">
+                                    <input
+                                        value={newSkillName}
+                                        onChange={e => setNewSkillName(e.target.value)}
+                                        className="flex-1 bg-[#121212] border border-white/5 rounded-xl px-4 py-2 text-sm text-white focus:border-brand-500/50 outline-none"
+                                        placeholder="Bacarıq adı"
+                                    />
+                                    {/* New Skill Level Custom Dropdown */}
+                                    <div className="relative w-32">
+                                        <button 
+                                            onClick={() => setIsNewSkillLevelOpen(!isNewSkillLevelOpen)}
+                                            className={`w-full h-full bg-[#121212] border border-white/5 rounded-xl px-4 py-2 text-sm text-white flex items-center justify-between hover:border-white/10 ${isNewSkillLevelOpen ? 'border-brand-500/50' : ''}`}
+                                        >
+                                            <span className="truncate">{newSkillLevel}</span>
+                                            <Icon icon="mdi:chevron-down" className="text-neutral-500 shrink-0" />
+                                        </button>
+                                        
+                                        {isNewSkillLevelOpen && (
+                                            <>
+                                                <div className="fixed inset-0 z-40" onClick={() => setIsNewSkillLevelOpen(false)} />
+                                                <div className="absolute bottom-full left-0 w-40 mb-2 bg-[#121212] border border-white/10 rounded-xl overflow-hidden z-50 shadow-2xl anim-up">
+                                                    {SKILL_LEVELS.map(l => (
+                                                        <div 
+                                                            key={l}
+                                                            onClick={() => {
+                                                                setNewSkillLevel(l);
+                                                                setIsNewSkillLevelOpen(false);
+                                                            }}
+                                                            className={`px-4 py-2.5 text-xs font-bold cursor-pointer transition-all ${newSkillLevel === l ? 'bg-brand-500/10 text-brand-400' : 'text-neutral-400 hover:bg-white/5 hover:text-white'}`}
+                                                        >
+                                                            {l}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={addSkill}
+                                        className="w-10 h-10 shrink-0 bg-brand-600 hover:bg-brand-500 text-white rounded-xl flex items-center justify-center transition-all active:scale-95"
+                                    >
+                                        <Icon icon="mdi:plus" className="text-xl" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Links */}
+                            <div className="space-y-3">
+                                <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest ml-1">Linklər</label>
+                                <div className="flex flex-wrap gap-2 mb-3">
+                                    {links.map((l, i) => (
+                                        <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-[#171717] border border-white/5 rounded-lg text-[12px] text-neutral-300">
+                                            {l.t}: {l.v}
+                                            <button onClick={() => removeLink(i)} className="hover:text-red-400 transition-colors">✕</button>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="flex gap-2">
+                                    {/* Link Type Custom Dropdown */}
+                                    <div className="relative w-32">
+                                        <button 
+                                            onClick={() => setIsNewLinkTypeOpen(!isNewLinkTypeOpen)}
+                                            className={`w-full h-full bg-[#121212] border border-white/5 rounded-xl px-4 py-2 text-sm text-white flex items-center justify-between hover:border-white/10 ${isNewLinkTypeOpen ? 'border-brand-500/50' : ''}`}
+                                        >
+                                            <span className="truncate">{newLinkType}</span>
+                                            <Icon icon="mdi:chevron-down" className="text-neutral-500 shrink-0" />
+                                        </button>
+                                        
+                                        {isNewLinkTypeOpen && (
+                                            <>
+                                                <div className="fixed inset-0 z-40" onClick={() => setIsNewLinkTypeOpen(false)} />
+                                                <div className="absolute bottom-full left-0 w-40 mb-2 bg-[#121212] border border-white/10 rounded-xl overflow-hidden z-50 shadow-2xl anim-up h-48 overflow-y-auto custom-scrollbar">
+                                                    {LINK_TYPES.map(t => (
+                                                        <div 
+                                                            key={t}
+                                                            onClick={() => {
+                                                                setNewLinkType(t);
+                                                                setIsNewLinkTypeOpen(false);
+                                                            }}
+                                                            className={`px-4 py-2.5 text-xs font-bold cursor-pointer transition-all ${newLinkType === t ? 'bg-brand-500/10 text-brand-400' : 'text-neutral-400 hover:bg-white/5 hover:text-white'}`}
+                                                        >
+                                                            {t}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                    <input
+                                        value={newLinkVal}
+                                        onChange={e => setNewLinkVal(e.target.value)}
+                                        className="flex-1 bg-[#121212] border border-white/5 rounded-xl px-4 py-2 text-sm text-white focus:border-brand-500/50 outline-none"
+                                        placeholder="github.com/username"
+                                    />
+                                    <button
+                                        onClick={addLink}
+                                        className="w-10 h-10 shrink-0 bg-brand-600 hover:bg-brand-500 text-white rounded-xl flex items-center justify-center transition-all active:scale-95"
+                                    >
+                                        <Icon icon="mdi:plus" className="text-xl" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer Buttons */}
+                        <div className="px-8 py-8 flex gap-4 mt-2">
+                            <button
+                                onClick={saveEdit}
+                                className="flex-1 bg-brand-600 hover:bg-brand-500 text-white font-bold py-3.5 rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-brand-500/10"
+                            >
+                                Yadda Saxla
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setEditOpen(false);
+                                    setIsLevelOpen(false);
+                                    setIsNewSkillLevelOpen(false);
+                                    setIsNewLinkTypeOpen(false);
+                                }}
+                                className="flex-1 bg-transparent border border-white/10 text-white font-bold py-3.5 rounded-xl hover:bg-white/5 transition-all"
+                            >
+                                Ləğv Et
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Post Detail Modal */}
+            {selectedPost && (
+                <div
+                    className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+                    onClick={(e) => { if (e.target === e.currentTarget) setSelectedPost(null); }}
+                >
+                    <div className="w-full max-w-lg anim-up">
+                        <div className="flex justify-end mb-4">
+                            <button 
+                                onClick={() => setSelectedPost(null)}
+                                className="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-all"
+                            >
+                                <Icon icon="mdi:close" className="text-2xl" />
+                            </button>
+                        </div>
+                        <PostCard 
+                            post={selectedPost} 
+                            onUpdate={(updatedPost) => {
+                                setPosts(prev => prev.map(p => p.id === updatedPost.id ? updatedPost : p));
+                                setSelectedPost(updatedPost);
+                            }}
+                            onDelete={(id) => {
+                                setPosts(prev => prev.filter(p => p.id !== id));
+                                setSelectedPost(null);
+                            }}
+                            onNavigate={onNavigate}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* User List Modal (Followers/Following) */}
+            {userList.open && (
+                <div
+                    className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+                    onClick={(e) => { if (e.target === e.currentTarget) setUserList({ ...userList, open: false }); }}
+                >
+                    <div className="bg-[#0a0a0a] border border-white/10 rounded-3xl w-full max-w-sm flex flex-col shadow-2xl anim-up h-[500px]">
+                        <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between">
+                            <h3 className="text-sm font-bold text-white uppercase tracking-widest">{userList.type}</h3>
+                            <button onClick={() => setUserList({ ...userList, open: false })} className="text-neutral-500 hover:text-white">
+                                <Icon icon="mdi:close" className="text-xl" />
+                            </button>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 custom-scrollbar">
+                            {userList.data.length > 0 ? userList.data.map(uid => {
+                                const u = DB.get('users').find(x => x.id === uid);
+                                if (!u) return null;
+                                const isMe = u.id === currentUser?.id;
+                                const isFollowed = currentUser?.following?.includes(u.id);
+                                
+                                return (
+                                    <div key={uid} className="flex items-center justify-between gap-3 p-2 rounded-2xl hover:bg-white/[0.02] transition-colors group">
+                                        <div 
+                                            className="flex items-center gap-3 flex-1 cursor-pointer"
+                                            onClick={() => {
+                                                setUserList({ ...userList, open: false });
+                                                onNavigate('profile', { userId: u.id });
+                                            }}
+                                        >
+                                            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${u.grad} flex items-center justify-center text-sm font-bold text-white shrink-0 shadow-lg`}>
+                                                {u.avatar ? <img src={u.avatar} className="w-full h-full object-cover rounded-xl" /> : initials(u.name)}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <div className="text-xs font-bold text-white truncate group-hover:text-brand-400 transition-colors">{u.name}</div>
+                                                <div className="text-[10px] text-neutral-500 truncate">{u.field}</div>
+                                            </div>
+                                        </div>
+                                        
+                                        {!isMe && (
+                                            <button 
+                                                onClick={() => handleFollow(u.id)}
+                                                className={`px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all ${isFollowed ? 'bg-white/5 text-neutral-400 border border-white/10' : 'bg-brand-500 text-white shadow-lg shadow-brand-500/20'}`}
+                                            >
+                                                {isFollowed ? 'Ləğv Et' : 'İzlə'}
+                                            </button>
+                                        )}
+                                    </div>
+                                );
+                            }) : (
+                                <div className="h-full flex flex-col items-center justify-center text-neutral-600 gap-3 grayscale opacity-40">
+                                    <Icon icon="mdi:account-group-outline" className="text-5xl" />
+                                    <p className="text-xs font-medium uppercase tracking-widest text-center px-10 leading-loose">Hələ heç bir istifadəçi yoxdur</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
+    );
+}
