@@ -7,6 +7,16 @@ import SharePostModal from './SharePostModal';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { useTranslation } from 'react-i18next';
 
+function translateField(field, t) {
+    const map = {
+        'Proqramlaşdırma': t('auth.fields.programming'),
+        'Dizayn': t('auth.fields.design'),
+        'Marketinq': t('auth.fields.marketing'),
+        'Digər': t('auth.fields.other'),
+    };
+    return map[field] || field;
+}
+
 const POST_COLORS = [
     'from-brand-600 via-purple-600 to-pink-500',
     'from-cyan-600 via-blue-600 to-brand-600',
@@ -132,7 +142,7 @@ export default function PostCard({ post, index, onDelete, onUpdate, onNavigate }
                         </div>
                         <div className="min-w-0 flex flex-col gap-0.5 items-start">
                             <div className="text-sm font-medium text-white truncate leading-tight">{author.name}</div>
-                            <div className="text-[10px] text-neutral-500 font-light leading-tight">{author.field} · {timeAgo(post.createdAt)}</div>
+                            <div className="text-[10px] text-neutral-500 font-light leading-tight">{translateField(author.field, t)} · {timeAgo(post.createdAt, t)}</div>
                         </div>
                     </button>
                     {post.authorId === currentUser?.id && (

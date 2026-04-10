@@ -20,11 +20,17 @@ export function initials(n) {
     return n.split(' ').map(function(w){return w[0]}).join('').slice(0,2).toUpperCase() 
 }
 
-export function timeAgo(ts) {
+export function timeAgo(ts, t) {
     var d = Date.now() - ts, 
         m = Math.floor(d / 60000), 
         h = Math.floor(d / 3600000), 
         dy = Math.floor(d / 86400000);
+    if (t) {
+        if (m < 1) return t('timeAgo.now');
+        if (m < 60) return t('timeAgo.min', { count: m });
+        if (h < 24) return t('timeAgo.hour', { count: h });
+        return t('timeAgo.day', { count: dy });
+    }
     if (m < 1) return 'İndi';
     if (m < 60) return m + ' dəq';
     if (h < 24) return h + ' saat';

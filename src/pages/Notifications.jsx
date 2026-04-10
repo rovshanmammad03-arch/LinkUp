@@ -48,7 +48,7 @@ export default function Notifications({ onNavigate }) {
         <div>
           <h1 className="text-3xl font-bold text-white tracking-tight">{t('nav.notifications')}</h1>
           {unreadCount > 0 && (
-            <p className="text-sm text-neutral-500 mt-1">{unreadCount} oxunmamış</p>
+            <p className="text-sm text-neutral-500 mt-1">{t('notifications.unread', { count: unreadCount })}</p>
           )}
         </div>
         {unreadCount > 0 && (
@@ -56,7 +56,7 @@ export default function Notifications({ onNavigate }) {
             onClick={markAllRead}
             className="text-xs font-semibold text-brand-400 hover:text-brand-300 transition-colors"
           >
-            Hamısını oxunmuş say
+            {t('notifications.markAllRead')}
           </button>
         )}
       </div>
@@ -98,10 +98,10 @@ export default function Notifications({ onNavigate }) {
                 {/* Text */}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-white leading-snug">
-                    <span className="font-semibold">{sender?.name || 'Kimsə'}</span>
+                    <span className="font-semibold">{sender?.name || t('notifications.unknown')}</span>
                     {' '}{n.text}
                   </p>
-                  <p className="text-[11px] text-neutral-500 mt-0.5">{timeAgo(n.ts)}</p>
+                  <p className="text-[11px] text-neutral-500 mt-0.5">{timeAgo(n.ts, t)}</p>
                 </div>
 
                 {!n.read && (

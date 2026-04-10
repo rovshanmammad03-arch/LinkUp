@@ -28,9 +28,13 @@
     "projects": "Projects",
     "universities": "Universities",
     "whyLinkUp": "Why LinkUp?",
+    "whyLinkUpPrefix": "Why",
     "notJustSocial": "Not just a social network — everything you need to grow in your field, all in one place.",
     "howItWorks": "How does it work?",
-    "readyJoin": "Ready? Join.",
+    "howItWorksPrefix": "How does it",
+    "howItWorksSuffix": "work",
+    "readyJoin": "Ready?",
+    "readyJoinHighlight": "Join.",
     "readyDesc": "Meet people in your field and build projects together.",
     "registerNow": "Register Now",
     "footer": "© 2025 LinkUp. All rights reserved.",
@@ -89,6 +93,17 @@
       "marketing": "Marketing",
       "other": "Other"
     }
+  },
+  "notifications": {
+    "unread": "{{count}} unread",
+    "markAllRead": "Mark all as read",
+    "unknown": "Someone"
+  },
+  "timeAgo": {
+    "now": "Just now",
+    "min": "{{count}} min",
+    "hour": "{{count}} hr",
+    "day": "{{count}} d"
   },
   "dashboard": {
     "profileCompletion": "Profile Completion",
@@ -218,6 +233,7 @@
     "colorLabel": "Project Color",
     "cancel": "Cancel",
     "create": "Create Project",
+    "deleteConfirm": "Are you sure you want to delete this project? This action cannot be undone.",
     "team": {
       "small": "1-2 people",
       "medium": "2-3 people",
@@ -240,6 +256,28 @@
     "noPosts": "No posts yet.",
     "noSkills": "No skills added.",
     "save": "Save",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "myProfile": "My Profile",
+    "nameLabel": "Full Name",
+    "namePlaceholder": "First Last",
+    "universityLabel": "University",
+    "fieldLabel": "Field",
+    "levelLabel": "Experience Level",
+    "bioLabel": "Bio",
+    "bioPlaceholder": "Brief info about yourself...",
+    "skillsLabel": "Skills",
+    "skillNamePlaceholder": "Skill name",
+    "linksLabel": "Links",
+    "statistics": "Statistics",
+    "about_me": "About Me",
+    "editCover": "Change cover photo",
+    "startChat": "Start Chat",
+    "followingStatus": "Following",
+    "noPostsYet": "No posts yet.",
+    "noLikesYet": "Nothing liked yet.",
+    "liked": "Liked",
+    "followersTitle": "Followers",
+    "followingTitle": "Following",
+    "loading": "Loading..."
   }
 }

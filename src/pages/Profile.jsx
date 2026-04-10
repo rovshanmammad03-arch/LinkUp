@@ -4,12 +4,35 @@ import { DB, initials } from '../services/db';
 import { Icon } from '@iconify/react';
 import { useScrollLock } from '../hooks/useScrollLock';
 import PostCard from '../components/feed/PostCard';
+import { useTranslation } from 'react-i18next';
 
-const SKILL_LEVELS = ['Başlanğıc', 'Orta', 'Qabaqcıl'];
+const SKILL_LEVEL_KEYS = ['beginner', 'intermediate', 'advanced'];
+const SKILL_LEVELS_AZ = ['Başlanğıc', 'Orta', 'Qabaqcıl'];
 const LINK_TYPES = ['Portfolio', 'GitHub', 'LinkedIn', 'Twitter', 'Kaggle', 'Behance', 'Digər'];
+
+// Maps stored AZ value → translation key
+function translateField(field, t) {
+    const map = {
+        'Proqramlaşdırma': t('auth.fields.programming'),
+        'Dizayn': t('auth.fields.design'),
+        'Marketinq': t('auth.fields.marketing'),
+        'Digər': t('auth.fields.other'),
+    };
+    return map[field] || field;
+}
+
+function translateLevel(level, t) {
+    const map = {
+        'Başlanğıc': t('discover.levels.beginner'),
+        'Orta': t('discover.levels.intermediate'),
+        'Qabaqcıl': t('discover.levels.advanced'),
+    };
+    return map[level] || level;
+}
 
 export default function Profile({ params, onNavigate }) {
     const { currentUser, setCurrentUser, refreshUser } = useAuth();
+    const { t } = useTranslation();
     const [tab, setTab] = useState('posts');
     const [posts, setPosts] = useState([]);
     const [stats, setStats] = useState({ posts: 0, following: 0, followers: 0 });
@@ -106,7 +129,7 @@ export default function Profile({ params, onNavigate }) {
         const ids = type === 'followers' ? (targetUser.followers || []) : (targetUser.following || []);
         setUserList({
             open: true,
-            type: type === 'followers' ? 'İzləyicilər' : 'İzlədikləri',
+            type: type === 'followers' ? t('profile.followersTitle') : t('profile.followingTitle'),
             data: ids
         });
     };
@@ -200,7 +223,7 @@ export default function Profile({ params, onNavigate }) {
 
     const removeLink = (i) => setLinks(links.filter((_, idx) => idx !== i));
 
-    if (!targetUser) return <div className="p-20 text-center text-neutral-500">Yüklənir...</div>;
+    if (!targetUser) return <div className="p-20 text-center text-neutral-500">{t('profile.loading')}</div>;
 
     const isFollowing = currentUser?.following?.includes(targetUser.id);
 
@@ -221,9 +244,9 @@ export default function Profile({ params, onNavigate }) {
                         )}
                         {/* Hover overlay */}
                         {isOwnProfile && (
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
-                                <Icon icon="mdi:image-edit-outline" className="text-white text-3xl" />
-                                <span className="text-white text-xs font-medium">Arxa fon şəklini dəyiş</span>
+                            <div className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 backdrop-blur-[1px]">
+                                <Icon icon="mdi:image-edit-outline" className="text-white text-3xl drop-shadow-lg" />
+                                <span className="text-white text-xs font-semibold drop-shadow-lg">{t('profile.editCover')}</span>
                             </div>
                         )}
                     </div>
@@ -240,8 +263,8 @@ export default function Profile({ params, onNavigate }) {
                                 initials(targetUser?.name)
                             )}
                             {isOwnProfile && (
-                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <Icon icon="mdi:camera" className="text-white text-2xl" />
+                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <Icon icon="mdi:camera" className="text-white text-2xl drop-shadow-lg" />
                                 </div>
                             )}
                         </div>
@@ -250,7 +273,7 @@ export default function Profile({ params, onNavigate }) {
                                 <h1 className="text-2xl md:text-3xl font-bold text-white">{targetUser?.name}</h1>
                                 <Icon icon="mdi:check-decagram" className="text-brand-400 text-xl" />
                             </div>
-                            <p className="text-neutral-400 text-sm font-medium">{targetUser?.field} · {targetUser?.university}</p>
+                            <p className="text-neutral-400 text-sm font-medium">{translateField(targetUser?.field, t)} · {targetUser?.university}</p>
                         </div>
                     </div>
 
@@ -259,26 +282,26 @@ export default function Profile({ params, onNavigate }) {
                         {isOwnProfile ? (
                             <button
                                 onClick={openEdit}
-                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest bg-black/50 backdrop-blur-md border border-white/10 text-white hover:bg-white/10 transition-all shadow-xl"
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest bg-neutral-900/90 backdrop-blur-md border border-white/20 text-white hover:bg-neutral-800 transition-all shadow-xl ring-1 ring-black/30"
                             >
                                 <Icon icon="mdi:pencil-outline" className="text-brand-400" />
-                                Profili Düzəlt
+                                {t('profile.editProfile')}
                             </button>
                         ) : (
                             <>
                                 <button
                                     onClick={() => onNavigate('messages', { userId: targetUser.id })}
-                                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-white/5 backdrop-blur-md border border-white/10 text-white hover:bg-white/10 transition-all shadow-xl"
+                                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-neutral-900/90 backdrop-blur-md border border-white/20 text-white hover:bg-neutral-800 transition-all shadow-xl ring-1 ring-black/30"
                                 >
                                     <Icon icon="mdi:chat-processing-outline" className="text-brand-400 text-lg" />
-                                    Söhbətə Başla
+                                    {t('profile.startChat')}
                                 </button>
                                 <button
                                     onClick={() => handleFollow()}
                                     className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-xl ${isFollowing ? 'bg-white/10 text-white border border-white/10' : 'bg-brand-500 text-white'}`}
                                 >
                                     <Icon icon={isFollowing ? "mdi:account-check" : "mdi:account-plus"} className="text-lg" />
-                                    {isFollowing ? 'Təqib Edilir' : 'Təqib Et'}
+                                    {isFollowing ? t('profile.followingStatus') : t('profile.follow')}
                                 </button>
                             </>
                         )}
@@ -290,9 +313,9 @@ export default function Profile({ params, onNavigate }) {
                     {/* Sidebar */}
                     <div className="space-y-5">
                         <div className="glass-card rounded-3xl p-6">
-                            <h3 className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4">Haqqımda</h3>
+                            <h3 className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4">{t('profile.about_me')}</h3>
                             <p className="text-[13px] text-neutral-400 leading-relaxed font-light mb-5">
-                                {currentUser?.bio || 'Hələ bioqrafiya əlavə edilməyib.'}
+                                {currentUser?.bio || t('profile.noBio')}
                             </p>
                             <div className="space-y-3">
                                 <div className="flex items-center gap-3 text-neutral-400">
@@ -301,7 +324,7 @@ export default function Profile({ params, onNavigate }) {
                                 </div>
                                 <div className="flex items-center gap-3 text-neutral-400">
                                     <Icon icon="mdi:briefcase-outline" className="text-lg text-brand-400 shrink-0" />
-                                    <span className="text-xs">{currentUser?.level} · {currentUser?.field}</span>
+                                    <span className="text-xs">{translateLevel(currentUser?.level, t)} · {translateField(currentUser?.field, t)}</span>
                                 </div>
                             </div>
                         </div>
@@ -309,7 +332,7 @@ export default function Profile({ params, onNavigate }) {
                         {/* Skills */}
                         {currentUser?.skills?.length > 0 && (
                             <div className="glass-card rounded-3xl p-6">
-                                <h3 className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4">Bacarıqlar</h3>
+                                <h3 className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4">{t('profile.skills')}</h3>
                                 <div className="flex flex-wrap gap-2">
                                     {currentUser.skills.map((s, i) => (
                                         <span key={i} className="text-[11px] px-3 py-1 rounded-full bg-white/5 border border-white/8 text-neutral-300">
@@ -323,7 +346,7 @@ export default function Profile({ params, onNavigate }) {
                         {/* Links */}
                         {currentUser?.links?.length > 0 && (
                             <div className="glass-card rounded-3xl p-6">
-                                <h3 className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4">Linklər</h3>
+                                <h3 className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4">{t('profile.links')}</h3>
                                 <div className="space-y-2">
                                     {currentUser.links.map((l, i) => (
                                         <a
@@ -343,7 +366,7 @@ export default function Profile({ params, onNavigate }) {
 
                         {/* Statistics */}
                         <div className="glass-card rounded-3xl p-6">
-                            <h3 className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4">Statistika</h3>
+                            <h3 className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4">{t('profile.statistics')}</h3>
                             <div className="grid grid-cols-3 gap-2">
                                 <div className="text-center">
                                     <div className="text-xl font-bold text-white">{stats.posts}</div>
@@ -354,14 +377,14 @@ export default function Profile({ params, onNavigate }) {
                                     onClick={() => openUserList('followers')}
                                 >
                                     <div className="text-xl font-bold text-white">{stats.followers}</div>
-                                    <div className="text-[9px] text-neutral-600 font-bold uppercase tracking-widest underline decoration-brand-500/30">İzləyici</div>
+                                    <div className="text-[9px] text-neutral-600 font-bold uppercase tracking-widest underline decoration-brand-500/30">{t('profile.followers')}</div>
                                 </div>
                                 <div 
                                     className="text-center cursor-pointer hover:bg-white/5 rounded-xl py-1 transition-colors"
                                     onClick={() => openUserList('following')}
                                 >
                                     <div className="text-xl font-bold text-white">{stats.following}</div>
-                                    <div className="text-[9px] text-neutral-600 font-bold uppercase tracking-widest underline decoration-brand-500/30">İzlədiyi</div>
+                                    <div className="text-[9px] text-neutral-600 font-bold uppercase tracking-widest underline decoration-brand-500/30">{t('profile.following')}</div>
                                 </div>
                             </div>
                         </div>
@@ -374,7 +397,7 @@ export default function Profile({ params, onNavigate }) {
                             className={`pb-4 text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-2 transition-all relative ${tab === 'posts' ? 'text-white' : 'text-neutral-500 hover:text-neutral-300'}`}
                         >
                             <Icon icon="mdi:view-grid-outline" className={tab === 'posts' ? 'text-brand-400' : ''} />
-                            Paylaşımlar
+                            {t('profile.posts')}
                             {tab === 'posts' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" />}
                         </button>
                         <button 
@@ -382,7 +405,7 @@ export default function Profile({ params, onNavigate }) {
                             className={`pb-4 text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-2 transition-all relative ${tab === 'liked' ? 'text-white' : 'text-neutral-500 hover:text-neutral-300'}`}
                         >
                             <Icon icon="mdi:heart-outline" className={tab === 'liked' ? 'text-rose-500' : ''} />
-                            Bəyəndiklərim
+                            {t('profile.liked')}
                             {tab === 'liked' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" />}
                         </button>
                     </div>
@@ -419,7 +442,7 @@ export default function Profile({ params, onNavigate }) {
                             <div className="col-span-2 bg-white/5 border border-white/10 border-dashed rounded-[40px] py-20 flex flex-col items-center justify-center gap-4 text-neutral-500">
                                 <Icon icon={tab === 'posts' ? "mdi:image-off-outline" : "mdi:heart-off-outline"} className="text-5xl opacity-20" />
                                 <p className="text-sm font-light">
-                                    {tab === 'posts' ? 'Hələ heç bir paylaşım yoxdur.' : 'Hələ heç nə bəyənilməyib.'}
+                                    {tab === 'posts' ? t('profile.noPostsYet') : t('profile.noLikesYet')}
                                 </p>
                             </div>
                         )}
@@ -436,53 +459,53 @@ export default function Profile({ params, onNavigate }) {
                     <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl w-full max-w-2xl flex flex-col shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] my-auto" style={{ animation: 'fadeInUp 0.3s ease-out' }}>
                         {/* Header */}
                         <div className="px-8 pt-8 pb-4">
-                            <h2 className="text-2xl font-bold text-white tracking-tight">Profilim</h2>
+                            <h2 className="text-2xl font-bold text-white tracking-tight">{t('profile.myProfile')}</h2>
                         </div>
 
                         {/* Modal Body */}
                         <div className="px-8 py-4 space-y-6">
                             {/* Ad ve Soyad */}
                             <div className="space-y-2">
-                                <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest ml-1">Ad və Soyad</label>
+                                <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest ml-1">{t('profile.nameLabel')}</label>
                                 <input
                                     value={form.name}
                                     onChange={e => setForm({ ...form, name: e.target.value })}
                                     className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:border-brand-500/50 outline-none transition-all"
-                                    placeholder="Ad Soyad"
+                                    placeholder={t('profile.namePlaceholder')}
                                 />
                             </div>
 
                             {/* Uni & Field Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest ml-1">Universitet</label>
+                                    <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest ml-1">{t('profile.universityLabel')}</label>
                                     <input
                                         value={form.university}
                                         onChange={e => setForm({ ...form, university: e.target.value })}
                                         className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:border-brand-500/50 outline-none transition-all"
-                                        placeholder="Universitet"
+                                        placeholder={t('auth.university')}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest ml-1">Sahə</label>
+                                    <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest ml-1">{t('profile.fieldLabel')}</label>
                                     <input
                                         value={form.field}
                                         onChange={e => setForm({ ...form, field: e.target.value })}
                                         className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:border-brand-500/50 outline-none transition-all"
-                                        placeholder="Sahə"
+                                        placeholder={t('auth.field')}
                                     />
                                 </div>
                             </div>
 
                             {/* Level Custom Dropdown */}
                             <div className="space-y-2">
-                                <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest ml-1">Təcrübə Səviyyəsi</label>
+                                <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest ml-1">{t('profile.levelLabel')}</label>
                                 <div className="relative">
                                     <button 
                                         onClick={() => setIsLevelOpen(!isLevelOpen)}
                                         className={`w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3 text-sm text-white flex items-center justify-between transition-all hover:border-white/10 ${isLevelOpen ? 'border-brand-500/50 ring-2 ring-brand-500/10' : ''}`}
                                     >
-                                        <span>{form.level}</span>
+                                        <span>{translateLevel(form.level, t)}</span>
                                         <Icon icon="mdi:chevron-down" className={`text-neutral-500 transition-transform ${isLevelOpen ? 'rotate-180' : ''}`} />
                                     </button>
                                     
@@ -490,7 +513,7 @@ export default function Profile({ params, onNavigate }) {
                                         <>
                                             <div className="fixed inset-0 z-40" onClick={() => setIsLevelOpen(false)} />
                                             <div className="absolute top-full left-0 w-full mt-2 bg-[#121212] border border-white/10 rounded-xl overflow-hidden z-50 shadow-2xl anim-up">
-                                                {SKILL_LEVELS.map(l => (
+                                                {SKILL_LEVELS_AZ.map(l => (
                                                     <div 
                                                         key={l}
                                                         onClick={() => {
@@ -499,7 +522,7 @@ export default function Profile({ params, onNavigate }) {
                                                         }}
                                                         className={`px-4 py-3 text-sm cursor-pointer transition-all flex items-center justify-between group ${form.level === l ? 'bg-brand-500/10 text-brand-400' : 'text-neutral-400 hover:bg-white/5 hover:text-white'}`}
                                                     >
-                                                        {l}
+                                                        {translateLevel(l, t)}
                                                         {form.level === l && <Icon icon="mdi:check" className="text-brand-400" />}
                                                     </div>
                                                 ))}
@@ -511,18 +534,18 @@ export default function Profile({ params, onNavigate }) {
 
                             {/* Bio */}
                             <div className="space-y-2">
-                                <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest ml-1">Bio</label>
+                                <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest ml-1">{t('profile.bioLabel')}</label>
                                 <textarea
                                     value={form.bio}
                                     onChange={e => setForm({ ...form, bio: e.target.value })}
                                     className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:border-brand-500/50 outline-none transition-all resize-none h-24"
-                                    placeholder="Özünüz haqqında qısa məlumat..."
+                                    placeholder={t('profile.bioPlaceholder')}
                                 />
                             </div>
 
                             {/* Skills */}
                             <div className="space-y-3">
-                                <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest ml-1">Bacarıqlar</label>
+                                <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest ml-1">{t('profile.skillsLabel')}</label>
                                 <div className="flex flex-wrap gap-2 mb-3">
                                     {skills.map((s, i) => (
                                         <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-[#171717] border border-white/5 rounded-lg text-[12px] text-neutral-300">
@@ -536,7 +559,7 @@ export default function Profile({ params, onNavigate }) {
                                         value={newSkillName}
                                         onChange={e => setNewSkillName(e.target.value)}
                                         className="flex-1 bg-[#121212] border border-white/5 rounded-xl px-4 py-2 text-sm text-white focus:border-brand-500/50 outline-none"
-                                        placeholder="Bacarıq adı"
+                                        placeholder={t('profile.skillNamePlaceholder')}
                                     />
                                     {/* New Skill Level Custom Dropdown */}
                                     <div className="relative w-32">
@@ -544,7 +567,7 @@ export default function Profile({ params, onNavigate }) {
                                             onClick={() => setIsNewSkillLevelOpen(!isNewSkillLevelOpen)}
                                             className={`w-full h-full bg-[#121212] border border-white/5 rounded-xl px-4 py-2 text-sm text-white flex items-center justify-between hover:border-white/10 ${isNewSkillLevelOpen ? 'border-brand-500/50' : ''}`}
                                         >
-                                            <span className="truncate">{newSkillLevel}</span>
+                                            <span className="truncate">{translateLevel(newSkillLevel, t)}</span>
                                             <Icon icon="mdi:chevron-down" className="text-neutral-500 shrink-0" />
                                         </button>
                                         
@@ -552,7 +575,7 @@ export default function Profile({ params, onNavigate }) {
                                             <>
                                                 <div className="fixed inset-0 z-40" onClick={() => setIsNewSkillLevelOpen(false)} />
                                                 <div className="absolute bottom-full left-0 w-40 mb-2 bg-[#121212] border border-white/10 rounded-xl overflow-hidden z-50 shadow-2xl anim-up">
-                                                    {SKILL_LEVELS.map(l => (
+                                                    {SKILL_LEVELS_AZ.map(l => (
                                                         <div 
                                                             key={l}
                                                             onClick={() => {
@@ -561,7 +584,7 @@ export default function Profile({ params, onNavigate }) {
                                                             }}
                                                             className={`px-4 py-2.5 text-xs font-bold cursor-pointer transition-all ${newSkillLevel === l ? 'bg-brand-500/10 text-brand-400' : 'text-neutral-400 hover:bg-white/5 hover:text-white'}`}
                                                         >
-                                                            {l}
+                                                            {translateLevel(l, t)}
                                                         </div>
                                                     ))}
                                                 </div>
@@ -579,7 +602,7 @@ export default function Profile({ params, onNavigate }) {
 
                             {/* Links */}
                             <div className="space-y-3">
-                                <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest ml-1">Linklər</label>
+                                <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest ml-1">{t('profile.linksLabel')}</label>
                                 <div className="flex flex-wrap gap-2 mb-3">
                                     {links.map((l, i) => (
                                         <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-[#171717] border border-white/5 rounded-lg text-[12px] text-neutral-300">
@@ -641,7 +664,7 @@ export default function Profile({ params, onNavigate }) {
                                 onClick={saveEdit}
                                 className="flex-1 bg-brand-600 hover:bg-brand-500 text-white font-bold py-3.5 rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-brand-500/10"
                             >
-                                Yadda Saxla
+                                {t('profile.save')}
                             </button>
                             <button
                                 onClick={() => {
@@ -652,7 +675,7 @@ export default function Profile({ params, onNavigate }) {
                                 }}
                                 className="flex-1 bg-transparent border border-white/10 text-white font-bold py-3.5 rounded-xl hover:bg-white/5 transition-all"
                             >
-                                Ləğv Et
+                                {t('profile.cancel')}
                             </button>
                         </div>
                     </div>

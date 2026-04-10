@@ -28,9 +28,13 @@
     "projects": "Layihə",
     "universities": "Universitet",
     "whyLinkUp": "Niyə LinkUp?",
+    "whyLinkUpPrefix": "Niyə",
     "notJustSocial": "Sadəcə sosial şəbəkə deyil — öz sahəndə inkişaf etmək üçün lazım olan hər şey bir yerdə.",
     "howItWorks": "Necə işləyir?",
-    "readyJoin": "Hazırsan? Qoşul.",
+    "howItWorksPrefix": "Necə",
+    "howItWorksSuffix": "işləyir",
+    "readyJoin": "Hazırsan?",
+    "readyJoinHighlight": "Qoşul.",
     "readyDesc": "Sən də öz sahəndə olan insanlarla tanış ol, birlikdə layihələr qur.",
     "registerNow": "İndi Qeydiyyat Ol",
     "footer": "© 2025 LinkUp. Bütün hüquqlar qorunur.",
@@ -90,6 +94,17 @@
       "other": "Digər"
     }
   },
+  "notifications": {
+    "unread": "{{count}} oxunmamış",
+    "markAllRead": "Hamısını oxunmuş say",
+    "unknown": "Kimsə"
+  },
+  "timeAgo": {
+    "now": "İndi",
+    "min": "{{count}} dəq",
+    "hour": "{{count}} saat",
+    "day": "{{count}} gün"
+  },
   "dashboard": {
     "profileCompletion": "Profil Tamamlanması",
     "complete": "Tamamla",
@@ -140,7 +155,8 @@
     "startTyping": "Yazmağa başlayın...",
     "emptyTitle": "Sənin mesajların",
     "emptyDesc": "Dostuna və ya tanışına şəxsi mesaj göndərərək söhbətə başla.",
-    "viewPost": "Posta bax"
+    "viewPost": "Posta bax",
+    "messagesTitle": "Mesajlar"
   },
   "post": {
     "edit": "Düzəliş et",
@@ -218,6 +234,7 @@
     "colorLabel": "Layihə Rəngi",
     "cancel": "Ləğv et",
     "create": "Layihəni Yarat",
+    "deleteConfirm": "Bu layihəni silmək istədiyinizə əminsiniz? Bu əməliyyat geri qaytarıla bilməz.",
     "team": {
       "small": "1-2 nəfər",
       "medium": "2-3 nəfər",
@@ -240,6 +257,28 @@
     "noPosts": "Hələ paylaşım yoxdur.",
     "noSkills": "Bacarıq əlavə edilməyib.",
     "save": "Yadda Saxla",
-    "cancel": "Ləğv et"
+    "cancel": "Ləğv et",
+    "myProfile": "Profilim",
+    "nameLabel": "Ad və Soyad",
+    "namePlaceholder": "Ad Soyad",
+    "universityLabel": "Universitet",
+    "fieldLabel": "Sahə",
+    "levelLabel": "Təcrübə Səviyyəsi",
+    "bioLabel": "Bio",
+    "bioPlaceholder": "Özünüz haqqında qısa məlumat...",
+    "skillsLabel": "Bacarıqlar",
+    "skillNamePlaceholder": "Bacarıq adı",
+    "linksLabel": "Linklər",
+    "statistics": "Statistika",
+    "about_me": "Haqqımda",
+    "editCover": "Arxa fon şəklini dəyiş",
+    "startChat": "Söhbətə Başla",
+    "followingStatus": "İzlənilir",
+    "noPostsYet": "Hələ heç bir paylaşım yoxdur.",
+    "noLikesYet": "Hələ heç nə bəyənilməyib.",
+    "liked": "Bəyəndiklərim",
+    "followersTitle": "İzləyicilər",
+    "followingTitle": "İzlədikləri",
+    "loading": "Yüklənir..."
   }
 }

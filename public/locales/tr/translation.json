@@ -28,9 +28,13 @@
     "projects": "Proje",
     "universities": "Üniversite",
     "whyLinkUp": "Neden LinkUp?",
+    "whyLinkUpPrefix": "Neden",
     "notJustSocial": "Sadece sosyal ağ değil — alanında gelişmek için ihtiyacın olan her şey bir arada.",
     "howItWorks": "Nasıl çalışır?",
-    "readyJoin": "Hazır mısın? Katıl.",
+    "howItWorksPrefix": "Nasıl",
+    "howItWorksSuffix": "çalışır",
+    "readyJoin": "Hazır mısın?",
+    "readyJoinHighlight": "Katıl.",
     "readyDesc": "Sen de alanındaki insanlarla tanış, birlikte projeler kur.",
     "registerNow": "Şimdi Kayıt Ol",
     "footer": "© 2025 LinkUp. Tüm hakları saklıdır.",
@@ -89,6 +93,17 @@
       "marketing": "Pazarlama",
       "other": "Diğer"
     }
+  },
+  "notifications": {
+    "unread": "{{count}} okunmamış",
+    "markAllRead": "Tümünü okundu say",
+    "unknown": "Biri"
+  },
+  "timeAgo": {
+    "now": "Şimdi",
+    "min": "{{count}} dk",
+    "hour": "{{count}} sa",
+    "day": "{{count}} g"
   },
   "dashboard": {
     "profileCompletion": "Profil Tamamlama",
@@ -218,6 +233,7 @@
     "colorLabel": "Proje Rengi",
     "cancel": "İptal",
     "create": "Proje Oluştur",
+    "deleteConfirm": "Bu projeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
     "team": {
       "small": "1-2 kişi",
       "medium": "2-3 kişi",
@@ -240,6 +256,28 @@
     "noPosts": "Henüz gönderi yok.",
     "noSkills": "Beceri eklenmemiş.",
     "save": "Kaydet",
-    "cancel": "İptal"
+    "cancel": "İptal",
+    "myProfile": "Profilim",
+    "nameLabel": "Ad Soyad",
+    "namePlaceholder": "Ad Soyad",
+    "universityLabel": "Üniversite",
+    "fieldLabel": "Alan",
+    "levelLabel": "Deneyim Seviyesi",
+    "bioLabel": "Bio",
+    "bioPlaceholder": "Kendiniz hakkında kısa bilgi...",
+    "skillsLabel": "Beceriler",
+    "skillNamePlaceholder": "Beceri adı",
+    "linksLabel": "Linkler",
+    "statistics": "İstatistikler",
+    "about_me": "Hakkımda",
+    "editCover": "Kapak fotoğrafını değiştir",
+    "startChat": "Sohbet Başlat",
+    "followingStatus": "Takip Ediliyor",
+    "noPostsYet": "Henüz gönderi yok.",
+    "noLikesYet": "Henüz hiçbir şey beğenilmedi.",
+    "liked": "Beğendiklerim",
+    "followersTitle": "Takipçiler",
+    "followingTitle": "Takip Edilenler",
+    "loading": "Yükleniyor..."
   }
 }

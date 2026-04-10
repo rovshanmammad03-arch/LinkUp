@@ -28,9 +28,13 @@
     "projects": "Проектов",
     "universities": "Университетов",
     "whyLinkUp": "Почему LinkUp?",
+    "whyLinkUpPrefix": "Почему",
     "notJustSocial": "Не просто социальная сеть — всё необходимое для развития в своей сфере в одном месте.",
     "howItWorks": "Как это работает?",
-    "readyJoin": "Готов? Присоединяйся.",
+    "howItWorksPrefix": "Как это",
+    "howItWorksSuffix": "работает",
+    "readyJoin": "Готов?",
+    "readyJoinHighlight": "Присоединяйся.",
     "readyDesc": "Познакомься с людьми в своей сфере и создавай проекты вместе.",
     "registerNow": "Зарегистрироваться",
     "footer": "© 2025 LinkUp. Все права защищены.",
@@ -89,6 +93,17 @@
       "marketing": "Маркетинг",
       "other": "Другое"
     }
+  },
+  "notifications": {
+    "unread": "{{count}} непрочитанных",
+    "markAllRead": "Отметить все как прочитанные",
+    "unknown": "Кто-то"
+  },
+  "timeAgo": {
+    "now": "Сейчас",
+    "min": "{{count}} мин",
+    "hour": "{{count}} ч",
+    "day": "{{count}} д"
   },
   "dashboard": {
     "profileCompletion": "Заполненность профиля",
@@ -218,6 +233,7 @@
     "colorLabel": "Цвет проекта",
     "cancel": "Отмена",
     "create": "Создать проект",
+    "deleteConfirm": "Вы уверены, что хотите удалить этот проект? Это действие нельзя отменить.",
     "team": {
       "small": "1-2 человека",
       "medium": "2-3 человека",
@@ -240,6 +256,28 @@
     "noPosts": "Публикаций пока нет.",
     "noSkills": "Навыки не добавлены.",
     "save": "Сохранить",
-    "cancel": "Отмена"
+    "cancel": "Отмена",
+    "myProfile": "Мой профиль",
+    "nameLabel": "Имя и фамилия",
+    "namePlaceholder": "Имя Фамилия",
+    "universityLabel": "Университет",
+    "fieldLabel": "Сфера",
+    "levelLabel": "Уровень опыта",
+    "bioLabel": "Биография",
+    "bioPlaceholder": "Краткая информация о себе...",
+    "skillsLabel": "Навыки",
+    "skillNamePlaceholder": "Название навыка",
+    "linksLabel": "Ссылки",
+    "statistics": "Статистика",
+    "about_me": "Обо мне",
+    "editCover": "Изменить фоновое изображение",
+    "startChat": "Начать чат",
+    "followingStatus": "Отслеживается",
+    "noPostsYet": "Публикаций пока нет.",
+    "noLikesYet": "Ещё ничего не понравилось.",
+    "liked": "Понравившееся",
+    "followersTitle": "Подписчики",
+    "followingTitle": "Подписки",
+    "loading": "Загрузка..."
   }
 }

@@ -5,6 +5,16 @@ import { Icon } from '@iconify/react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
+function translateField(field, t) {
+    const map = {
+        'Proqramlaşdırma': t('auth.fields.programming'),
+        'Dizayn': t('auth.fields.design'),
+        'Marketinq': t('auth.fields.marketing'),
+        'Digər': t('auth.fields.other'),
+    };
+    return map[field] || field;
+}
+
 export default function Messages({ params, onNavigate }) {
     const { currentUser } = useAuth();
     const { t } = useTranslation();
@@ -99,7 +109,7 @@ export default function Messages({ params, onNavigate }) {
 
                     <div className="flex-1 overflow-y-auto">
                         <div className="px-5 py-2">
-                            <span className="text-sm font-bold text-white uppercase tracking-wider">Mesajlar</span>
+                            <span className="text-sm font-bold text-white uppercase tracking-wider">{t('messages.title')}</span>
                         </div>
                         {filteredConvos.length > 0 ? (
                             filteredConvos.map((c, i) => (
@@ -164,7 +174,7 @@ export default function Messages({ params, onNavigate }) {
                                    </div>
                                 </div>
                                 <h3 className="text-lg font-bold text-white">{selectedConvo.user.name}</h3>
-                                <p className="text-[11px] text-neutral-500 mt-1 tracking-wider uppercase font-bold">{selectedConvo.user.field} · {selectedConvo.user.university}</p>
+                                <p className="text-[11px] text-neutral-500 mt-1 tracking-wider uppercase font-bold">{translateField(selectedConvo.user.field, t)} · {selectedConvo.user.university}</p>
                                 <button 
                                     onClick={() => onNavigate('profile', { userId: selectedConvo.user.id })}
                                     className="mt-4 px-4 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-bold rounded-lg transition-colors"
@@ -210,7 +220,7 @@ export default function Messages({ params, onNavigate }) {
                                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                             <div className="bg-white/10 backdrop-blur-md rounded-full px-3 py-1.5 flex items-center gap-2 text-[10px] font-bold text-white border border-white/10">
                                                                 <Icon icon="mdi:eye-outline" className="text-sm" />
-                                                                Posta bax
+                                                                {t('messages.viewPost')}
                                                             </div>
                                                         </div>
                                                     </div>

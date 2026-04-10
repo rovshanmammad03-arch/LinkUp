@@ -8,6 +8,25 @@ import ConfirmModal from '../components/common/ConfirmModal';
 import { useScrollLock } from '../hooks/useScrollLock';
 import { useTranslation } from 'react-i18next';
 
+function translateField(field, t) {
+    const map = {
+        'Proqramlaşdırma': t('auth.fields.programming'),
+        'Dizayn': t('auth.fields.design'),
+        'Marketinq': t('auth.fields.marketing'),
+        'Digər': t('auth.fields.other'),
+    };
+    return map[field] || field;
+}
+
+function translateLevel(level, t) {
+    const map = {
+        'Başlanğıc': t('discover.levels.beginner'),
+        'Orta': t('discover.levels.intermediate'),
+        'Qabaqcıl': t('discover.levels.advanced'),
+    };
+    return map[level] || level;
+}
+
 export default function Discover({ onNavigate }) {
     const { currentUser, refreshUser } = useAuth();
     const { t } = useTranslation();
@@ -141,10 +160,10 @@ export default function Discover({ onNavigate }) {
     });
 
     const getLevelBadge = (level) => {
-        switch(level?.toLowerCase()) {
-            case 'qabaqcıl': return 'bg-emerald-500/10 text-emerald-500';
-            case 'orta': return 'bg-blue-500/10 text-blue-500';
-            case 'başlanğıc': return 'bg-amber-500/10 text-amber-500';
+        switch(level) {
+            case 'Qabaqcıl': return 'bg-emerald-500/10 text-emerald-500';
+            case 'Orta': return 'bg-blue-500/10 text-blue-500';
+            case 'Başlanğıc': return 'bg-amber-500/10 text-amber-500';
             default: return 'bg-neutral-500/10 text-neutral-500';
         }
     };
@@ -245,7 +264,7 @@ export default function Discover({ onNavigate }) {
                                 onClick={() => setIsLevelOpen(!isLevelOpen)}
                                 className={`h-14 px-6 discover-btn-base bg-[#111] border-white/5 rounded-2xl min-w-[200px] justify-between transition-all ${isLevelOpen ? 'border-brand-500/50 ring-4 ring-brand-500/10' : 'hover:border-white/10'}`}
                             >
-                                <span className="text-sm font-semibold text-neutral-300">{levelFilter === 'all' ? t('discover.allLevels') : levelFilter}</span>
+                                <span className="text-sm font-semibold text-neutral-300">{levelFilter === 'all' ? t('discover.allLevels') : translateLevel(levelFilter, t)}</span>
                                 <Icon icon="mdi:chevron-down" className={`text-neutral-500 transition-transform duration-200 ${isLevelOpen ? 'rotate-180' : ''}`} />
                             </button>
                             {isLevelOpen && (
@@ -258,7 +277,7 @@ export default function Discover({ onNavigate }) {
                                                 onClick={() => { setLevelFilter(lvl); setIsLevelOpen(false); }}
                                                 className={`sort-item ${levelFilter === lvl ? 'selected' : ''}`}
                                             >
-                                                {lvl === 'all' ? t('discover.allLevels') : lvl}
+                                                {lvl === 'all' ? t('discover.allLevels') : translateLevel(lvl, t)}
                                                 {levelFilter === lvl && <Icon icon="mdi:check" className="text-white" />}
                                             </div>
                                         ))}
@@ -273,7 +292,7 @@ export default function Discover({ onNavigate }) {
                                 onClick={() => setIsFieldOpen(!isFieldOpen)}
                                 className={`h-14 px-6 discover-btn-base bg-[#111] border-white/5 rounded-2xl min-w-[200px] justify-between transition-all ${isFieldOpen ? 'border-brand-500/50 ring-4 ring-brand-500/10' : 'hover:border-white/10'}`}
                             >
-                                <span className="text-sm font-semibold text-neutral-300">{fieldFilter === 'all' ? t('discover.allFields') : fieldFilter}</span>
+                                <span className="text-sm font-semibold text-neutral-300">{fieldFilter === 'all' ? t('discover.allFields') : translateField(fieldFilter, t)}</span>
                                 <Icon icon="mdi:chevron-down" className={`text-neutral-500 transition-transform duration-200 ${isFieldOpen ? 'rotate-180' : ''}`} />
                             </button>
                             {isFieldOpen && (
@@ -286,7 +305,7 @@ export default function Discover({ onNavigate }) {
                                                 onClick={() => { setFieldFilter(fld); setIsFieldOpen(false); }}
                                                 className={`sort-item ${fieldFilter === fld ? 'selected' : ''}`}
                                             >
-                                                {fld === 'all' ? t('discover.allFields') : fld}
+                                                {fld === 'all' ? t('discover.allFields') : translateField(fld, t)}
                                                 {fieldFilter === fld && <Icon icon="mdi:check" className="text-white" />}
                                             </div>
                                         ))}
@@ -313,16 +332,16 @@ export default function Discover({ onNavigate }) {
                                         </div>
                                         <div className="min-w-0">
                                             <h3 className="text-lg font-bold text-white group-hover:text-brand-300 transition-colors leading-tight">{u.name}</h3>
-                                            <p className="text-[11px] text-neutral-500 font-medium uppercase tracking-wider mt-1">{u.university} - {u.field}</p>
+                                            <p className="text-[11px] text-neutral-500 font-medium uppercase tracking-wider mt-1">{u.university} - {translateField(u.field, t)}</p>
                                         </div>
                                     </div>
                                     <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight ${getLevelBadge(u.level)}`}>
-                                        {u.level}
+                                        {translateLevel(u.level, t)}
                                     </span>
                                 </div>
 
                                 <p className="text-[13px] text-neutral-400 font-light leading-relaxed mb-6 line-clamp-2 h-10">
-                                    {u.bio || 'Hələ bioqrafiya əlavə edilməyib.'}
+                                    {u.bio || t('profile.noBio')}
                                 </p>
 
                                 <div className="flex flex-wrap gap-2 mb-8 flex-1 content-start">
@@ -464,10 +483,10 @@ export default function Discover({ onNavigate }) {
 
             {projectToDeleteId && (
                 <ConfirmModal 
-                    title="Layihəni Sil"
-                    message="Bu layihəni silmək istədiyinizə əminsiniz? Bu əməliyyat geri qaytarıla bilməz."
-                    confirmText="Bəli, Sil"
-                    cancelText="Ləğv Et"
+                    title={t('discover.project.delete')}
+                    message={t('newProject.deleteConfirm')}
+                    confirmText={t('post.confirmDelete')}
+                    cancelText={t('post.cancel')}
                     onConfirm={confirmDelete}
                     onCancel={() => setProjectToDeleteId(null)}
                 />
