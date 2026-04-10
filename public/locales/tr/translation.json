@@ -14,6 +14,7 @@
     "settings": "Ayarlar",
     "language": "Dil",
     "lightMode": "Açık Mod",
+    "darkMode": "Karanlık Mod",
     "help": "Yardım",
     "logout": "Çıkış"
   },

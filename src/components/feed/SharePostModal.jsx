@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { DB, initials, uid } from '../../services/db';
 import { Icon } from '@iconify/react';
 import { useScrollLock } from '../../hooks/useScrollLock';
+import { useTranslation } from 'react-i18next';
 
 const SOCIAL_PLATFORMS = [
     { name: 'WhatsApp', icon: 'mdi:whatsapp', color: 'bg-[#25D366]', url: (url) => `https://wa.me/?text=${encodeURIComponent(url)}` },
@@ -14,10 +15,11 @@ const SOCIAL_PLATFORMS = [
 
 export default function SharePostModal({ post, onClose }) {
     const { currentUser } = useAuth();
+    const { t } = useTranslation();
     const [users, setUsers] = useState([]);
     const [search, setSearch] = useState('');
     const [sentStatus, setSentStatus] = useState({});
-    const [activeTab, setActiveTab] = useState('friends'); // 'friends' or 'social'
+    const [activeTab, setActiveTab] = useState('friends');
     const [copied, setCopied] = useState(false);
 
     useScrollLock(true);
@@ -26,26 +28,21 @@ export default function SharePostModal({ post, onClose }) {
 
     useEffect(() => {
         const followingIds = currentUser?.following || [];
-        const followedUsers = DB.get('users').filter(u => followingIds.includes(u.id));
-        setUsers(followedUsers);
+        setUsers(DB.get('users').filter(u => followingIds.includes(u.id)));
     }, [currentUser]);
 
     const handleSend = (user) => {
         const messages = DB.get('messages');
-        const newMessage = {
+        DB.set('messages', [...messages, {
             id: 'msg_' + uid(),
             from: currentUser.id,
             to: user.id,
-            text: `Bu paylaşımı sənə göndərdim: [Post]`,
+            text: t('share.sharedPost'),
             postId: post.id,
             ts: Date.now()
-        };
-        DB.set('messages', [...messages, newMessage]);
-        
+        }]);
         setSentStatus(prev => ({ ...prev, [user.id]: true }));
-        setTimeout(() => {
-            setSentStatus(prev => ({ ...prev, [user.id]: false }));
-        }, 2000);
+        setTimeout(() => setSentStatus(prev => ({ ...prev, [user.id]: false })), 2000);
     };
 
     const copyToClipboard = () => {
@@ -54,38 +51,38 @@ export default function SharePostModal({ post, onClose }) {
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const filteredUsers = users.filter(u => 
-        u.name.toLowerCase().includes(search.toLowerCase()) || 
+    const filteredUsers = users.filter(u =>
+        u.name.toLowerCase().includes(search.toLowerCase()) ||
         u.field.toLowerCase().includes(search.toLowerCase())
     );
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose}></div>
-            
-            <div className="bg-[#121212] border border-white/10 rounded-[32px] w-full max-w-sm relative z-10 anim-up flex flex-col shadow-2xl overflow-hidden h-[540px]">
+
+            <div className="bg-white dark:bg-[#121212] border border-black/10 dark:border-white/10 rounded-[32px] w-full max-w-sm relative z-10 anim-up flex flex-col shadow-2xl overflow-hidden h-[540px]">
                 {/* Header */}
                 <div className="p-6 pb-4 flex items-center justify-between">
-                    <h3 className="text-xl font-bold text-white tracking-tight">Paylaş</h3>
-                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10 transition-all">
+                    <h3 className="text-xl font-bold text-neutral-900 dark:text-white tracking-tight">{t('share.title')}</h3>
+                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/5 text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-all">
                         <Icon icon="mdi:close" className="text-xl" />
                     </button>
                 </div>
 
                 {/* Tabs */}
                 <div className="px-6 mb-6">
-                    <div className="flex p-1 bg-white/5 rounded-2xl">
-                        <button 
+                    <div className="flex p-1 bg-black/5 dark:bg-white/5 rounded-2xl">
+                        <button
                             onClick={() => setActiveTab('friends')}
-                            className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all ${activeTab === 'friends' ? 'bg-brand-500 text-white shadow-lg' : 'text-neutral-500 hover:text-neutral-300'}`}
+                            className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all ${activeTab === 'friends' ? 'bg-brand-500 text-white shadow-lg' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'}`}
                         >
-                            Dostlar
+                            {t('share.friends')}
                         </button>
-                        <button 
+                        <button
                             onClick={() => setActiveTab('social')}
-                            className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all ${activeTab === 'social' ? 'bg-brand-500 text-white shadow-lg' : 'text-neutral-500 hover:text-neutral-300'}`}
+                            className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all ${activeTab === 'social' ? 'bg-brand-500 text-white shadow-lg' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'}`}
                         >
-                            Xarici
+                            {t('share.external')}
                         </button>
                     </div>
                 </div>
@@ -94,48 +91,48 @@ export default function SharePostModal({ post, onClose }) {
                     {activeTab === 'friends' ? (
                         <>
                             <div className="relative mb-4">
-                                <Icon icon="mdi:magnify" className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500 text-lg" />
-                                <input 
-                                    type="text" 
+                                <Icon icon="mdi:magnify" className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500 text-lg" />
+                                <input
+                                    type="text"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    placeholder="İzlədiyin adamları axtar..." 
-                                    className="w-full bg-white/5 border border-white/5 rounded-2xl pl-11 pr-4 py-3 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-brand-500/50 transition-all"
+                                    placeholder={t('share.searchFriends')}
+                                    className="w-full bg-black/5 dark:bg-white/5 border border-black/8 dark:border-white/5 rounded-2xl pl-11 pr-4 py-3 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:border-brand-500/50 transition-all"
                                 />
                             </div>
 
                             <div className="flex-1 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
                                 {filteredUsers.length > 0 ? filteredUsers.map(u => (
-                                    <div key={u.id} className="flex items-center justify-between p-2 rounded-2xl hover:bg-white/5 transition-all group">
+                                    <div key={u.id} className="flex items-center justify-between p-2 rounded-2xl hover:bg-black/5 dark:hover:bg-white/5 transition-all group">
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${u.grad} flex items-center justify-center text-xs font-bold overflow-hidden shrink-0 shadow-lg shadow-black/20`}>
+                                            <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${u.grad} flex items-center justify-center text-xs font-bold overflow-hidden shrink-0`}>
                                                 {u.avatar ? <img src={u.avatar} className="w-full h-full object-cover" /> : initials(u.name)}
                                             </div>
                                             <div>
-                                                <h4 className="text-sm font-semibold text-white group-hover:text-brand-300 transition-colors">{u.name}</h4>
+                                                <h4 className="text-sm font-semibold text-neutral-900 dark:text-white group-hover:text-brand-500 dark:group-hover:text-brand-300 transition-colors">{u.name}</h4>
                                                 <p className="text-[11px] text-neutral-500 font-medium">{u.field}</p>
                                             </div>
                                         </div>
-                                        <button 
+                                        <button
                                             onClick={() => handleSend(u)}
                                             disabled={sentStatus[u.id]}
                                             className={`px-4 py-2 rounded-xl text-[11px] font-bold transition-all ${
-                                                sentStatus[u.id] 
-                                                ? 'bg-green-500/10 text-green-400 border border-green-500/20' 
-                                                : 'bg-white/5 text-white hover:bg-brand-500 hover:scale-105 active:scale-95'
+                                                sentStatus[u.id]
+                                                ? 'bg-green-500/10 text-green-500 border border-green-500/20'
+                                                : 'bg-black/5 dark:bg-white/5 text-neutral-700 dark:text-white hover:bg-brand-500 hover:text-white hover:scale-105 active:scale-95'
                                             }`}
                                         >
                                             {sentStatus[u.id] ? (
                                                 <div className="flex items-center gap-1">
-                                                    <Icon icon="mdi:check" className="text-sm" /> Göndərildi
+                                                    <Icon icon="mdi:check" className="text-sm" /> {t('share.sent')}
                                                 </div>
-                                            ) : 'Göndər'}
+                                            ) : t('share.send')}
                                         </button>
                                     </div>
                                 )) : (
-                                    <div className="flex flex-col items-center justify-center h-full text-neutral-600 gap-2">
-                                        <Icon icon="mdi:account-search-outline" className="text-4xl opacity-20" />
-                                        <p className="text-sm font-medium">İzlədiyin heç kim tapılmadı</p>
+                                    <div className="flex flex-col items-center justify-center h-full text-neutral-400 dark:text-neutral-600 gap-2">
+                                        <Icon icon="mdi:account-search-outline" className="text-4xl opacity-30" />
+                                        <p className="text-sm font-medium">{t('share.noFriends')}</p>
                                     </div>
                                 )}
                             </div>
@@ -143,27 +140,27 @@ export default function SharePostModal({ post, onClose }) {
                     ) : (
                         <div className="flex flex-col h-full anim-up">
                             {/* Copy Link */}
-                            <div className="bg-white/5 border border-white/5 rounded-2xl p-4 mb-6">
-                                <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest mb-3">Post Linki</p>
-                                <div className="flex items-center gap-2 bg-black/40 rounded-xl p-1.5 pl-3 border border-white/5">
-                                    <span className="text-xs text-neutral-400 truncate flex-1 font-mono">{postUrl}</span>
-                                    <button 
+                            <div className="bg-black/5 dark:bg-white/5 border border-black/8 dark:border-white/5 rounded-2xl p-4 mb-6">
+                                <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest mb-3">{t('share.postLink')}</p>
+                                <div className="flex items-center gap-2 bg-black/5 dark:bg-black/40 rounded-xl p-1.5 pl-3 border border-black/8 dark:border-white/5">
+                                    <span className="text-xs text-neutral-500 dark:text-neutral-400 truncate flex-1 font-mono">{postUrl}</span>
+                                    <button
                                         onClick={copyToClipboard}
                                         className={`px-4 py-2 rounded-lg text-[11px] font-bold transition-all flex items-center gap-2 ${
                                             copied ? 'bg-green-500 text-white' : 'bg-brand-500 text-white hover:bg-brand-600'
                                         }`}
                                     >
                                         <Icon icon={copied ? "mdi:check" : "mdi:content-copy"} />
-                                        {copied ? 'Kopyalandı' : 'Kopyala'}
+                                        {copied ? t('share.copied') : t('share.copy')}
                                     </button>
                                 </div>
                             </div>
 
                             {/* Social Grid */}
-                            <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest mb-4">Sosial Şəbəkələr</p>
+                            <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest mb-4">{t('share.socialNetworks')}</p>
                             <div className="grid grid-cols-4 gap-4">
                                 {SOCIAL_PLATFORMS.map((platform) => (
-                                    <a 
+                                    <a
                                         key={platform.name}
                                         href={platform.url(postUrl)}
                                         target="_blank"
@@ -173,19 +170,19 @@ export default function SharePostModal({ post, onClose }) {
                                         <div className={`w-12 h-12 rounded-2xl ${platform.color} flex items-center justify-center text-white text-2xl shadow-lg transition-all group-hover:scale-110 group-hover:-translate-y-1 active:scale-95`}>
                                             <Icon icon={platform.icon} />
                                         </div>
-                                        <span className="text-[10px] text-neutral-500 font-bold tracking-tight group-hover:text-white transition-colors">{platform.name}</span>
+                                        <span className="text-[10px] text-neutral-500 font-bold tracking-tight group-hover:text-neutral-900 dark:group-hover:text-white transition-colors">{platform.name}</span>
                                     </a>
                                 ))}
                                 <button className="flex flex-col items-center gap-2 group">
-                                    <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-neutral-400 text-2xl transition-all group-hover:bg-white/10 group-hover:text-white group-hover:-translate-y-1">
+                                    <div className="w-12 h-12 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/8 dark:border-white/10 flex items-center justify-center text-neutral-400 text-2xl transition-all group-hover:bg-black/10 dark:group-hover:bg-white/10 group-hover:text-neutral-900 dark:group-hover:text-white group-hover:-translate-y-1">
                                         <Icon icon="mdi:dots-horizontal" />
                                     </div>
-                                    <span className="text-[10px] text-neutral-500 font-bold tracking-tight group-hover:text-white transition-colors">Daha çox</span>
+                                    <span className="text-[10px] text-neutral-500 font-bold tracking-tight group-hover:text-neutral-900 dark:group-hover:text-white transition-colors">{t('share.more')}</span>
                                 </button>
                             </div>
 
-                            <div className="mt-auto pt-6 border-t border-white/5 text-center">
-                                <p className="text-[11px] text-neutral-600 font-medium">LinkUp ilə dünyanı paylaşın</p>
+                            <div className="mt-auto pt-6 border-t border-black/8 dark:border-white/5 text-center">
+                                <p className="text-[11px] text-neutral-400 dark:text-neutral-600 font-medium">{t('share.footer')}</p>
                             </div>
                         </div>
                     )}

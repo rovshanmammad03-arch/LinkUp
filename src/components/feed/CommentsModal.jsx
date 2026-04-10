@@ -14,7 +14,7 @@ export default function CommentsModal({ postId, onClose, onCommentAdded }) {
     const { t } = useTranslation();
     const [post, setPost] = useState(null);
     const [text, setText] = useState('');
-    const [replyingTo, setReplyingTo] = useState(null); // { commentId, name }
+    const [replyingTo, setReplyingTo] = useState(null);
     const [expandedReplies, setExpandedReplies] = useState({});
     const listRef = useRef(null);
 
@@ -26,14 +26,10 @@ export default function CommentsModal({ postId, onClose, onCommentAdded }) {
         setPost(p);
     };
 
-    useEffect(() => {
-        loadPost();
-    }, [postId]);
+    useEffect(() => { loadPost(); }, [postId]);
 
     useEffect(() => {
-        if (listRef.current) {
-            listRef.current.scrollTop = listRef.current.scrollHeight;
-        }
+        if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
     }, [post]);
 
     const submitComment = (e) => {
@@ -60,14 +56,11 @@ export default function CommentsModal({ postId, onClose, onCommentAdded }) {
         loadPost();
         if (onCommentAdded) onCommentAdded();
 
-        // Bildirim göndər
-        const notifType = replyingTo ? 'reply' : 'comment';
-        const notifText = replyingTo ? 'şərhinə cavab verdi' : 'paylaşımına şərh yazdı';
         addNotification({
             toUserId: replyingTo ? getUser(replyingTo.commentId)?.id || p.authorId : p.authorId,
             fromUserId: currentUser.id,
-            type: notifType,
-            text: notifText,
+            type: replyingTo ? 'reply' : 'comment',
+            text: replyingTo ? 'şərhinə cavab verdi' : 'paylaşımına şərh yazdı',
             route: 'dashboard',
         });
     };
@@ -93,14 +86,14 @@ export default function CommentsModal({ postId, onClose, onCommentAdded }) {
 
     return (
         <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-            <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl" style={{ animation: 'fadeInUp 0.25s ease-out' }}>
+            <div className="bg-white dark:bg-[#111] border border-black/10 dark:border-white/10 rounded-2xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl" style={{ animation: 'fadeInUp 0.25s ease-out' }}>
                 {/* Header */}
-                <div className="flex items-center justify-between p-5 border-b border-white/5 shrink-0">
-                    <h3 className="text-base font-semibold flex items-center gap-2">
+                <div className="flex items-center justify-between p-5 border-b border-black/8 dark:border-white/5 shrink-0">
+                    <h3 className="text-base font-semibold text-neutral-900 dark:text-white flex items-center gap-2">
                         <Icon icon="mdi:comment-multiple-outline" className="text-brand-400 text-xl" />
                         {t('comments.title')}
                     </h3>
-                    <button onClick={onClose} className="text-neutral-500 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors">
+                    <button onClick={onClose} className="text-neutral-400 hover:text-neutral-900 dark:hover:text-white p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
                         <Icon icon="mdi:close" className="text-xl" />
                     </button>
                 </div>
@@ -109,8 +102,8 @@ export default function CommentsModal({ postId, onClose, onCommentAdded }) {
                 <div ref={listRef} className="flex-1 overflow-y-auto p-5 space-y-6" style={{ scrollbarWidth: 'thin' }}>
                     {roots.length === 0 ? (
                         <div className="text-center py-10 flex flex-col items-center">
-                            <Icon icon="mdi:comment-processing-outline" className="text-4xl text-neutral-700 mb-3" />
-                            <span className="text-neutral-500 text-sm">{t('comments.empty')}</span>
+                            <Icon icon="mdi:comment-processing-outline" className="text-4xl text-neutral-300 dark:text-neutral-700 mb-3" />
+                            <span className="text-neutral-400 dark:text-neutral-500 text-sm">{t('comments.empty')}</span>
                         </div>
                     ) : (
                         roots.map(c => {
@@ -127,19 +120,19 @@ export default function CommentsModal({ postId, onClose, onCommentAdded }) {
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-0.5">
-                                                <span className="text-sm font-medium">{cu?.name || t('comments.unknown')}</span>
-                                                <span className="text-[10px] text-neutral-500">{timeAgo(c.ts, t)}</span>
+                                                <span className="text-sm font-medium text-neutral-900 dark:text-white">{cu?.name || t('comments.unknown')}</span>
+                                                <span className="text-[10px] text-neutral-400 dark:text-neutral-500">{timeAgo(c.ts, t)}</span>
                                             </div>
-                                            <p className="text-[13px] text-neutral-300 font-light leading-relaxed break-words">{c.text}</p>
+                                            <p className="text-[13px] text-neutral-600 dark:text-neutral-300 font-light leading-relaxed break-words">{c.text}</p>
                                             <div className="flex items-center gap-3 mt-1">
                                                 <button
-                                                    onClick={() => { setReplyingTo({ commentId: c.id, name: cu?.name || '' }); }}
-                                                    className="text-[11px] text-neutral-500 hover:text-brand-400 font-medium transition-colors"
+                                                    onClick={() => setReplyingTo({ commentId: c.id, name: cu?.name || '' })}
+                                                    className="text-[11px] text-neutral-400 dark:text-neutral-500 hover:text-brand-400 font-medium transition-colors"
                                                 >
                                                     {t('comments.reply')}
                                                 </button>
                                                 {isMyComment && (
-                                                    <button onClick={() => deleteComment(c.id)} className="text-[11px] text-neutral-500 hover:text-red-400 transition-colors">
+                                                    <button onClick={() => deleteComment(c.id)} className="text-[11px] text-neutral-400 dark:text-neutral-500 hover:text-red-400 transition-colors">
                                                         {t('comments.delete')}
                                                     </button>
                                                 )}
@@ -147,14 +140,13 @@ export default function CommentsModal({ postId, onClose, onCommentAdded }) {
                                         </div>
                                     </div>
 
-                                    {/* Replies toggle */}
                                     {childReplies.length > 0 && (
                                         <div>
                                             <button
                                                 onClick={() => toggleReplies(c.id)}
-                                                className="flex items-center gap-2 ml-11 mt-2 text-[11px] font-medium text-neutral-500 hover:text-brand-400 transition-colors"
+                                                className="flex items-center gap-2 ml-11 mt-2 text-[11px] font-medium text-neutral-400 dark:text-neutral-500 hover:text-brand-400 transition-colors"
                                             >
-                                                <div className="w-5 h-px bg-white/10"></div>
+                                                <div className="w-5 h-px bg-black/10 dark:bg-white/10"></div>
                                                 <span>{showReplies ? t('comments.hideReplies') : t('comments.showReplies', { count: childReplies.length })}</span>
                                                 <Icon icon="mdi:chevron-down" className={`transition-transform ${showReplies ? 'rotate-180' : ''}`} />
                                             </button>
@@ -170,16 +162,16 @@ export default function CommentsModal({ postId, onClose, onCommentAdded }) {
                                                                 </div>
                                                                 <div className="flex-1 min-w-0">
                                                                     <div className="flex items-center gap-2 mb-0.5">
-                                                                        <span className="text-[12px] font-medium">{rcu?.name || t('comments.unknown')}</span>
-                                                                        <span className="text-[9px] text-neutral-500">{timeAgo(r.ts, t)}</span>
+                                                                        <span className="text-[12px] font-medium text-neutral-900 dark:text-white">{rcu?.name || t('comments.unknown')}</span>
+                                                                        <span className="text-[9px] text-neutral-400 dark:text-neutral-500">{timeAgo(r.ts, t)}</span>
                                                                     </div>
-                                                                    <p className="text-[12px] text-neutral-300 font-light leading-relaxed break-words">{r.text}</p>
+                                                                    <p className="text-[12px] text-neutral-600 dark:text-neutral-300 font-light leading-relaxed break-words">{r.text}</p>
                                                                     <div className="flex items-center gap-3 mt-1">
-                                                                        <button onClick={() => setReplyingTo({ commentId: c.id, name: rcu?.name || '' })} className="text-[10px] text-neutral-500 hover:text-brand-400 transition-colors">
+                                                                        <button onClick={() => setReplyingTo({ commentId: c.id, name: rcu?.name || '' })} className="text-[10px] text-neutral-400 dark:text-neutral-500 hover:text-brand-400 transition-colors">
                                                                             {t('comments.reply')}
                                                                         </button>
                                                                         {isMyReply && (
-                                                                            <button onClick={() => deleteComment(r.id)} className="text-[10px] text-neutral-500 hover:text-red-400 transition-colors">
+                                                                            <button onClick={() => deleteComment(r.id)} className="text-[10px] text-neutral-400 dark:text-neutral-500 hover:text-red-400 transition-colors">
                                                                                 {t('comments.delete')}
                                                                             </button>
                                                                         )}
@@ -199,14 +191,14 @@ export default function CommentsModal({ postId, onClose, onCommentAdded }) {
                 </div>
 
                 {/* Input */}
-                <div className="p-4 border-t border-white/5 shrink-0">
+                <div className="p-4 border-t border-black/8 dark:border-white/5 shrink-0">
                     {replyingTo && (
-                        <div className="flex items-center justify-between px-3 py-2 bg-brand-500/5 rounded-t-xl border-b border-white/5 mb-0 -mb-px">
-                            <span className="text-[11px] text-neutral-400 flex items-center gap-1">
+                        <div className="flex items-center justify-between px-3 py-2 bg-brand-500/5 rounded-t-xl border-b border-black/5 dark:border-white/5 mb-0 -mb-px">
+                            <span className="text-[11px] text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
                                 <Icon icon="mdi:reply" className="text-brand-400" />
                                 <span className="text-brand-400">@{replyingTo.name}</span> {t('comments.replyingTo')}
                             </span>
-                            <button onClick={() => setReplyingTo(null)} className="text-neutral-500 hover:text-white">
+                            <button onClick={() => setReplyingTo(null)} className="text-neutral-400 hover:text-neutral-900 dark:hover:text-white">
                                 <Icon icon="mdi:close" className="text-sm" />
                             </button>
                         </div>
@@ -218,9 +210,8 @@ export default function CommentsModal({ postId, onClose, onCommentAdded }) {
                             onChange={e => setText(e.target.value)}
                             placeholder={t('comments.placeholder')}
                             className="input-field flex-1 text-sm py-2.5 px-3"
-                            style={{ background: 'rgba(255,255,255,0.03)' }}
                         />
-                        <button type="submit" className="btn-secondary btn-sm px-4 flex items-center justify-center" style={{ background: '#4f46e5' }}>
+                        <button type="submit" className="btn-secondary btn-sm px-4 flex items-center justify-center">
                             <Icon icon="mdi:send" className="text-lg" />
                         </button>
                     </form>

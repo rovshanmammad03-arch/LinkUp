@@ -5,10 +5,10 @@ import { Icon } from '@iconify/react';
 import { useTranslation } from 'react-i18next';
 
 const POST_TYPES = [
-    { value: 'code', icon: 'mdi:code-braces', color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20' },
-    { value: 'design', icon: 'mdi:palette-outline', color: 'text-pink-400 bg-pink-500/10 border-pink-500/20' },
-    { value: 'project', icon: 'mdi:rocket-launch-outline', color: 'text-green-400 bg-green-500/10 border-green-500/20' },
-    { value: 'other', icon: 'mdi:star-four-points-outline', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
+    { value: 'code', icon: 'mdi:code-braces', color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20' },
+    { value: 'design', icon: 'mdi:palette-outline', color: 'text-pink-500 bg-pink-500/10 border-pink-500/20' },
+    { value: 'project', icon: 'mdi:rocket-launch-outline', color: 'text-green-500 bg-green-500/10 border-green-500/20' },
+    { value: 'other', icon: 'mdi:star-four-points-outline', color: 'text-amber-500 bg-amber-500/10 border-amber-500/20' },
 ];
 
 export default function NewPostModal({ onClose, onPostCreated }) {
@@ -45,17 +45,15 @@ export default function NewPostModal({ onClose, onPostCreated }) {
         onClose();
     };
 
-    const selectedType = POST_TYPES.find(tp => tp.value === postType);
-
     return (
-        <div className="fixed inset-0 z-[100] bg-[#080808] flex flex-col">
+        <div className="fixed inset-0 z-[100] bg-white dark:bg-[#080808] flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-                <button onClick={onClose} className="flex items-center gap-2 text-neutral-400 hover:text-white transition-colors">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-black/8 dark:border-white/5">
+                <button onClick={onClose} className="flex items-center gap-2 text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors">
                     <Icon icon="mdi:arrow-left" className="text-xl" />
                     <span className="text-sm font-medium">{t('newPost.back')}</span>
                 </button>
-                <span className="text-sm font-semibold text-white">{t('newPost.title')}</span>
+                <span className="text-sm font-semibold text-neutral-900 dark:text-white">{t('newPost.title')}</span>
                 <button
                     onClick={handlePost}
                     disabled={!caption.trim()}
@@ -75,13 +73,13 @@ export default function NewPostModal({ onClose, onPostCreated }) {
                             {currentUser.avatar ? <img src={currentUser.avatar} className="w-full h-full object-cover" /> : initials(currentUser.name)}
                         </div>
                         <div className="flex-1 flex flex-col gap-1">
-                            <span className="text-sm font-semibold text-white">{currentUser.name}</span>
+                            <span className="text-sm font-semibold text-neutral-900 dark:text-white">{currentUser.name}</span>
                             <textarea
                                 autoFocus
                                 value={caption}
                                 onChange={e => setCaption(e.target.value)}
                                 placeholder={t('newPost.placeholder')}
-                                className="w-full bg-transparent text-[15px] text-white placeholder-neutral-600 focus:outline-none resize-none min-h-[140px] leading-relaxed"
+                                className="w-full bg-transparent text-[15px] text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none resize-none min-h-[140px] leading-relaxed"
                             />
                         </div>
                     </div>
@@ -89,31 +87,25 @@ export default function NewPostModal({ onClose, onPostCreated }) {
                     {/* Image URL */}
                     <div className="flex flex-col gap-2">
                         <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{t('newPost.imageLabel')}</label>
-                        <div className="flex items-center gap-3 bg-white/3 border border-white/8 rounded-2xl px-4 py-3 focus-within:border-white/20 transition-colors">
-                            <Icon icon="mdi:image-outline" className="text-neutral-500 text-xl shrink-0" />
+                        <div className="flex items-center gap-3 bg-black/3 dark:bg-white/3 border border-black/8 dark:border-white/8 rounded-2xl px-4 py-3 focus-within:border-black/20 dark:focus-within:border-white/20 transition-colors">
+                            <Icon icon="mdi:image-outline" className="text-neutral-400 dark:text-neutral-500 text-xl shrink-0" />
                             <input
                                 type="text"
                                 value={image.startsWith('data:') ? '' : image}
                                 onChange={e => setImage(e.target.value)}
                                 placeholder={t('newPost.imageUrlPlaceholder')}
-                                className="flex-1 bg-transparent text-sm text-white placeholder-neutral-600 focus:outline-none"
+                                className="flex-1 bg-transparent text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none"
                             />
                             <button
                                 onClick={() => fileInputRef.current?.click()}
-                                className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-all text-xs font-semibold"
+                                className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-all text-xs font-semibold"
                             >
                                 <Icon icon="mdi:upload-outline" className="text-base" /> {t('newPost.upload')}
                             </button>
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={handleFileChange}
-                            />
+                            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                         </div>
                         {image && (
-                            <div className="mt-2 rounded-2xl overflow-hidden border border-white/8 max-h-48 relative group">
+                            <div className="mt-2 rounded-2xl overflow-hidden border border-black/8 dark:border-white/8 max-h-48 relative group">
                                 <img src={image} className="w-full object-cover max-h-48" onError={e => e.target.style.display='none'} />
                                 <button
                                     onClick={() => setImage('')}
@@ -133,7 +125,7 @@ export default function NewPostModal({ onClose, onPostCreated }) {
                                 <button
                                     key={pt.value}
                                     onClick={() => setPostType(pt.value)}
-                                    className={`flex flex-col items-center gap-2 py-4 rounded-2xl border transition-all active:scale-95 ${postType === pt.value ? pt.color + ' border-current' : 'bg-white/3 border-white/8 text-neutral-500 hover:border-white/15 hover:text-neutral-300'}`}
+                                    className={`flex flex-col items-center gap-2 py-4 rounded-2xl border transition-all active:scale-95 ${postType === pt.value ? pt.color + ' border-current' : 'bg-black/3 dark:bg-white/3 border-black/8 dark:border-white/8 text-neutral-400 dark:text-neutral-500 hover:border-black/15 dark:hover:border-white/15 hover:text-neutral-700 dark:hover:text-neutral-300'}`}
                                 >
                                     <Icon icon={pt.icon} className="text-2xl" />
                                     <span className="text-[11px] font-bold uppercase tracking-wide">{t(`newPost.types.${pt.value}`)}</span>

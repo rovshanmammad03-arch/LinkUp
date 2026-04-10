@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import Navbar from './components/layout/Navbar';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
@@ -101,9 +102,11 @@ function AppContent() {
 
 function App() {
     return (
-        <AuthProvider>
-            <AppContent />
-        </AuthProvider>
+        <ThemeProvider>
+            <AuthProvider>
+                <AppContent />
+            </AuthProvider>
+        </ThemeProvider>
     );
 }
 

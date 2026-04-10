@@ -141,24 +141,24 @@ export default function PostCard({ post, index, onDelete, onUpdate, onNavigate }
                             {author.avatar ? <img src={author.avatar} className="w-full h-full object-cover" /> : initials(author.name)}
                         </div>
                         <div className="min-w-0 flex flex-col gap-0.5 items-start">
-                            <div className="text-sm font-medium text-white truncate leading-tight">{author.name}</div>
+                            <div className="text-sm font-medium text-neutral-900 dark:text-white truncate leading-tight">{author.name}</div>
                             <div className="text-[10px] text-neutral-500 font-light leading-tight">{translateField(author.field, t)} · {timeAgo(post.createdAt, t)}</div>
                         </div>
                     </button>
                     {post.authorId === currentUser?.id && (
                         <div className="relative" ref={dropdownRef}>
-                            <button onClick={() => setShowDropdown(!showDropdown)} className="text-neutral-600 hover:text-white transition-colors p-1 rounded hover:bg-white/5">
+                            <button onClick={() => setShowDropdown(!showDropdown)} className="text-neutral-400 dark:text-neutral-600 hover:text-neutral-900 dark:hover:text-white transition-colors p-1 rounded hover:bg-black/5 dark:hover:bg-white/5">
                                 <Icon icon="mdi:dots-horizontal" className="text-lg" />
                             </button>
                             {showDropdown && (
-                                <div className="absolute right-0 top-full mt-1 w-36 bg-neutral-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden z-20">
+                                <div className="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-neutral-900 border border-black/10 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden z-20">
                                     <button 
                                         onClick={() => {
                                             setShowDropdown(false);
                                             setEditCaption(post.caption || '');
                                             setShowEditModal(true);
                                         }}
-                                        className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-semibold text-neutral-300 hover:text-white hover:bg-white/5 transition-colors"
+                                        className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-semibold text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                                     >
                                         <Icon icon="mdi:pencil-outline" className="text-base" /> {t('post.edit')}
                                     </button>
@@ -202,21 +202,21 @@ export default function PostCard({ post, index, onDelete, onUpdate, onNavigate }
                 <div className="px-4 pb-3 flex items-center gap-5">
                     <button 
                         onClick={toggleLike}
-                        className={`flex items-center gap-2 transition-all ${liked ? 'text-rose-400' : 'text-neutral-500 hover:text-rose-400'}`}
+                        className={`flex items-center gap-2 transition-all ${liked ? 'text-rose-400' : 'text-neutral-400 dark:text-neutral-500 hover:text-rose-400'}`}
                     >
                         <Icon icon={liked ? "mdi:heart" : "mdi:heart-outline"} className={`text-xl ${liked ? 'scale-110' : ''}`} />
                         <span className="text-xs font-semibold">{likeCount}</span>
                     </button>
                     <button 
                         onClick={() => setShowComments(true)}
-                        className="flex items-center gap-2 text-neutral-500 hover:text-brand-400 transition-all"
+                        className="flex items-center gap-2 text-neutral-400 dark:text-neutral-500 hover:text-brand-400 transition-all"
                     >
                         <Icon icon="mdi:comment-outline" className="text-xl" />
                         <span className="text-xs font-semibold">{commentCount}</span>
                     </button>
                     <button 
                         onClick={() => setShowShareModal(true)}
-                        className="flex items-center gap-2 text-neutral-500 hover:text-green-400 transition-all"
+                        className="flex items-center gap-2 text-neutral-400 dark:text-neutral-500 hover:text-green-400 transition-all"
                     >
                         <Icon icon="mdi:share-outline" className="text-xl" />
                     </button>
@@ -224,10 +224,10 @@ export default function PostCard({ post, index, onDelete, onUpdate, onNavigate }
 
                 {/* Caption */}
                 <div className="px-5 pb-5">
-                    <p className="text-[13px] text-neutral-300 font-light leading-relaxed">
+                    <p className="text-[13px] text-neutral-600 dark:text-neutral-300 font-light leading-relaxed">
                         <button 
                             onClick={() => onNavigate && onNavigate('profile', { userId: post.authorId })} 
-                            className="font-bold text-white mr-1 hover:underline bg-transparent border-0 p-0 cursor-pointer"
+                            className="font-bold text-neutral-900 dark:text-white mr-1 hover:underline bg-transparent border-0 p-0 cursor-pointer"
                         >
                             {author.name}
                         </button>
@@ -236,7 +236,7 @@ export default function PostCard({ post, index, onDelete, onUpdate, onNavigate }
                     {commentCount > 0 && (
                         <button 
                             onClick={() => setShowComments(true)}
-                            className="text-[11px] text-neutral-500 hover:text-neutral-300 transition-colors mt-3"
+                            className="text-[11px] text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors mt-3"
                         >
                             {t('post.viewComments', { count: commentCount })}
                         </button>
@@ -255,19 +255,18 @@ export default function PostCard({ post, index, onDelete, onUpdate, onNavigate }
             {showDeleteModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowDeleteModal(false)}></div>
-                    <div className="bg-neutral-900 border border-white/10 rounded-2xl p-6 max-w-sm w-full relative z-10 anim-up flex flex-col items-center text-center shadow-2xl">
+                    <div className="bg-white dark:bg-neutral-900 border border-black/10 dark:border-white/10 rounded-2xl p-6 max-w-sm w-full relative z-10 anim-up flex flex-col items-center text-center shadow-2xl">
                         <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
                             <Icon icon="mdi:alert-circle-outline" className="text-red-500 text-2xl" />
                         </div>
-                        <h3 className="text-lg font-bold text-white mb-2">{t('post.deleteTitle')}</h3>
-                        <p className="text-sm text-neutral-400 mb-6 pb-6 border-b border-white/5 w-full">
+                        <h3 className="text-lg font-bold text-neutral-900 dark:text-white mb-2">{t('post.deleteTitle')}</h3>
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-6 pb-6 border-b border-black/5 dark:border-white/5 w-full">
                             {t('post.deleteConfirm')}
                         </p>
-                        
                         <div className="grid grid-cols-2 gap-3 w-full">
                             <button 
                                 onClick={() => setShowDeleteModal(false)}
-                                className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-white/5 hover:bg-white/10 transition-colors"
+                                className="px-4 py-2.5 rounded-xl text-sm font-semibold text-neutral-700 dark:text-white bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
                             >
                                 {t('post.cancel')}
                             </button>
@@ -285,25 +284,23 @@ export default function PostCard({ post, index, onDelete, onUpdate, onNavigate }
             {showEditModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowEditModal(false)}></div>
-                    <div className="bg-neutral-900 border border-white/10 rounded-xl p-5 max-w-lg w-full relative z-10 anim-up flex flex-col shadow-2xl">
-                        <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/10">
-                            <h3 className="text-lg font-bold text-white">{t('post.editTitle')}</h3>
-                            <button onClick={() => setShowEditModal(false)} className="text-neutral-500 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors">
+                    <div className="bg-white dark:bg-neutral-900 border border-black/10 dark:border-white/10 rounded-xl p-5 max-w-lg w-full relative z-10 anim-up flex flex-col shadow-2xl">
+                        <div className="flex items-center justify-between mb-4 pb-4 border-b border-black/10 dark:border-white/10">
+                            <h3 className="text-lg font-bold text-neutral-900 dark:text-white">{t('post.editTitle')}</h3>
+                            <button onClick={() => setShowEditModal(false)} className="text-neutral-400 hover:text-neutral-900 dark:hover:text-white p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
                                 <Icon icon="mdi:close" className="text-xl" />
                             </button>
                         </div>
-                        
                         <textarea 
                             value={editCaption}
                             onChange={(e) => setEditCaption(e.target.value)}
                             placeholder={t('post.editPlaceholder')}
-                            className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-brand-500 transition-colors mb-4 resize-none h-32"
+                            className="w-full bg-black/5 dark:bg-black/50 border border-black/10 dark:border-white/10 rounded-xl p-4 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:border-brand-500 transition-colors mb-4 resize-none h-32"
                         ></textarea>
-                        
                         <div className="flex justify-end gap-3 w-full">
                             <button 
                                 onClick={() => setShowEditModal(false)}
-                                className="px-5 py-2 rounded-xl text-sm font-semibold text-white bg-white/5 hover:bg-white/10 transition-colors"
+                                className="px-5 py-2 rounded-xl text-sm font-semibold text-neutral-700 dark:text-white bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
                             >
                                 {t('post.cancel')}
                             </button>

@@ -41,57 +41,57 @@ export default function NewProjectModal({ onClose, onProjectCreated }) {
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
-            <div className="bg-[#0a0a0a] border border-white/10 rounded-[32px] p-8 max-w-xl w-full relative z-10 anim-up flex flex-col shadow-2xl overflow-y-auto max-h-[90vh]">
-                <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/5">
+            <div className="bg-white dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 rounded-[32px] p-8 max-w-xl w-full relative z-10 anim-up flex flex-col shadow-2xl overflow-y-auto max-h-[90vh]">
+                <div className="flex items-center justify-between mb-8 pb-4 border-b border-black/8 dark:border-white/5">
                     <div>
-                        <h3 className="text-2xl font-bold text-white leading-tight">{t('newProject.title')}</h3>
+                        <h3 className="text-2xl font-bold text-neutral-900 dark:text-white leading-tight">{t('newProject.title')}</h3>
                         <p className="text-neutral-500 text-xs mt-1">{t('newProject.subtitle')}</p>
                     </div>
-                    <button onClick={onClose} className="text-neutral-500 hover:text-white p-2 rounded-xl hover:bg-white/5 transition-colors">
+                    <button onClick={onClose} className="text-neutral-400 hover:text-neutral-900 dark:hover:text-white p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
                         <Icon icon="mdi:close" className="text-xl" />
                     </button>
                 </div>
                 
                 <div className="space-y-6">
                     <div>
-                        <label className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-2 block">{t('newProject.nameLabel')}</label>
+                        <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-2 block">{t('newProject.nameLabel')}</label>
                         <input 
                             type="text"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             placeholder={t('newProject.namePlaceholder')}
-                            className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-brand-500/50 focus:bg-white/10 transition-all shadow-inner"
+                            className="w-full bg-black/5 dark:bg-white/5 border border-black/8 dark:border-white/5 rounded-2xl px-5 py-4 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:border-brand-500/50 focus:bg-black/8 dark:focus:bg-white/10 transition-all"
                         />
                     </div>
 
                     <div>
-                        <label className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-2 block">{t('newProject.descLabel')}</label>
+                        <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-2 block">{t('newProject.descLabel')}</label>
                         <textarea 
                             value={desc}
                             onChange={(e) => setDesc(e.target.value)}
                             placeholder={t('newProject.descPlaceholder')}
-                            className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-brand-500/50 focus:bg-white/10 transition-all shadow-inner h-32 resize-none"
+                            className="w-full bg-black/5 dark:bg-white/5 border border-black/8 dark:border-white/5 rounded-2xl px-5 py-4 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:border-brand-500/50 focus:bg-black/8 dark:focus:bg-white/10 transition-all h-32 resize-none"
                         ></textarea>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-2 block">{t('newProject.skillsLabel')}</label>
+                            <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-2 block">{t('newProject.skillsLabel')}</label>
                             <input 
                                 type="text"
                                 value={skills}
                                 onChange={(e) => setSkills(e.target.value)}
                                 placeholder={t('newProject.skillsPlaceholder')}
-                                className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-brand-500/50 focus:bg-white/10 transition-all shadow-inner"
+                                className="w-full bg-black/5 dark:bg-white/5 border border-black/8 dark:border-white/5 rounded-2xl px-5 py-4 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:border-brand-500/50 focus:bg-black/8 dark:focus:bg-white/10 transition-all"
                             />
-                            <p className="text-[10px] text-neutral-600 mt-1.5 ml-1">{t('newProject.skillsHint')}</p>
+                            <p className="text-[10px] text-neutral-400 mt-1.5 ml-1">{t('newProject.skillsHint')}</p>
                         </div>
                         <div>
-                            <label className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-2 block">{t('newProject.teamLabel')}</label>
+                            <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-2 block">{t('newProject.teamLabel')}</label>
                             <select 
                                 value={team}
                                 onChange={(e) => setTeam(e.target.value)}
-                                className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-brand-500/50 focus:bg-white/10 transition-all shadow-inner outline-none appearance-none cursor-pointer"
+                                className="w-full bg-black/5 dark:bg-white/5 border border-black/8 dark:border-white/5 rounded-2xl px-5 py-4 text-sm text-neutral-900 dark:text-white focus:outline-none focus:border-brand-500/50 transition-all outline-none appearance-none cursor-pointer"
                             >
                                 <option value="1-2 nəfər">{t('newProject.team.small')}</option>
                                 <option value="2-3 nəfər">{t('newProject.team.medium')}</option>
@@ -102,13 +102,13 @@ export default function NewProjectModal({ onClose, onProjectCreated }) {
                     </div>
 
                     <div>
-                        <label className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-3 block">{t('newProject.colorLabel')}</label>
+                        <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-3 block">{t('newProject.colorLabel')}</label>
                         <div className="flex flex-wrap gap-3">
                             {GRADIENTS.map((g, i) => (
                                 <button 
                                     key={i}
                                     onClick={() => setSelectedGrad(g)}
-                                    className={`w-10 h-10 rounded-xl bg-gradient-to-br ${g} transition-all ${selectedGrad === g ? 'ring-4 ring-brand-500/30 ring-offset-4 ring-offset-[#0a0a0a] scale-110' : 'opacity-60 hover:opacity-100 hover:scale-105'}`}
+                                    className={`w-10 h-10 rounded-xl bg-gradient-to-br ${g} transition-all ${selectedGrad === g ? 'ring-4 ring-brand-500/30 ring-offset-4 ring-offset-white dark:ring-offset-[#0a0a0a] scale-110' : 'opacity-60 hover:opacity-100 hover:scale-105'}`}
                                 />
                             ))}
                         </div>
@@ -118,7 +118,7 @@ export default function NewProjectModal({ onClose, onProjectCreated }) {
                 <div className="flex justify-end gap-3 mt-10">
                     <button 
                         onClick={onClose}
-                        className="px-8 py-3.5 rounded-2xl text-[11px] font-bold text-neutral-400 hover:text-white bg-white/5 hover:bg-white/10 transition-all uppercase tracking-widest"
+                        className="px-8 py-3.5 rounded-2xl text-[11px] font-bold text-neutral-500 hover:text-neutral-900 dark:hover:text-white bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-all uppercase tracking-widest"
                     >
                         {t('newProject.cancel')}
                     </button>

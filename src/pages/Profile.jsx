@@ -255,7 +255,7 @@ export default function Profile({ params, onNavigate }) {
                     <div className="absolute -bottom-16 left-8 flex items-end gap-6">
                         <div
                             onClick={handleAvatarUpload}
-                            className={`w-32 h-32 md:w-36 md:h-36 rounded-3xl bg-gradient-to-br ${targetUser?.grad} border-4 border-black flex items-center justify-center text-4xl font-bold shadow-2xl shrink-0 group relative ${isOwnProfile ? 'cursor-pointer overflow-hidden' : ''}`}
+                            className={`w-32 h-32 md:w-36 md:h-36 rounded-3xl bg-gradient-to-br ${targetUser?.grad} border-4 border-white dark:border-black flex items-center justify-center text-4xl font-bold shadow-2xl shrink-0 group relative ${isOwnProfile ? 'cursor-pointer overflow-hidden' : ''}`}
                         >
                             {targetUser?.avatar ? (
                                 <img src={targetUser.avatar} className="w-full h-full object-cover rounded-2xl" />
@@ -270,10 +270,10 @@ export default function Profile({ params, onNavigate }) {
                         </div>
                         <div className="mb-2">
                             <div className="inline-flex items-center gap-2 mb-1">
-                                <h1 className="text-2xl md:text-3xl font-bold text-white">{targetUser?.name}</h1>
+                                <h1 className="text-2xl md:text-3xl font-bold text-neutral-900 dark:text-white">{targetUser?.name}</h1>
                                 <Icon icon="mdi:check-decagram" className="text-brand-400 text-xl" />
                             </div>
-                            <p className="text-neutral-400 text-sm font-medium">{translateField(targetUser?.field, t)} · {targetUser?.university}</p>
+                            <p className="text-neutral-500 text-sm font-medium">{translateField(targetUser?.field, t)} · {targetUser?.university}</p>
                         </div>
                     </div>
 
@@ -282,23 +282,23 @@ export default function Profile({ params, onNavigate }) {
                         {isOwnProfile ? (
                             <button
                                 onClick={openEdit}
-                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest bg-neutral-900/90 backdrop-blur-md border border-white/20 text-white hover:bg-neutral-800 transition-all shadow-xl ring-1 ring-black/30"
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md border border-black/10 dark:border-white/20 text-neutral-900 dark:text-white hover:bg-white dark:hover:bg-neutral-800 transition-all shadow-xl"
                             >
-                                <Icon icon="mdi:pencil-outline" className="text-brand-400" />
+                                <Icon icon="mdi:pencil-outline" className="text-brand-500" />
                                 {t('profile.editProfile')}
                             </button>
                         ) : (
                             <>
                                 <button
                                     onClick={() => onNavigate('messages', { userId: targetUser.id })}
-                                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-neutral-900/90 backdrop-blur-md border border-white/20 text-white hover:bg-neutral-800 transition-all shadow-xl ring-1 ring-black/30"
+                                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md border border-black/10 dark:border-white/20 text-neutral-900 dark:text-white hover:bg-white dark:hover:bg-neutral-800 transition-all shadow-xl"
                                 >
-                                    <Icon icon="mdi:chat-processing-outline" className="text-brand-400 text-lg" />
+                                    <Icon icon="mdi:chat-processing-outline" className="text-brand-500 text-lg" />
                                     {t('profile.startChat')}
                                 </button>
                                 <button
                                     onClick={() => handleFollow()}
-                                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-xl ${isFollowing ? 'bg-white/10 text-white border border-white/10' : 'bg-brand-500 text-white'}`}
+                                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-xl ${isFollowing ? 'bg-black/10 dark:bg-white/10 text-neutral-900 dark:text-white border border-black/10 dark:border-white/10' : 'bg-brand-500 text-white'}`}
                                 >
                                     <Icon icon={isFollowing ? "mdi:account-check" : "mdi:account-plus"} className="text-lg" />
                                     {isFollowing ? t('profile.followingStatus') : t('profile.follow')}
@@ -314,29 +314,29 @@ export default function Profile({ params, onNavigate }) {
                     <div className="space-y-5">
                         <div className="glass-card rounded-3xl p-6">
                             <h3 className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4">{t('profile.about_me')}</h3>
-                            <p className="text-[13px] text-neutral-400 leading-relaxed font-light mb-5">
-                                {currentUser?.bio || t('profile.noBio')}
+                            <p className="text-[13px] text-neutral-500 dark:text-neutral-400 leading-relaxed font-light mb-5">
+                                {targetUser?.bio || t('profile.noBio')}
                             </p>
                             <div className="space-y-3">
-                                <div className="flex items-center gap-3 text-neutral-400">
+                                <div className="flex items-center gap-3 text-neutral-500 dark:text-neutral-400">
                                     <Icon icon="mdi:school-outline" className="text-lg text-brand-400 shrink-0" />
-                                    <span className="text-xs">{currentUser?.university || '—'}</span>
+                                    <span className="text-xs">{targetUser?.university || '—'}</span>
                                 </div>
-                                <div className="flex items-center gap-3 text-neutral-400">
+                                <div className="flex items-center gap-3 text-neutral-500 dark:text-neutral-400">
                                     <Icon icon="mdi:briefcase-outline" className="text-lg text-brand-400 shrink-0" />
-                                    <span className="text-xs">{translateLevel(currentUser?.level, t)} · {translateField(currentUser?.field, t)}</span>
+                                    <span className="text-xs">{translateLevel(targetUser?.level, t)} · {translateField(targetUser?.field, t)}</span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Skills */}
-                        {currentUser?.skills?.length > 0 && (
+                        {targetUser?.skills?.length > 0 && (
                             <div className="glass-card rounded-3xl p-6">
                                 <h3 className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4">{t('profile.skills')}</h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {currentUser.skills.map((s, i) => (
-                                        <span key={i} className="text-[11px] px-3 py-1 rounded-full bg-white/5 border border-white/8 text-neutral-300">
-                                            {s.n} <span className="text-neutral-600">· {s.l}</span>
+                                    {targetUser.skills.map((s, i) => (
+                                        <span key={i} className="text-[11px] px-3 py-1 rounded-full bg-black/5 dark:bg-white/5 border border-black/8 dark:border-white/8 text-neutral-600 dark:text-neutral-300">
+                                            {s.n} <span className="text-neutral-400 dark:text-neutral-600">· {s.l}</span>
                                         </span>
                                     ))}
                                 </div>
@@ -344,17 +344,17 @@ export default function Profile({ params, onNavigate }) {
                         )}
 
                         {/* Links */}
-                        {currentUser?.links?.length > 0 && (
+                        {targetUser?.links?.length > 0 && (
                             <div className="glass-card rounded-3xl p-6">
                                 <h3 className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4">{t('profile.links')}</h3>
                                 <div className="space-y-2">
-                                    {currentUser.links.map((l, i) => (
+                                    {targetUser.links.map((l, i) => (
                                         <a
                                             key={i}
                                             href={`https://${l.v.replace(/^https?:\/\//, '')}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="flex items-center gap-2 text-xs text-brand-400 hover:text-brand-300 transition-colors"
+                                            className="flex items-center gap-2 text-xs text-brand-500 dark:text-brand-400 hover:text-brand-600 dark:hover:text-brand-300 transition-colors"
                                         >
                                             <Icon icon="mdi:link-variant" className="text-sm" />
                                             {l.t}: {l.v}
@@ -369,40 +369,40 @@ export default function Profile({ params, onNavigate }) {
                             <h3 className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4">{t('profile.statistics')}</h3>
                             <div className="grid grid-cols-3 gap-2">
                                 <div className="text-center">
-                                    <div className="text-xl font-bold text-white">{stats.posts}</div>
-                                    <div className="text-[9px] text-neutral-600 font-bold uppercase tracking-widest">Post</div>
+                                    <div className="text-xl font-bold text-neutral-900 dark:text-white">{stats.posts}</div>
+                                    <div className="text-[9px] text-neutral-500 dark:text-neutral-600 font-bold uppercase tracking-widest">Post</div>
                                 </div>
-                                <div 
-                                    className="text-center cursor-pointer hover:bg-white/5 rounded-xl py-1 transition-colors"
+                                <div
+                                    className="text-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded-xl py-1 transition-colors"
                                     onClick={() => openUserList('followers')}
                                 >
-                                    <div className="text-xl font-bold text-white">{stats.followers}</div>
-                                    <div className="text-[9px] text-neutral-600 font-bold uppercase tracking-widest underline decoration-brand-500/30">{t('profile.followers')}</div>
+                                    <div className="text-xl font-bold text-neutral-900 dark:text-white">{stats.followers}</div>
+                                    <div className="text-[9px] text-neutral-500 dark:text-neutral-600 font-bold uppercase tracking-widest underline decoration-brand-500/30">{t('profile.followers')}</div>
                                 </div>
-                                <div 
-                                    className="text-center cursor-pointer hover:bg-white/5 rounded-xl py-1 transition-colors"
+                                <div
+                                    className="text-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded-xl py-1 transition-colors"
                                     onClick={() => openUserList('following')}
                                 >
-                                    <div className="text-xl font-bold text-white">{stats.following}</div>
-                                    <div className="text-[9px] text-neutral-600 font-bold uppercase tracking-widest underline decoration-brand-500/30">{t('profile.following')}</div>
+                                    <div className="text-xl font-bold text-neutral-900 dark:text-white">{stats.following}</div>
+                                    <div className="text-[9px] text-neutral-500 dark:text-neutral-600 font-bold uppercase tracking-widest underline decoration-brand-500/30">{t('profile.following')}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Tab Navigation */}
-                    <div className="flex items-center gap-8 border-b border-white/5 mb-8">
-                        <button 
+                    <div className="flex items-center gap-8 border-b border-black/8 dark:border-white/5 mb-8">
+                        <button
                             onClick={() => setTab('posts')}
-                            className={`pb-4 text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-2 transition-all relative ${tab === 'posts' ? 'text-white' : 'text-neutral-500 hover:text-neutral-300'}`}
+                            className={`pb-4 text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-2 transition-all relative ${tab === 'posts' ? 'text-neutral-900 dark:text-white' : 'text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'}`}
                         >
                             <Icon icon="mdi:view-grid-outline" className={tab === 'posts' ? 'text-brand-400' : ''} />
                             {t('profile.posts')}
                             {tab === 'posts' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" />}
                         </button>
-                        <button 
+                        <button
                             onClick={() => setTab('liked')}
-                            className={`pb-4 text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-2 transition-all relative ${tab === 'liked' ? 'text-white' : 'text-neutral-500 hover:text-neutral-300'}`}
+                            className={`pb-4 text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-2 transition-all relative ${tab === 'liked' ? 'text-neutral-900 dark:text-white' : 'text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'}`}
                         >
                             <Icon icon="mdi:heart-outline" className={tab === 'liked' ? 'text-rose-500' : ''} />
                             {t('profile.liked')}
@@ -413,10 +413,10 @@ export default function Profile({ params, onNavigate }) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 anim-up">
                         {posts.length > 0 ? (
                             posts.map((p, i) => (
-                                <div 
-                                    key={p.id} 
+                                <div
+                                    key={p.id}
                                     onClick={() => setSelectedPost(p)}
-                                    className="aspect-square bg-white/5 border border-white/5 rounded-[32px] overflow-hidden group relative cursor-pointer shadow-lg hover:border-white/10 transition-all"
+                                    className="aspect-square bg-black/5 dark:bg-white/5 border border-black/8 dark:border-white/5 rounded-[32px] overflow-hidden group relative cursor-pointer shadow-sm dark:shadow-lg hover:border-black/15 dark:hover:border-white/10 transition-all"
                                 >
                                     {p.image ? (
                                         <img src={p.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
@@ -439,7 +439,7 @@ export default function Profile({ params, onNavigate }) {
                                 </div>
                             ))
                         ) : (
-                            <div className="col-span-2 bg-white/5 border border-white/10 border-dashed rounded-[40px] py-20 flex flex-col items-center justify-center gap-4 text-neutral-500">
+                            <div className="col-span-2 bg-black/3 dark:bg-white/5 border border-black/10 dark:border-white/10 border-dashed rounded-[40px] py-20 flex flex-col items-center justify-center gap-4 text-neutral-400 dark:text-neutral-500">
                                 <Icon icon={tab === 'posts' ? "mdi:image-off-outline" : "mdi:heart-off-outline"} className="text-5xl opacity-20" />
                                 <p className="text-sm font-light">
                                     {tab === 'posts' ? t('profile.noPostsYet') : t('profile.noLikesYet')}
@@ -456,10 +456,10 @@ export default function Profile({ params, onNavigate }) {
                     className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
                     onClick={(e) => { if (e.target === e.currentTarget) setEditOpen(false); }}
                 >
-                    <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl w-full max-w-2xl flex flex-col shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] my-auto" style={{ animation: 'fadeInUp 0.3s ease-out' }}>
+                    <div className="bg-white dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 rounded-2xl w-full max-w-2xl flex flex-col shadow-2xl my-auto" style={{ animation: 'fadeInUp 0.3s ease-out' }}>
                         {/* Header */}
                         <div className="px-8 pt-8 pb-4">
-                            <h2 className="text-2xl font-bold text-white tracking-tight">{t('profile.myProfile')}</h2>
+                            <h2 className="text-2xl font-bold text-neutral-900 dark:text-white tracking-tight">{t('profile.myProfile')}</h2>
                         </div>
 
                         {/* Modal Body */}
@@ -470,7 +470,7 @@ export default function Profile({ params, onNavigate }) {
                                 <input
                                     value={form.name}
                                     onChange={e => setForm({ ...form, name: e.target.value })}
-                                    className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:border-brand-500/50 outline-none transition-all"
+                                    className="w-full bg-black/5 dark:bg-[#121212] border border-black/8 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-neutral-900 dark:text-white focus:border-brand-500/50 outline-none transition-all"
                                     placeholder={t('profile.namePlaceholder')}
                                 />
                             </div>
@@ -482,7 +482,7 @@ export default function Profile({ params, onNavigate }) {
                                     <input
                                         value={form.university}
                                         onChange={e => setForm({ ...form, university: e.target.value })}
-                                        className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:border-brand-500/50 outline-none transition-all"
+                                        className="w-full bg-black/5 dark:bg-[#121212] border border-black/8 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-neutral-900 dark:text-white focus:border-brand-500/50 outline-none transition-all"
                                         placeholder={t('auth.university')}
                                     />
                                 </div>
@@ -491,7 +491,7 @@ export default function Profile({ params, onNavigate }) {
                                     <input
                                         value={form.field}
                                         onChange={e => setForm({ ...form, field: e.target.value })}
-                                        className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:border-brand-500/50 outline-none transition-all"
+                                        className="w-full bg-black/5 dark:bg-[#121212] border border-black/8 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-neutral-900 dark:text-white focus:border-brand-500/50 outline-none transition-all"
                                         placeholder={t('auth.field')}
                                     />
                                 </div>
@@ -503,16 +503,16 @@ export default function Profile({ params, onNavigate }) {
                                 <div className="relative">
                                     <button 
                                         onClick={() => setIsLevelOpen(!isLevelOpen)}
-                                        className={`w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3 text-sm text-white flex items-center justify-between transition-all hover:border-white/10 ${isLevelOpen ? 'border-brand-500/50 ring-2 ring-brand-500/10' : ''}`}
+                                        className={`w-full bg-black/5 dark:bg-[#121212] border border-black/8 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-neutral-900 dark:text-white flex items-center justify-between transition-all hover:border-black/15 dark:hover:border-white/10 ${isLevelOpen ? 'border-brand-500/50 ring-2 ring-brand-500/10' : ''}`}
                                     >
                                         <span>{translateLevel(form.level, t)}</span>
-                                        <Icon icon="mdi:chevron-down" className={`text-neutral-500 transition-transform ${isLevelOpen ? 'rotate-180' : ''}`} />
+                                        <Icon icon="mdi:chevron-down" className={`text-neutral-400 transition-transform ${isLevelOpen ? 'rotate-180' : ''}`} />
                                     </button>
                                     
                                     {isLevelOpen && (
                                         <>
                                             <div className="fixed inset-0 z-40" onClick={() => setIsLevelOpen(false)} />
-                                            <div className="absolute top-full left-0 w-full mt-2 bg-[#121212] border border-white/10 rounded-xl overflow-hidden z-50 shadow-2xl anim-up">
+                                            <div className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-[#121212] border border-black/10 dark:border-white/10 rounded-xl overflow-hidden z-50 shadow-xl dark:shadow-2xl anim-up">
                                                 {SKILL_LEVELS_AZ.map(l => (
                                                     <div 
                                                         key={l}
@@ -520,10 +520,10 @@ export default function Profile({ params, onNavigate }) {
                                                             setForm({ ...form, level: l });
                                                             setIsLevelOpen(false);
                                                         }}
-                                                        className={`px-4 py-3 text-sm cursor-pointer transition-all flex items-center justify-between group ${form.level === l ? 'bg-brand-500/10 text-brand-400' : 'text-neutral-400 hover:bg-white/5 hover:text-white'}`}
+                                                        className={`px-4 py-3 text-sm cursor-pointer transition-all flex items-center justify-between group ${form.level === l ? 'bg-brand-500/10 text-brand-500 dark:text-brand-400' : 'text-neutral-600 dark:text-neutral-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-neutral-900 dark:hover:text-white'}`}
                                                     >
                                                         {translateLevel(l, t)}
-                                                        {form.level === l && <Icon icon="mdi:check" className="text-brand-400" />}
+                                                        {form.level === l && <Icon icon="mdi:check" className="text-brand-500 dark:text-brand-400" />}
                                                     </div>
                                                 ))}
                                             </div>
@@ -538,7 +538,7 @@ export default function Profile({ params, onNavigate }) {
                                 <textarea
                                     value={form.bio}
                                     onChange={e => setForm({ ...form, bio: e.target.value })}
-                                    className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:border-brand-500/50 outline-none transition-all resize-none h-24"
+                                    className="w-full bg-black/5 dark:bg-[#121212] border border-black/8 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-neutral-900 dark:text-white focus:border-brand-500/50 outline-none transition-all resize-none h-24"
                                     placeholder={t('profile.bioPlaceholder')}
                                 />
                             </div>
@@ -548,9 +548,9 @@ export default function Profile({ params, onNavigate }) {
                                 <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest ml-1">{t('profile.skillsLabel')}</label>
                                 <div className="flex flex-wrap gap-2 mb-3">
                                     {skills.map((s, i) => (
-                                        <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-[#171717] border border-white/5 rounded-lg text-[12px] text-neutral-300">
+                                        <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-neutral-100 dark:bg-[#171717] border border-black/8 dark:border-white/5 rounded-lg text-[12px] text-neutral-700 dark:text-neutral-300">
                                             {s.n} · {s.l}
-                                            <button onClick={() => removeSkill(i)} className="hover:text-red-400 transition-colors">✕</button>
+                                            <button onClick={() => removeSkill(i)} className="hover:text-red-500 transition-colors">✕</button>
                                         </div>
                                     ))}
                                 </div>
@@ -558,23 +558,23 @@ export default function Profile({ params, onNavigate }) {
                                     <input
                                         value={newSkillName}
                                         onChange={e => setNewSkillName(e.target.value)}
-                                        className="flex-1 bg-[#121212] border border-white/5 rounded-xl px-4 py-2 text-sm text-white focus:border-brand-500/50 outline-none"
+                                        className="flex-1 bg-black/5 dark:bg-[#121212] border border-black/8 dark:border-white/5 rounded-xl px-4 py-2 text-sm text-neutral-900 dark:text-white focus:border-brand-500/50 outline-none"
                                         placeholder={t('profile.skillNamePlaceholder')}
                                     />
                                     {/* New Skill Level Custom Dropdown */}
                                     <div className="relative w-32">
                                         <button 
                                             onClick={() => setIsNewSkillLevelOpen(!isNewSkillLevelOpen)}
-                                            className={`w-full h-full bg-[#121212] border border-white/5 rounded-xl px-4 py-2 text-sm text-white flex items-center justify-between hover:border-white/10 ${isNewSkillLevelOpen ? 'border-brand-500/50' : ''}`}
+                                            className={`w-full h-full bg-black/5 dark:bg-[#121212] border border-black/8 dark:border-white/5 rounded-xl px-4 py-2 text-sm text-neutral-900 dark:text-white flex items-center justify-between hover:border-black/15 dark:hover:border-white/10 ${isNewSkillLevelOpen ? 'border-brand-500/50' : ''}`}
                                         >
                                             <span className="truncate">{translateLevel(newSkillLevel, t)}</span>
-                                            <Icon icon="mdi:chevron-down" className="text-neutral-500 shrink-0" />
+                                            <Icon icon="mdi:chevron-down" className="text-neutral-400 shrink-0" />
                                         </button>
                                         
                                         {isNewSkillLevelOpen && (
                                             <>
                                                 <div className="fixed inset-0 z-40" onClick={() => setIsNewSkillLevelOpen(false)} />
-                                                <div className="absolute bottom-full left-0 w-40 mb-2 bg-[#121212] border border-white/10 rounded-xl overflow-hidden z-50 shadow-2xl anim-up">
+                                                <div className="absolute bottom-full left-0 w-40 mb-2 bg-white dark:bg-[#121212] border border-black/10 dark:border-white/10 rounded-xl overflow-hidden z-50 shadow-xl dark:shadow-2xl anim-up">
                                                     {SKILL_LEVELS_AZ.map(l => (
                                                         <div 
                                                             key={l}
@@ -582,7 +582,7 @@ export default function Profile({ params, onNavigate }) {
                                                                 setNewSkillLevel(l);
                                                                 setIsNewSkillLevelOpen(false);
                                                             }}
-                                                            className={`px-4 py-2.5 text-xs font-bold cursor-pointer transition-all ${newSkillLevel === l ? 'bg-brand-500/10 text-brand-400' : 'text-neutral-400 hover:bg-white/5 hover:text-white'}`}
+                                                            className={`px-4 py-2.5 text-xs font-bold cursor-pointer transition-all ${newSkillLevel === l ? 'bg-brand-500/10 text-brand-500 dark:text-brand-400' : 'text-neutral-600 dark:text-neutral-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-neutral-900 dark:hover:text-white'}`}
                                                         >
                                                             {translateLevel(l, t)}
                                                         </div>
@@ -605,9 +605,9 @@ export default function Profile({ params, onNavigate }) {
                                 <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest ml-1">{t('profile.linksLabel')}</label>
                                 <div className="flex flex-wrap gap-2 mb-3">
                                     {links.map((l, i) => (
-                                        <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-[#171717] border border-white/5 rounded-lg text-[12px] text-neutral-300">
+                                        <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-neutral-100 dark:bg-[#171717] border border-black/8 dark:border-white/5 rounded-lg text-[12px] text-neutral-700 dark:text-neutral-300">
                                             {l.t}: {l.v}
-                                            <button onClick={() => removeLink(i)} className="hover:text-red-400 transition-colors">✕</button>
+                                            <button onClick={() => removeLink(i)} className="hover:text-red-500 transition-colors">✕</button>
                                         </div>
                                     ))}
                                 </div>
@@ -616,26 +616,26 @@ export default function Profile({ params, onNavigate }) {
                                     <div className="relative w-32">
                                         <button 
                                             onClick={() => setIsNewLinkTypeOpen(!isNewLinkTypeOpen)}
-                                            className={`w-full h-full bg-[#121212] border border-white/5 rounded-xl px-4 py-2 text-sm text-white flex items-center justify-between hover:border-white/10 ${isNewLinkTypeOpen ? 'border-brand-500/50' : ''}`}
+                                            className={`w-full h-full bg-black/5 dark:bg-[#121212] border border-black/8 dark:border-white/5 rounded-xl px-4 py-2 text-sm text-neutral-900 dark:text-white flex items-center justify-between hover:border-black/15 dark:hover:border-white/10 ${isNewLinkTypeOpen ? 'border-brand-500/50' : ''}`}
                                         >
                                             <span className="truncate">{newLinkType}</span>
-                                            <Icon icon="mdi:chevron-down" className="text-neutral-500 shrink-0" />
+                                            <Icon icon="mdi:chevron-down" className="text-neutral-400 shrink-0" />
                                         </button>
                                         
                                         {isNewLinkTypeOpen && (
                                             <>
                                                 <div className="fixed inset-0 z-40" onClick={() => setIsNewLinkTypeOpen(false)} />
-                                                <div className="absolute bottom-full left-0 w-40 mb-2 bg-[#121212] border border-white/10 rounded-xl overflow-hidden z-50 shadow-2xl anim-up h-48 overflow-y-auto custom-scrollbar">
-                                                    {LINK_TYPES.map(t => (
+                                                <div className="absolute bottom-full left-0 w-40 mb-2 bg-white dark:bg-[#121212] border border-black/10 dark:border-white/10 rounded-xl overflow-hidden z-50 shadow-xl dark:shadow-2xl anim-up h-48 overflow-y-auto custom-scrollbar">
+                                                    {LINK_TYPES.map(lt => (
                                                         <div 
-                                                            key={t}
+                                                            key={lt}
                                                             onClick={() => {
-                                                                setNewLinkType(t);
+                                                                setNewLinkType(lt);
                                                                 setIsNewLinkTypeOpen(false);
                                                             }}
-                                                            className={`px-4 py-2.5 text-xs font-bold cursor-pointer transition-all ${newLinkType === t ? 'bg-brand-500/10 text-brand-400' : 'text-neutral-400 hover:bg-white/5 hover:text-white'}`}
+                                                            className={`px-4 py-2.5 text-xs font-bold cursor-pointer transition-all ${newLinkType === lt ? 'bg-brand-500/10 text-brand-500 dark:text-brand-400' : 'text-neutral-600 dark:text-neutral-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-neutral-900 dark:hover:text-white'}`}
                                                         >
-                                                            {t}
+                                                            {lt}
                                                         </div>
                                                     ))}
                                                 </div>
@@ -645,7 +645,7 @@ export default function Profile({ params, onNavigate }) {
                                     <input
                                         value={newLinkVal}
                                         onChange={e => setNewLinkVal(e.target.value)}
-                                        className="flex-1 bg-[#121212] border border-white/5 rounded-xl px-4 py-2 text-sm text-white focus:border-brand-500/50 outline-none"
+                                        className="flex-1 bg-black/5 dark:bg-[#121212] border border-black/8 dark:border-white/5 rounded-xl px-4 py-2 text-sm text-neutral-900 dark:text-white focus:border-brand-500/50 outline-none"
                                         placeholder="github.com/username"
                                     />
                                     <button
@@ -673,7 +673,7 @@ export default function Profile({ params, onNavigate }) {
                                     setIsNewSkillLevelOpen(false);
                                     setIsNewLinkTypeOpen(false);
                                 }}
-                                className="flex-1 bg-transparent border border-white/10 text-white font-bold py-3.5 rounded-xl hover:bg-white/5 transition-all"
+                                className="flex-1 bg-transparent border border-black/10 dark:border-white/10 text-neutral-700 dark:text-white font-bold py-3.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-all"
                             >
                                 {t('profile.cancel')}
                             </button>
@@ -719,10 +719,10 @@ export default function Profile({ params, onNavigate }) {
                     className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
                     onClick={(e) => { if (e.target === e.currentTarget) setUserList({ ...userList, open: false }); }}
                 >
-                    <div className="bg-[#0a0a0a] border border-white/10 rounded-3xl w-full max-w-sm flex flex-col shadow-2xl anim-up h-[500px]">
-                        <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between">
-                            <h3 className="text-sm font-bold text-white uppercase tracking-widest">{userList.type}</h3>
-                            <button onClick={() => setUserList({ ...userList, open: false })} className="text-neutral-500 hover:text-white">
+                    <div className="bg-white dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 rounded-3xl w-full max-w-sm flex flex-col shadow-2xl anim-up h-[500px]">
+                        <div className="px-6 py-5 border-b border-black/8 dark:border-white/5 flex items-center justify-between">
+                            <h3 className="text-sm font-bold text-neutral-900 dark:text-white uppercase tracking-widest">{userList.type}</h3>
+                            <button onClick={() => setUserList({ ...userList, open: false })} className="text-neutral-400 hover:text-neutral-900 dark:hover:text-white">
                                 <Icon icon="mdi:close" className="text-xl" />
                             </button>
                         </div>
@@ -735,7 +735,7 @@ export default function Profile({ params, onNavigate }) {
                                 const isFollowed = currentUser?.following?.includes(u.id);
                                 
                                 return (
-                                    <div key={uid} className="flex items-center justify-between gap-3 p-2 rounded-2xl hover:bg-white/[0.02] transition-colors group">
+                                    <div key={uid} className="flex items-center justify-between gap-3 p-2 rounded-2xl hover:bg-black/5 dark:hover:bg-white/[0.02] transition-colors group">
                                         <div 
                                             className="flex items-center gap-3 flex-1 cursor-pointer"
                                             onClick={() => {
@@ -747,7 +747,7 @@ export default function Profile({ params, onNavigate }) {
                                                 {u.avatar ? <img src={u.avatar} className="w-full h-full object-cover rounded-xl" /> : initials(u.name)}
                                             </div>
                                             <div className="min-w-0">
-                                                <div className="text-xs font-bold text-white truncate group-hover:text-brand-400 transition-colors">{u.name}</div>
+                                                <div className="text-xs font-bold text-neutral-900 dark:text-white truncate group-hover:text-brand-500 dark:group-hover:text-brand-400 transition-colors">{u.name}</div>
                                                 <div className="text-[10px] text-neutral-500 truncate">{u.field}</div>
                                             </div>
                                         </div>
@@ -755,7 +755,7 @@ export default function Profile({ params, onNavigate }) {
                                         {!isMe && (
                                             <button 
                                                 onClick={() => handleFollow(u.id)}
-                                                className={`px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all ${isFollowed ? 'bg-white/5 text-neutral-400 border border-white/10' : 'bg-brand-500 text-white shadow-lg shadow-brand-500/20'}`}
+                                                className={`px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all ${isFollowed ? 'bg-black/5 dark:bg-white/5 text-neutral-500 dark:text-neutral-400 border border-black/10 dark:border-white/10' : 'bg-brand-500 text-white shadow-lg shadow-brand-500/20'}`}
                                             >
                                                 {isFollowed ? 'Ləğv Et' : 'İzlə'}
                                             </button>
@@ -763,7 +763,7 @@ export default function Profile({ params, onNavigate }) {
                                     </div>
                                 );
                             }) : (
-                                <div className="h-full flex flex-col items-center justify-center text-neutral-600 gap-3 grayscale opacity-40">
+                                <div className="h-full flex flex-col items-center justify-center text-neutral-400 dark:text-neutral-600 gap-3 opacity-40">
                                     <Icon icon="mdi:account-group-outline" className="text-5xl" />
                                     <p className="text-xs font-medium uppercase tracking-widest text-center px-10 leading-loose">Hələ heç bir istifadəçi yoxdur</p>
                                 </div>

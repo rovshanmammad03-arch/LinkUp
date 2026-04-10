@@ -50,10 +50,10 @@ export default function Dashboard({ onNavigate }) {
                     </div>
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-bold text-white uppercase tracking-wider">{t('dashboard.profileCompletion')}</span>
+                            <span className="text-xs font-bold text-neutral-800 dark:text-white uppercase tracking-wider">{t('dashboard.profileCompletion')}</span>
                             <span className="text-xs font-bold text-brand-400">{pct}%</span>
                         </div>
-                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-1.5 w-full bg-black/10 dark:bg-white/5 rounded-full overflow-hidden">
                             <div 
                                 className={`h-full transition-all duration-1000 ${pct >= 80 ? 'bg-gradient-to-r from-emerald-400 to-green-500' : pct >= 50 ? 'bg-gradient-to-r from-brand-400 to-purple-500' : 'bg-gradient-to-r from-amber-400 to-orange-500'}`} 
                                 style={{ width: `${pct}%` }}
@@ -64,16 +64,16 @@ export default function Dashboard({ onNavigate }) {
                 </div>
             )}
 
-            <div className="flex border-b border-white/10 mb-6 gap-6">
+            <div className="flex border-b border-black/10 dark:border-white/10 mb-6 gap-6">
                 <button 
                     onClick={() => setFeedType('all')}
-                    className={`pb-3 text-sm font-medium transition-colors border-b-2 ${feedType === 'all' ? 'border-brand-400 text-brand-400' : 'border-transparent text-neutral-400 hover:text-white'}`}
+                    className={`pb-3 text-sm font-medium transition-colors border-b-2 ${feedType === 'all' ? 'border-brand-400 text-brand-400' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'}`}
                 >
                     {t('dashboard.all')}
                 </button>
                 <button 
                     onClick={() => setFeedType('following')}
-                    className={`pb-3 text-sm font-medium transition-colors border-b-2 ${feedType === 'following' ? 'border-brand-400 text-brand-400' : 'border-transparent text-neutral-400 hover:text-white'}`}
+                    className={`pb-3 text-sm font-medium transition-colors border-b-2 ${feedType === 'following' ? 'border-brand-400 text-brand-400' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'}`}
                 >
                     {t('dashboard.following')}
                 </button>
@@ -93,7 +93,7 @@ export default function Dashboard({ onNavigate }) {
             </div>
 
             <div className="text-center py-12">
-                <span className="text-[10px] text-neutral-600 font-bold uppercase tracking-[0.2em]">{t('dashboard.allSeen')}</span>
+                <span className="text-[10px] text-neutral-400 dark:text-neutral-600 font-bold uppercase tracking-[0.2em]">{t('dashboard.allSeen')}</span>
             </div>
         </div>
     );

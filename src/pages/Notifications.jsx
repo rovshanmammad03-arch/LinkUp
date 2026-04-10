@@ -24,7 +24,6 @@ export default function Notifications({ onNavigate }) {
       .sort((a, b) => b.ts - a.ts);
     setNotifications(mine);
 
-    // Mark all as read
     const updated = all.map(n =>
       n.toUserId === currentUser?.id ? { ...n, read: true } : n
     );
@@ -46,15 +45,19 @@ export default function Notifications({ onNavigate }) {
     <div className="max-w-2xl mx-auto px-6 anim-up">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">{t('nav.notifications')}</h1>
+          <h1 className="text-3xl font-bold text-neutral-900 dark:text-white tracking-tight">
+            {t('nav.notifications')}
+          </h1>
           {unreadCount > 0 && (
-            <p className="text-sm text-neutral-500 mt-1">{t('notifications.unread', { count: unreadCount })}</p>
+            <p className="text-sm text-neutral-500 mt-1">
+              {t('notifications.unread', { count: unreadCount })}
+            </p>
           )}
         </div>
         {unreadCount > 0 && (
           <button
             onClick={markAllRead}
-            className="text-xs font-semibold text-brand-400 hover:text-brand-300 transition-colors"
+            className="text-xs font-semibold text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 transition-colors"
           >
             {t('notifications.markAllRead')}
           </button>
@@ -63,10 +66,12 @@ export default function Notifications({ onNavigate }) {
 
       {notifications.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
-            <Icon icon="mdi:bell-outline" className="text-3xl text-neutral-600" />
+          <div className="w-16 h-16 rounded-2xl bg-black/5 dark:bg-white/5 flex items-center justify-center mb-4">
+            <Icon icon="mdi:bell-outline" className="text-3xl text-neutral-400 dark:text-neutral-600" />
           </div>
-          <p className="text-neutral-500 text-sm font-medium">{t('nav.noNotifications')}</p>
+          <p className="text-neutral-400 dark:text-neutral-500 text-sm font-medium">
+            {t('nav.noNotifications')}
+          </p>
         </div>
       ) : (
         <div className="flex flex-col gap-2">
@@ -79,13 +84,13 @@ export default function Notifications({ onNavigate }) {
                 onClick={() => n.route && onNavigate(n.route, n.routeParams || {})}
                 className={`flex items-center gap-4 p-4 rounded-2xl border transition-all cursor-pointer
                   ${n.read
-                    ? 'bg-white/[0.02] border-white/5 hover:bg-white/5'
+                    ? 'bg-black/[0.02] dark:bg-white/[0.02] border-black/8 dark:border-white/5 hover:bg-black/5 dark:hover:bg-white/5'
                     : 'bg-brand-500/5 border-brand-500/20 hover:bg-brand-500/10'
                   }`}
               >
                 {/* Sender avatar */}
                 <div className="relative shrink-0">
-                  <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${sender?.grad || 'from-neutral-600 to-neutral-700'} flex items-center justify-center text-sm font-bold overflow-hidden`}>
+                  <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${sender?.grad || 'from-neutral-400 to-neutral-500'} flex items-center justify-center text-sm font-bold overflow-hidden`}>
                     {sender?.avatar
                       ? <img src={sender.avatar} className="w-full h-full object-cover" />
                       : initials(sender?.name || '?')}
@@ -97,7 +102,7 @@ export default function Notifications({ onNavigate }) {
 
                 {/* Text */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white leading-snug">
+                  <p className="text-sm text-neutral-900 dark:text-white leading-snug">
                     <span className="font-semibold">{sender?.name || t('notifications.unknown')}</span>
                     {' '}{n.text}
                   </p>

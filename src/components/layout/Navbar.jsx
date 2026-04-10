@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { Icon } from '@iconify/react';
 import { initials } from '../../services/db';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +14,7 @@ const LANGUAGES = [
 
 export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) {
   const { currentUser, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const { t, i18n } = useTranslation();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -82,12 +84,12 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
               {langOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setLangOpen(false)} />
-                  <div className="absolute right-0 top-full mt-2 w-44 bg-neutral-900/95 backdrop-blur-xl rounded-xl border border-white/10 shadow-2xl overflow-hidden z-50">
+                  <div className="absolute right-0 top-full mt-2 w-44 bg-white dark:bg-neutral-900/95 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 shadow-xl dark:shadow-2xl overflow-hidden z-50">
                     {LANGUAGES.map(lang => (
                       <button
                         key={lang.code}
                         onClick={() => handleLangChange(lang.code)}
-                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-left ${i18n.language === lang.code ? 'text-white bg-white/10' : 'text-neutral-400 hover:text-white hover:bg-white/5'}`}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-left ${i18n.language === lang.code ? 'text-neutral-900 dark:text-white bg-black/8 dark:bg-white/10' : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'}`}
                       >
                         <span className="text-base">{lang.flag}</span>
                         <span className="font-medium">{lang.label}</span>
@@ -145,20 +147,20 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
         <div className="flex items-center gap-2 md:gap-4">
           {/* Notifications */}
           <div className="relative" ref={notifRef}>
-            <button onClick={toggleNotif} className="text-neutral-500 hover:text-white p-2 transition-colors relative flex items-center rounded-lg hover:bg-white/5">
+            <button onClick={toggleNotif} className="text-neutral-500 hover:text-neutral-900 dark:hover:text-white p-2 transition-colors relative flex items-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
               <Icon icon="mdi:bell-outline" className="text-xl" />
               <span className="notif-dot hidden"></span>
             </button>
             {notifOpen && (
-              <div className="absolute right-0 top-full mt-2 w-80 max-w-[90vw] bg-neutral-900 rounded-xl border border-white/10 shadow-2xl overflow-hidden z-[60]">
-                <div className="p-3 border-b border-white/10 flex items-center justify-between bg-neutral-900">
-                  <span className="text-xs font-medium text-neutral-300">{t('nav.notifications')}</span>
+              <div className="absolute right-0 top-full mt-2 w-80 max-w-[90vw] bg-white dark:bg-neutral-900 rounded-xl border border-black/10 dark:border-white/10 shadow-xl dark:shadow-2xl overflow-hidden z-[60]">
+                <div className="p-3 border-b border-black/8 dark:border-white/10 flex items-center justify-between">
+                  <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">{t('nav.notifications')}</span>
                   <button
                     onClick={() => { setNotifOpen(false); onNavigate('notifications'); }}
-                    className="text-[10px] text-brand-400 hover:text-brand-300 transition-colors"
+                    className="text-[10px] text-brand-500 dark:text-brand-400 hover:text-brand-600 dark:hover:text-brand-300 transition-colors"
                   >{t('nav.viewAll')}</button>
                 </div>
-                <div className="max-h-80 overflow-y-auto p-4 text-center text-xs text-neutral-500">
+                <div className="max-h-80 overflow-y-auto p-4 text-center text-xs text-neutral-400 dark:text-neutral-500">
                   {t('nav.noNotifications')}
                 </div>
               </div>
@@ -166,8 +168,8 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
           </div>
 
           {/* Profile */}
-          <button onClick={() => onNavigate('profile', {}, true)} className="flex items-center gap-2 pl-1 pr-1 py-1 rounded-lg hover:bg-white/5 transition-colors">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-[10px] text-white font-bold overflow-hidden border border-white/10">
+          <button onClick={() => onNavigate('profile', {}, true)} className="flex items-center gap-2 pl-1 pr-1 py-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-[10px] text-white font-bold overflow-hidden border border-black/10 dark:border-white/10">
               {currentUser.avatar ? <img src={currentUser.avatar} className="w-full h-full object-cover" /> : initials(currentUser.name)}
             </div>
             <span className="text-sm font-medium hidden sm:inline">{currentUser.name.split(' ')[0]}</span>
@@ -175,37 +177,37 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
 
           {/* Settings */}
           <div className="relative" ref={settingsRef}>
-            <button onClick={toggleSettings} className="text-neutral-500 hover:text-white p-1 transition-colors relative flex items-center rounded-lg hover:bg-white/5">
+            <button onClick={toggleSettings} className="text-neutral-500 hover:text-neutral-900 dark:hover:text-white p-1 transition-colors relative flex items-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
               <Icon icon="mdi:cog-outline" className="text-xl" />
             </button>
             {settingsOpen && (
-              <div className="absolute right-0 top-full mt-2 w-52 bg-neutral-900/95 backdrop-blur-xl rounded-xl border border-white/10 shadow-2xl overflow-hidden z-[60]">
-                <div className="p-3 border-b border-white/5 bg-black/60">
-                  <span className="text-xs font-medium text-neutral-300">{t('nav.settings')}</span>
+              <div className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-neutral-900/95 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 shadow-xl dark:shadow-2xl overflow-hidden z-[60]">
+                <div className="p-3 border-b border-black/5 dark:border-white/5 bg-neutral-50 dark:bg-black/60">
+                  <span className="text-xs font-medium text-neutral-600 dark:text-neutral-300">{t('nav.settings')}</span>
                 </div>
-                <div className="p-2 flex flex-col gap-1 text-neutral-300">
+                <div className="p-2 flex flex-col gap-1 text-neutral-600 dark:text-neutral-300">
                   {/* Language selector */}
                   <div className="relative">
                     <button
                       onClick={() => setLangOpen(!langOpen)}
-                      className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-white/10 transition-colors text-sm hover:text-white"
+                      className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-sm hover:text-neutral-900 dark:hover:text-white"
                     >
                       <div className="flex items-center gap-2">
                         <Icon icon="mdi:translate" className="text-lg text-brand-400" />
                         {t('nav.language')}
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] text-neutral-500 bg-white/5 px-1.5 py-0.5 rounded">{currentLang.flag} {currentLang.code.toUpperCase()}</span>
-                        <Icon icon="mdi:chevron-right" className={`text-sm text-neutral-500 transition-transform ${langOpen ? 'rotate-90' : ''}`} />
+                        <span className="text-[10px] text-neutral-400 dark:text-neutral-500 bg-black/5 dark:bg-white/5 px-1.5 py-0.5 rounded">{currentLang.flag} {currentLang.code.toUpperCase()}</span>
+                        <Icon icon="mdi:chevron-right" className={`text-sm text-neutral-400 dark:text-neutral-500 transition-transform ${langOpen ? 'rotate-90' : ''}`} />
                       </div>
                     </button>
                     {langOpen && (
-                      <div className="mt-1 mx-1 bg-black/60 rounded-xl border border-white/5 overflow-hidden">
+                      <div className="mt-1 mx-1 bg-neutral-50 dark:bg-black/60 rounded-xl border border-black/5 dark:border-white/5 overflow-hidden">
                         {LANGUAGES.map(lang => (
                           <button
                             key={lang.code}
                             onClick={() => handleLangChange(lang.code)}
-                            className={`w-full flex items-center gap-3 px-3 py-2 text-xs transition-colors text-left ${i18n.language === lang.code ? 'text-white bg-white/10' : 'text-neutral-400 hover:text-white hover:bg-white/5'}`}
+                            className={`w-full flex items-center gap-3 px-3 py-2 text-xs transition-colors text-left ${i18n.language === lang.code ? 'text-neutral-900 dark:text-white bg-black/8 dark:bg-white/10' : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'}`}
                           >
                             <span className="text-sm">{lang.flag}</span>
                             <span className="font-medium">{lang.label}</span>
@@ -216,17 +218,20 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
                     )}
                   </div>
 
-                  <button className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-white/10 transition-colors text-sm hover:text-white">
+                  <button onClick={toggleTheme} className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-sm hover:text-neutral-900 dark:hover:text-white">
                     <div className="flex items-center gap-2">
-                      <Icon icon="mdi:weather-sunny" className="text-lg text-brand-400" />
-                      <span>{t('nav.lightMode')}</span>
+                      <Icon icon={theme === 'dark' ? 'mdi:weather-sunny' : 'mdi:weather-night'} className="text-lg text-brand-400" />
+                      <span>{theme === 'dark' ? t('nav.lightMode') : t('nav.darkMode')}</span>
+                    </div>
+                    <div className={`w-9 h-5 rounded-full transition-colors relative ${theme === 'dark' ? 'bg-neutral-300 dark:bg-neutral-700' : 'bg-brand-500'}`}>
+                      <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${theme === 'dark' ? 'left-0.5' : 'left-[18px]'}`} />
                     </div>
                   </button>
-                  <button className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-white/10 transition-colors text-left text-sm hover:text-white">
+                  <button className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-left text-sm hover:text-neutral-900 dark:hover:text-white">
                     <Icon icon="mdi:help-circle-outline" className="text-lg text-brand-400" /> {t('nav.help')}
                   </button>
-                  <div className="h-px w-full bg-white/10 my-1"></div>
-                  <button onClick={logout} className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-red-500/15 transition-colors text-left text-sm text-red-400 hover:text-red-300">
+                  <div className="h-px w-full bg-black/8 dark:bg-white/10 my-1"></div>
+                  <button onClick={logout} className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-red-500/10 transition-colors text-left text-sm text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300">
                     <Icon icon="mdi:logout" className="text-lg" /> {t('nav.logout')}
                   </button>
                 </div>

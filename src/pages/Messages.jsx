@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { DB, getUser, initials, uid } from '../services/db';
 import { Icon } from '@iconify/react';
-import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 function translateField(field, t) {
@@ -27,7 +26,7 @@ export default function Messages({ params, onNavigate }) {
     const refreshConvos = () => {
         const msgs = DB.get('messages');
         const userConvos = msgs.filter(m => m.from === currentUser?.id || m.to === currentUser?.id);
-        
+
         const uniqueUsers = new Set();
         userConvos.forEach(m => {
             uniqueUsers.add(m.from === currentUser?.id ? m.to : m.from);
@@ -41,66 +40,57 @@ export default function Messages({ params, onNavigate }) {
 
         if (params?.userId && !uniqueUsers.has(params.userId)) {
             const user = getUser(params.userId);
-            if (user) {
-                convos.unshift({ user, lastMsg: null });
-            }
+            if (user) convos.unshift({ user, lastMsg: null });
         }
         setConversations(convos);
     };
 
-    useEffect(() => {
-        refreshConvos();
-    }, [currentUser, params?.userId]);
+    useEffect(() => { refreshConvos(); }, [currentUser, params?.userId]);
 
     useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
+        if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }, [selectedUserId, conversations]);
 
     const selectedConvo = conversations.find(c => c.user.id === selectedUserId);
 
-    const chatMsgs = DB.get('messages').filter(m => 
-        (m.from === currentUser?.id && m.to === selectedUserId) || 
+    const chatMsgs = DB.get('messages').filter(m =>
+        (m.from === currentUser?.id && m.to === selectedUserId) ||
         (m.from === selectedUserId && m.to === currentUser?.id)
     ).sort((a, b) => a.ts - b.ts);
 
     const handleSend = () => {
         if (!msgText.trim() || !selectedUserId) return;
-
-        const allMsgs = DB.get('messages');
-        const newMsg = {
+        DB.set('messages', [...DB.get('messages'), {
             id: 'm_' + uid(),
             from: currentUser.id,
             to: selectedUserId,
             text: msgText.trim(),
             ts: Date.now()
-        };
-
-        DB.set('messages', [...allMsgs, newMsg]);
+        }]);
         setMsgText('');
         refreshConvos();
     };
 
-    const filteredConvos = conversations.filter(c => 
+    const filteredConvos = conversations.filter(c =>
         c.user.name.toLowerCase().includes(search.toLowerCase())
     );
 
     return (
         <div className="max-w-6xl mx-auto h-[calc(100vh-120px)] anim-up">
-            <div className="flex bg-[#000] border border-white/10 rounded-2xl overflow-hidden h-full shadow-2xl">
-                {/* Sidebar (Contacts) */}
-                <div className="w-80 border-r border-white/10 flex flex-col bg-[#000]">
-                    <div className="p-5 border-b border-white/10">
-                        <span className="text-xl font-bold text-white tracking-tight">{currentUser?.name}</span>
+            <div className="flex bg-white dark:bg-[#000] border border-black/10 dark:border-white/10 rounded-2xl overflow-hidden h-full shadow-xl dark:shadow-2xl">
+
+                {/* Sidebar */}
+                <div className="w-80 border-r border-black/8 dark:border-white/10 flex flex-col bg-white dark:bg-[#000]">
+                    <div className="p-5 border-b border-black/8 dark:border-white/10">
+                        <span className="text-xl font-bold text-neutral-900 dark:text-white tracking-tight">{currentUser?.name}</span>
                     </div>
 
                     <div className="p-4">
                         <div className="relative">
-                            <Icon icon="mdi:magnify" className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
-                            <input 
-                                className="w-full bg-[#121212] border-none rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-neutral-500 focus:ring-1 focus:ring-white/20 outline-none" 
-                                placeholder={t('messages.search')} 
+                            <Icon icon="mdi:magnify" className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" />
+                            <input
+                                className="w-full bg-neutral-100 dark:bg-[#121212] border-none rounded-lg pl-10 pr-4 py-2 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 focus:ring-1 focus:ring-black/10 dark:focus:ring-white/20 outline-none"
+                                placeholder={t('messages.search')}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                             />
@@ -109,37 +99,41 @@ export default function Messages({ params, onNavigate }) {
 
                     <div className="flex-1 overflow-y-auto">
                         <div className="px-5 py-2">
-                            <span className="text-sm font-bold text-white uppercase tracking-wider">{t('messages.title')}</span>
+                            <span className="text-sm font-bold text-neutral-900 dark:text-white uppercase tracking-wider">{t('messages.title')}</span>
                         </div>
                         {filteredConvos.length > 0 ? (
                             filteredConvos.map((c, i) => (
-                                <div 
-                                    key={i} 
+                                <div
+                                    key={i}
                                     onClick={() => setSelectedUserId(c.user.id)}
-                                    className={`px-5 py-3 flex items-center gap-4 hover:bg-[#121212] cursor-pointer transition-colors ${selectedUserId === c.user.id ? 'bg-[#121212]' : ''}`}
+                                    className={`px-5 py-3 flex items-center gap-4 cursor-pointer transition-colors ${
+                                        selectedUserId === c.user.id
+                                            ? 'bg-neutral-100 dark:bg-[#121212]'
+                                            : 'hover:bg-neutral-50 dark:hover:bg-[#121212]'
+                                    }`}
                                 >
                                     <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${c.user.grad} p-[2px] shrink-0`}>
-                                        <div className="w-full h-full rounded-full bg-black p-[2px]">
+                                        <div className="w-full h-full rounded-full bg-white dark:bg-black p-[2px]">
                                             {c.user.avatar ? (
                                                 <img src={c.user.avatar} className="w-full h-full object-cover rounded-full" />
                                             ) : (
-                                                <div className="w-full h-full rounded-full bg-neutral-800 flex items-center justify-center text-xs font-bold text-white">
+                                                <div className="w-full h-full rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-xs font-bold text-neutral-700 dark:text-white">
                                                     {initials(c.user.name)}
                                                 </div>
                                             )}
                                         </div>
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                        <h4 className="text-sm font-medium text-white truncate">{c.user.name}</h4>
+                                        <h4 className="text-sm font-medium text-neutral-900 dark:text-white truncate">{c.user.name}</h4>
                                         <p className="text-xs text-neutral-500 truncate mt-0.5">
                                             {c.lastMsg?.from === currentUser.id ? t('messages.you') : ''}{c.lastMsg?.text || t('messages.startTyping')}
                                         </p>
                                     </div>
-                                    {!c.lastMsg && <div className="w-2 h-2 bg-brand-500 rounded-full"></div>}
+                                    {!c.lastMsg && <div className="w-2 h-2 bg-brand-500 rounded-full shrink-0"></div>}
                                 </div>
                             ))
                         ) : (
-                            <div className="p-10 text-center text-neutral-600">
+                            <div className="p-10 text-center text-neutral-400 dark:text-neutral-600">
                                 <p className="text-xs font-medium uppercase tracking-widest leading-loose">{t('messages.noConversations')}</p>
                             </div>
                         )}
@@ -148,36 +142,45 @@ export default function Messages({ params, onNavigate }) {
 
                 {/* Chat Window */}
                 {selectedConvo ? (
-                    <div className="flex-1 flex flex-col bg-[#000]">
+                    <div className="flex-1 flex flex-col bg-white dark:bg-[#000]">
                         {/* Header */}
-                        <div className="h-16 border-b border-white/10 flex items-center justify-between px-6 bg-[#000]">
+                        <div className="h-16 border-b border-black/8 dark:border-white/10 flex items-center justify-between px-6">
                             <div className="flex items-center gap-3">
                                 <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${selectedConvo.user.grad} flex items-center justify-center text-[10px] font-bold shadow-lg`}>
-                                    {selectedConvo.user.avatar ? <img src={selectedConvo.user.avatar} className="w-full h-full object-cover rounded-full" /> : initials(selectedConvo.user.name)}
+                                    {selectedConvo.user.avatar
+                                        ? <img src={selectedConvo.user.avatar} className="w-full h-full object-cover rounded-full" />
+                                        : initials(selectedConvo.user.name)}
                                 </div>
                                 <div>
-                                    <h4 className="text-sm font-bold text-white leading-none">{selectedConvo.user.name}</h4>
+                                    <h4 className="text-sm font-bold text-neutral-900 dark:text-white leading-none">{selectedConvo.user.name}</h4>
                                     <p className="text-[10px] text-neutral-500 mt-1 font-medium">{t('messages.active')}</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-5 text-white">
-                                <button className="hover:opacity-60 transition-opacity"><Icon icon="mdi:information-outline" className="text-2xl" /></button>
+                            <div className="flex items-center gap-5 text-neutral-500 dark:text-white">
+                                <button className="hover:opacity-60 transition-opacity">
+                                    <Icon icon="mdi:information-outline" className="text-2xl" />
+                                </button>
                             </div>
                         </div>
 
                         {/* Messages */}
                         <div className="flex-1 overflow-y-auto p-6 space-y-4 flex flex-col scroll-smooth" ref={scrollRef}>
+                            {/* Profile header in chat */}
                             <div className="flex flex-col items-center mb-8">
                                 <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${selectedConvo.user.grad} p-1 mb-3`}>
-                                   <div className="w-full h-full rounded-full bg-black p-1">
-                                        {selectedConvo.user.avatar ? <img src={selectedConvo.user.avatar} className="w-full h-full object-cover rounded-full" /> : <div className="w-full h-full flex items-center justify-center text-xl font-bold">{initials(selectedConvo.user.name)}</div>}
-                                   </div>
+                                    <div className="w-full h-full rounded-full bg-white dark:bg-black p-1">
+                                        {selectedConvo.user.avatar
+                                            ? <img src={selectedConvo.user.avatar} className="w-full h-full object-cover rounded-full" />
+                                            : <div className="w-full h-full flex items-center justify-center text-xl font-bold text-neutral-700 dark:text-white">{initials(selectedConvo.user.name)}</div>}
+                                    </div>
                                 </div>
-                                <h3 className="text-lg font-bold text-white">{selectedConvo.user.name}</h3>
-                                <p className="text-[11px] text-neutral-500 mt-1 tracking-wider uppercase font-bold">{translateField(selectedConvo.user.field, t)} · {selectedConvo.user.university}</p>
-                                <button 
+                                <h3 className="text-lg font-bold text-neutral-900 dark:text-white">{selectedConvo.user.name}</h3>
+                                <p className="text-[11px] text-neutral-500 mt-1 tracking-wider uppercase font-bold">
+                                    {translateField(selectedConvo.user.field, t)} · {selectedConvo.user.university}
+                                </p>
+                                <button
                                     onClick={() => onNavigate('profile', { userId: selectedConvo.user.id })}
-                                    className="mt-4 px-4 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-bold rounded-lg transition-colors"
+                                    className="mt-4 px-4 py-1.5 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-700 dark:text-white text-xs font-bold rounded-lg transition-colors"
                                 >
                                     {t('messages.viewProfile')}
                                 </button>
@@ -190,11 +193,13 @@ export default function Messages({ params, onNavigate }) {
                                 return (
                                     <div key={m.id || i} className={`flex items-end gap-2 ${isMe ? 'justify-end' : 'justify-start'}`}>
                                         {!isMe && (
-                                            <div className="w-6 h-6 rounded-full overflow-hidden mb-1">
+                                            <div className="w-6 h-6 rounded-full overflow-hidden mb-1 shrink-0">
                                                 {selectedConvo.user.avatar ? (
                                                     <img src={selectedConvo.user.avatar} className="w-full h-full object-cover" />
                                                 ) : (
-                                                    <div className={`w-full h-full bg-gradient-to-br ${selectedConvo.user.grad} flex items-center justify-center text-[8px] font-bold`}>{initials(selectedConvo.user.name)}</div>
+                                                    <div className={`w-full h-full bg-gradient-to-br ${selectedConvo.user.grad} flex items-center justify-center text-[8px] font-bold`}>
+                                                        {initials(selectedConvo.user.name)}
+                                                    </div>
                                                 )}
                                             </div>
                                         )}
@@ -202,13 +207,13 @@ export default function Messages({ params, onNavigate }) {
                                             <div className={`ig-bubble ${isMe ? 'ig-bubble-me' : 'ig-bubble-them'}`}>
                                                 {m.text}
                                             </div>
-                                            
+
                                             {sharedPost && (
-                                                <div 
+                                                <div
                                                     onClick={() => onNavigate('dashboard', { postId: sharedPost.id })}
-                                                    className={`cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-[#121212] transition-all hover:border-white/20 active:scale-95 group ${isMe ? 'self-end' : 'self-start'}`}
+                                                    className={`cursor-pointer overflow-hidden rounded-2xl border border-black/8 dark:border-white/10 bg-neutral-50 dark:bg-[#121212] transition-all hover:border-black/15 dark:hover:border-white/20 active:scale-95 group ${isMe ? 'self-end' : 'self-start'}`}
                                                 >
-                                                    <div className="aspect-video relative overflow-hidden bg-neutral-900 border-b border-white/5">
+                                                    <div className="aspect-video relative overflow-hidden bg-neutral-100 dark:bg-neutral-900 border-b border-black/5 dark:border-white/5">
                                                         {sharedPost.image ? (
                                                             <img src={sharedPost.image} className="w-full h-full object-cover" alt="Shared Post" />
                                                         ) : (
@@ -229,9 +234,9 @@ export default function Messages({ params, onNavigate }) {
                                                             <div className={`w-4 h-4 rounded-full bg-gradient-to-br ${getUser(sharedPost.authorId)?.grad} flex items-center justify-center text-[6px] font-black text-white`}>
                                                                 {initials(getUser(sharedPost.authorId)?.name)}
                                                             </div>
-                                                            <span className="text-[9px] font-bold text-neutral-400">{getUser(sharedPost.authorId)?.name}</span>
+                                                            <span className="text-[9px] font-bold text-neutral-500 dark:text-neutral-400">{getUser(sharedPost.authorId)?.name}</span>
                                                         </div>
-                                                        <p className="text-[11px] text-neutral-300 line-clamp-2 leading-relaxed">{sharedPost.caption}</p>
+                                                        <p className="text-[11px] text-neutral-600 dark:text-neutral-300 line-clamp-2 leading-relaxed">{sharedPost.caption}</p>
                                                     </div>
                                                 </div>
                                             )}
@@ -241,26 +246,28 @@ export default function Messages({ params, onNavigate }) {
                             })}
                         </div>
 
-                        {/* Footer / Input */}
+                        {/* Input */}
                         <div className="p-4">
-                            <div className="ig-input-pill group focus-within:ring-1 focus-within:ring-white/10">
-                                <button className="text-white hover:opacity-70"><Icon icon="mdi:emoticon-outline" className="text-2xl" /></button>
-                                <input 
-                                    className="flex-1 bg-transparent border-none text-sm text-white placeholder-neutral-500 py-3 outline-none" 
-                                    placeholder={t('messages.messagePlaceholder')} 
+                            <div className="ig-input-pill group">
+                                <button className="text-neutral-500 dark:text-white hover:opacity-70">
+                                    <Icon icon="mdi:emoticon-outline" className="text-2xl" />
+                                </button>
+                                <input
+                                    className="flex-1 bg-transparent border-none text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 py-3 outline-none"
+                                    placeholder={t('messages.messagePlaceholder')}
                                     value={msgText}
                                     onChange={(e) => setMsgText(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                                 />
                                 {msgText.trim() ? (
-                                    <button 
+                                    <button
                                         onClick={handleSend}
-                                        className="text-brand-400 font-bold text-sm hover:text-white transition-colors px-2"
+                                        className="text-brand-500 font-bold text-sm hover:text-brand-600 transition-colors px-2"
                                     >
                                         {t('messages.send')}
                                     </button>
                                 ) : (
-                                    <div className="flex items-center gap-4 text-white">
+                                    <div className="flex items-center gap-4 text-neutral-500 dark:text-white">
                                         <button className="hover:opacity-70 transition-opacity"><Icon icon="mdi:microphone-outline" className="text-2xl" /></button>
                                         <button className="hover:opacity-70 transition-opacity"><Icon icon="mdi:image-outline" className="text-2xl" /></button>
                                     </div>
@@ -269,11 +276,12 @@ export default function Messages({ params, onNavigate }) {
                         </div>
                     </div>
                 ) : (
+                    /* Empty state */
                     <div className="flex-1 flex flex-col items-center justify-center text-center p-10">
-                        <div className="w-24 h-24 rounded-full border-2 border-white flex items-center justify-center mb-6">
-                            <Icon icon="mdi:chat-processing-outline" className="text-5xl text-white" />
+                        <div className="w-24 h-24 rounded-full border-2 border-neutral-200 dark:border-white flex items-center justify-center mb-6">
+                            <Icon icon="mdi:chat-processing-outline" className="text-5xl text-neutral-400 dark:text-white" />
                         </div>
-                        <h2 className="text-xl font-bold text-white mb-2">{t('messages.emptyTitle')}</h2>
+                        <h2 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">{t('messages.emptyTitle')}</h2>
                         <p className="text-sm text-neutral-500 max-w-xs">{t('messages.emptyDesc')}</p>
                     </div>
                 )}
