@@ -139,9 +139,21 @@
       "apply": "Başvur",
       "applied": "Başvuruldu",
       "applications": "Başvurular",
+      "applicantsCount": "{{count}} başvuru",
       "makeActive": "Aktif Et",
       "markComplete": "Tamamla",
-      "delete": "Projeyi Sil"
+      "delete": "Projeyi Sil",
+      "rolesNeeded": "Aranan Roller",
+      "rolesPlaceholder": "Tasarımcı, Geliştirici, Pazarlamacı",
+      "rolesHint": "Virgülle ayırın",
+      "accept": "Kabul Et",
+      "reject": "Reddet",
+      "accepted": "Kabul Edildi",
+      "rejected": "Reddedildi",
+      "pending": "Beklemede",
+      "viewAuthor": "Profile Bak",
+      "noApplicants": "Henüz başvuru yok",
+      "createdAt": "Oluşturuldu"
     }
   },
   "messages": {
@@ -230,6 +242,9 @@
     "skillsLabel": "Gerekli Beceriler",
     "skillsPlaceholder": "React, UI/UX, Node.js",
     "skillsHint": "Virgülle ayırın",
+    "rolesLabel": "Aranan Roller",
+    "rolesPlaceholder": "Tasarımcı, Geliştirici, Pazarlamacı",
+    "rolesHint": "Virgülle ayırın",
     "teamLabel": "Ekip Büyüklüğü",
     "colorLabel": "Proje Rengi",
     "cancel": "İptal",

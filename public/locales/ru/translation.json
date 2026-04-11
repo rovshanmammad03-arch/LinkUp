@@ -139,9 +139,21 @@
       "apply": "Подать заявку",
       "applied": "Заявка подана",
       "applications": "Заявки",
+      "applicantsCount": "{{count}} заявок",
       "makeActive": "Сделать активным",
       "markComplete": "Завершить",
-      "delete": "Удалить проект"
+      "delete": "Удалить проект",
+      "rolesNeeded": "Нужные роли",
+      "rolesPlaceholder": "Дизайнер, Разработчик, Маркетолог",
+      "rolesHint": "Разделяйте запятыми",
+      "accept": "Принять",
+      "reject": "Отклонить",
+      "accepted": "Принято",
+      "rejected": "Отклонено",
+      "pending": "Ожидание",
+      "viewAuthor": "Посмотреть профиль",
+      "noApplicants": "Заявок пока нет",
+      "createdAt": "Создано"
     }
   },
   "messages": {
@@ -230,6 +242,9 @@
     "skillsLabel": "Необходимые навыки",
     "skillsPlaceholder": "React, UI/UX, Node.js",
     "skillsHint": "Разделяйте запятыми",
+    "rolesLabel": "Нужные роли",
+    "rolesPlaceholder": "Дизайнер, Разработчик, Маркетолог",
+    "rolesHint": "Разделяйте запятыми",
     "teamLabel": "Размер команды",
     "colorLabel": "Цвет проекта",
     "cancel": "Отмена",

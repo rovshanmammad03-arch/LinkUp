@@ -12,6 +12,7 @@ import Messages from './pages/Messages';
 import Notifications from './pages/Notifications';
 import NewPostModal from './components/feed/NewPostModal';
 import OnboardingModal from './components/onboarding/OnboardingModal';
+import NewProject from './pages/NewProject';
 
 function AppContent() {
     const { currentUser, loading } = useAuth();
@@ -71,6 +72,7 @@ function AppContent() {
             case 'profile': return <Profile onNavigate={handleNavigate} params={routeParams} />;
             case 'messages': return <Messages onNavigate={handleNavigate} params={routeParams} />;
             case 'notifications': return <Notifications onNavigate={handleNavigate} />;
+            case 'new-project': return <NewProject onNavigate={handleNavigate} params={routeParams} />;
             case 'new-post': return (
                 <>
                     <Dashboard onNavigate={handleNavigate} />

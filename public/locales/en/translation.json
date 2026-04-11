@@ -139,9 +139,21 @@
       "apply": "Apply",
       "applied": "Applied",
       "applications": "Applications",
+      "applicantsCount": "{{count}} applicants",
       "makeActive": "Make Active",
       "markComplete": "Mark Complete",
-      "delete": "Delete Project"
+      "delete": "Delete Project",
+      "rolesNeeded": "Roles Needed",
+      "rolesPlaceholder": "Designer, Developer, Marketer",
+      "rolesHint": "Separate with commas",
+      "accept": "Accept",
+      "reject": "Reject",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "pending": "Pending",
+      "viewAuthor": "View Profile",
+      "noApplicants": "No applicants yet",
+      "createdAt": "Created"
     }
   },
   "messages": {
@@ -230,6 +242,9 @@
     "skillsLabel": "Required Skills",
     "skillsPlaceholder": "React, UI/UX, Node.js",
     "skillsHint": "Separate with commas",
+    "rolesLabel": "Roles Needed",
+    "rolesPlaceholder": "Designer, Developer, Marketer",
+    "rolesHint": "Separate with commas",
     "teamLabel": "Team Size",
     "colorLabel": "Project Color",
     "cancel": "Cancel",

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { DB, getUser, initials, addNotification } from '../services/db';
 import { Icon } from '@iconify/react';
-import NewProjectModal from '../components/discover/NewProjectModal';
 import ProjectApplicantsModal from '../components/discover/ProjectApplicantsModal';
 import ConfirmModal from '../components/common/ConfirmModal';
 import { useScrollLock } from '../hooks/useScrollLock';
@@ -36,7 +35,6 @@ export default function Discover({ onNavigate }) {
     const [search, setSearch] = useState('');
     const [isSortOpen, setIsSortOpen] = useState(false);
     const [sortBy, setSortBy] = useState('newest');
-    const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
     const [selectedApplicantsProject, setSelectedApplicantsProject] = useState(null);
     const [openOptionsId, setOpenOptionsId] = useState(null);
     const [projectToDeleteId, setProjectToDeleteId] = useState(null);
@@ -46,7 +44,7 @@ export default function Discover({ onNavigate }) {
     const [isLevelOpen, setIsLevelOpen] = useState(false);
     const [isFieldOpen, setIsFieldOpen] = useState(false);
 
-    useScrollLock(isNewProjectModalOpen || !!selectedApplicantsProject || !!projectToDeleteId);
+    useScrollLock(!!selectedApplicantsProject || !!projectToDeleteId);
 
     useEffect(() => {
         setUsers(DB.get('users').filter(u => u.id !== currentUser?.id));
@@ -100,11 +98,25 @@ export default function Discover({ onNavigate }) {
         if (pIdx === -1) return;
 
         if (!allProjects[pIdx].applicants) allProjects[pIdx].applicants = [];
-        if (allProjects[pIdx].applicants.includes(currentUser.id)) return;
+        
+        // Support both old (string[]) and new (object[]) applicant format
+        const alreadyApplied = allProjects[pIdx].applicants.some(a => 
+            (typeof a === 'object' ? a.id : a) === currentUser.id
+        );
+        if (alreadyApplied) return;
 
-        allProjects[pIdx].applicants.push(currentUser.id);
+        allProjects[pIdx].applicants.push({ id: currentUser.id, status: 'pending' });
         DB.set('projects', allProjects);
         setProjects(allProjects);
+
+        addNotification({
+            toUserId: allProjects[pIdx].authorId,
+            fromUserId: currentUser.id,
+            type: 'project_apply',
+            text: `"${allProjects[pIdx].title}" layihənizə müraciət etdi`,
+            route: 'discover',
+            routeParams: {},
+        });
     };
 
     const handleDeleteProject = (projectId) => {
@@ -168,8 +180,24 @@ export default function Discover({ onNavigate }) {
         }
     };
 
+    const formatDate = (ts) => {
+        if (!ts) return '';
+        const d = new Date(ts);
+        return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+    };
+
+    const getApplicantCount = (applicants) => {
+        return (applicants || []).length;
+    };
+
+    const hasApplied = (applicants) => {
+        if (!currentUser || !applicants) return false;
+        return applicants.some(a => (typeof a === 'object' ? a.id : a) === currentUser.id);
+    };
+
     return (
-        <div className="max-w-7xl mx-auto px-6 anim-up">
+        <>
+            <div className="max-w-7xl mx-auto px-6 anim-up">
             {/* Header Section */}
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-6">
                 <div>
@@ -235,7 +263,7 @@ export default function Discover({ onNavigate }) {
                         </div>
                     ) : (
                         <button 
-                            onClick={() => setIsNewProjectModalOpen(true)}
+                            onClick={() => onNavigate('new-project')}
                             className="flex items-center gap-2 px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-brand-500/20 active:scale-95 anim-up"
                         >
                             <Icon icon="mdi:plus" className="text-lg" /> {t('discover.createProject')}
@@ -380,6 +408,10 @@ export default function Discover({ onNavigate }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                     {filteredProjects.map((p, i) => {
                         const author = getUser(p.authorId);
+                        const applicantCount = getApplicantCount(p.applicants);
+                        const alreadyApplied = hasApplied(p.applicants);
+                        const isOwner = p.authorId === currentUser?.id;
+
                         return (
                             <div key={p.id} className="bg-white dark:bg-[#111]/60 backdrop-blur-xl border border-black/8 dark:border-white/5 rounded-[32px] p-7 group hover:border-black/15 dark:hover:border-white/10 transition-all anim-up shadow-sm dark:shadow-2xl flex flex-col" style={{ animationDelay: `${i * 0.05}s` }}>
                                 <div className="flex items-start justify-between mb-6">
@@ -389,9 +421,20 @@ export default function Discover({ onNavigate }) {
                                         </div>
                                         <div className="min-w-0">
                                             <h3 className="text-lg font-bold text-neutral-900 dark:text-white mb-1 leading-tight group-hover:text-brand-500 dark:group-hover:text-brand-300 transition-colors">{p.title}</h3>
-                                            <p className="text-[11px] text-neutral-500 font-medium">
-                                                {author?.name} · {p.team}
-                                            </p>
+                                            <div className="flex items-center gap-1.5 text-[11px] text-neutral-500 font-medium">
+                                                <button
+                                                    onClick={() => onNavigate('profile', { userId: p.authorId })}
+                                                    className="hover:text-brand-500 dark:hover:text-brand-400 transition-colors underline-offset-2 hover:underline"
+                                                >
+                                                    {author?.name}
+                                                </button>
+                                                {p.projectType && (
+                                                    <>
+                                                        <span>·</span>
+                                                        <span>{p.projectType}</span>
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                     <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${p.status === 'completed' ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10' : 'text-brand-600 dark:text-brand-400 bg-brand-400/10'}`}>
@@ -399,19 +442,66 @@ export default function Discover({ onNavigate }) {
                                     </span>
                                 </div>
                                 
-                                <p className="text-[13px] text-neutral-500 dark:text-neutral-400 font-light leading-relaxed mb-6 line-clamp-2 h-10">
+                                <p className="text-[13px] text-neutral-500 dark:text-neutral-400 font-light leading-relaxed mb-4 line-clamp-2 h-10">
                                     {p.desc}
                                 </p>
+
+                                <div className="flex flex-wrap gap-2 mb-4">
+                                    {p.stage && (
+                                        <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[10px] font-bold text-amber-600 dark:text-amber-500 flex items-center gap-1.5 tracking-wide">
+                                            <Icon icon="mdi:target" className="text-xs" />
+                                            {p.stage}
+                                        </span>
+                                    )}
+                                    {p.documentUrl && (
+                                        <a 
+                                            href={p.documentUrl.startsWith('http') ? p.documentUrl : `https://${p.documentUrl}`} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-xl text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-colors flex items-center gap-1.5 tracking-wide"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <Icon icon="mdi:link-variant" className="text-xs" />
+                                            {t('discover.project.document', 'Sənəd Linki')}
+                                        </a>
+                                    )}
+                                    {p.documentFile && (
+                                        <a 
+                                            href={p.documentFile.data} 
+                                            download={p.documentFile.name}
+                                            className="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition-colors flex items-center gap-1.5 tracking-wide max-w-[150px] truncate"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <Icon icon="mdi:download" className="text-xs shrink-0" />
+                                            <span className="truncate">{p.documentFile.name}</span>
+                                        </a>
+                                    )}
+                                </div>
                                 
-                                <div className="flex flex-wrap gap-2 mb-8">
+                                {/* Skills */}
+                                <div className="flex flex-wrap gap-2 mb-5">
                                     {p.skills?.slice(0, 3).map((sk, si) => (
                                         <span key={si} className="px-3 py-1.5 bg-neutral-100 dark:bg-black/40 border border-black/5 dark:border-white/5 rounded-xl text-[10px] font-semibold text-neutral-500 group-hover:text-neutral-700 dark:group-hover:text-neutral-300 transition-colors">{sk}</span>
                                     ))}
                                 </div>
 
+                                {/* Meta: applicant count + date */}
+                                <div className="flex items-center gap-4 mb-4 text-[11px] text-neutral-400">
+                                    <span className="flex items-center gap-1">
+                                        <Icon icon="mdi:account-group-outline" className="text-sm" />
+                                        {t('discover.project.applicantsCount', { count: applicantCount })}
+                                    </span>
+                                    {p.createdAt && (
+                                        <span className="flex items-center gap-1">
+                                            <Icon icon="mdi:calendar-outline" className="text-sm" />
+                                            {formatDate(p.createdAt)}
+                                        </span>
+                                    )}
+                                </div>
+
                                 <div className="flex items-center justify-end mt-auto pt-4 border-t border-black/8 dark:border-white/5 relative">
-                                    {p.authorId === currentUser?.id ? (
-                                        <div className="flex items-center gap-4">
+                                    {isOwner ? (
+                                        <div className="flex items-center gap-4 w-full justify-between">
                                             <div className="relative">
                                                 <button 
                                                     onClick={() => setOpenOptionsId(openOptionsId === p.id ? null : p.id)}
@@ -424,6 +514,13 @@ export default function Discover({ onNavigate }) {
                                                     <>
                                                         <div className="fixed inset-0 z-40" onClick={() => setOpenOptionsId(null)} />
                                                         <div className="absolute bottom-full right-0 mb-2 w-48 bg-white dark:bg-[#0a0a0a] border border-black/8 dark:border-white/10 rounded-2xl shadow-xl dark:shadow-2xl py-2 z-50 anim-up overflow-hidden">
+                                                            <button 
+                                                                onClick={() => { onNavigate('new-project', { projectId: p.id }); setOpenOptionsId(null); }}
+                                                                className="w-full px-4 py-2.5 flex items-center gap-3 text-xs font-bold text-brand-500 dark:text-brand-400 hover:bg-brand-500/10 transition-all text-left"
+                                                            >
+                                                                <Icon icon="mdi:pencil-outline" className="text-lg" />
+                                                                {t('discover.project.edit', 'Redaktə et')}
+                                                            </button>
                                                             <button 
                                                                 onClick={() => handleToggleStatus(p.id)}
                                                                 className="w-full px-4 py-2.5 flex items-center gap-3 text-xs font-bold text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all text-left"
@@ -444,17 +541,31 @@ export default function Discover({ onNavigate }) {
                                             </div>
                                             <button 
                                                 onClick={() => setSelectedApplicantsProject(p)}
-                                                className="px-6 py-2 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-neutral-700 dark:text-white rounded-xl text-xs font-bold transition-all active:scale-95"
+                                                className="flex items-center gap-2 px-5 py-2.5 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-neutral-700 dark:text-white rounded-2xl text-[11px] font-bold transition-all active:scale-95 uppercase tracking-wider"
                                             >
-                                                {t('discover.project.applications')} ({p.applicants?.length || 0})
+                                                <Icon icon="mdi:account-group-outline" className="text-base" />
+                                                {t('discover.project.applications')}
+                                                {applicantCount > 0 && (
+                                                    <span className="bg-brand-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                                                        {applicantCount}
+                                                    </span>
+                                                )}
                                             </button>
                                         </div>
                                     ) : (
-                                        <button 
+                                        <button
                                             onClick={() => handleApply(p.id)}
-                                            className={`px-8 py-2.5 rounded-xl text-xs font-bold transition-all shadow-lg active:scale-95 ${p.applicants?.includes(currentUser?.id) ? 'bg-black/8 dark:bg-white/10 text-neutral-400 dark:text-neutral-500 cursor-default' : 'bg-brand-500 hover:bg-brand-600 text-white shadow-brand-500/20'}`}
+                                            disabled={alreadyApplied || p.status === 'completed'}
+                                            className={`flex items-center gap-2 px-6 py-2.5 rounded-2xl text-[11px] font-bold transition-all active:scale-95 uppercase tracking-wider ${
+                                                alreadyApplied
+                                                    ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 cursor-default'
+                                                    : p.status === 'completed'
+                                                    ? 'bg-black/5 dark:bg-white/5 text-neutral-400 cursor-not-allowed'
+                                                    : 'bg-brand-500 hover:bg-brand-600 text-white shadow-lg shadow-brand-500/20'
+                                            }`}
                                         >
-                                            {p.applicants?.includes(currentUser?.id) ? t('discover.project.applied') : t('discover.project.apply')}
+                                            <Icon icon={alreadyApplied ? "mdi:check-circle-outline" : "mdi:send-outline"} className="text-base" />
+                                            {alreadyApplied ? t('discover.project.applied') : t('discover.project.apply')}
                                         </button>
                                     )}
                                 </div>
@@ -463,21 +574,17 @@ export default function Discover({ onNavigate }) {
                     })}
                 </div>
             )}
-
-            {isNewProjectModalOpen && (
-                <NewProjectModal 
-                    onClose={() => setIsNewProjectModalOpen(false)}
-                    onProjectCreated={() => {
-                        setProjects(DB.get('projects'));
-                    }}
-                />
-            )}
+            </div>
 
             {selectedApplicantsProject && (
                 <ProjectApplicantsModal 
                     project={selectedApplicantsProject}
                     onClose={() => setSelectedApplicantsProject(null)}
                     onNavigate={onNavigate}
+                    onProjectUpdated={(updatedProject) => {
+                        setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+                        setSelectedApplicantsProject(updatedProject);
+                    }}
                 />
             )}
 
@@ -491,6 +598,6 @@ export default function Discover({ onNavigate }) {
                     onCancel={() => setProjectToDeleteId(null)}
                 />
             )}
-        </div>
+        </>
     );
 }
