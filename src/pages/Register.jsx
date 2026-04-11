@@ -4,7 +4,7 @@ import { Icon } from '@iconify/react';
 import { DB, uid, GRADIENTS } from '../services/db';
 import { useTranslation } from 'react-i18next';
 
-export default function Register({ onNavigate }) {
+export default function Register({ onNavigate, onRegisterDone }) {
     const { setCurrentUser } = useAuth();
     const { t } = useTranslation();
     const [name, setName] = useState('');
@@ -47,7 +47,11 @@ export default function Register({ onNavigate }) {
         DB.set('users', users);
         DB.setOne('session', { userId: newUser.id });
         setCurrentUser(newUser);
-        onNavigate('dashboard');
+        if (onRegisterDone) {
+            onRegisterDone();
+        } else {
+            onNavigate('dashboard');
+        }
     };
 
     return (

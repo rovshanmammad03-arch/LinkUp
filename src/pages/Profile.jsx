@@ -298,7 +298,11 @@ export default function Profile({ params, onNavigate }) {
                                 </button>
                                 <button
                                     onClick={() => handleFollow()}
-                                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-xl ${isFollowing ? 'bg-black/10 dark:bg-white/10 text-neutral-900 dark:text-white border border-black/10 dark:border-white/10' : 'bg-brand-500 text-white'}`}
+                                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-xl ${
+                                        isFollowing
+                                            ? 'bg-neutral-800 text-white border border-white/10 hover:bg-red-600 hover:border-red-500'
+                                            : 'bg-brand-500 text-white hover:bg-brand-400'
+                                    }`}
                                 >
                                     <Icon icon={isFollowing ? "mdi:account-check" : "mdi:account-plus"} className="text-lg" />
                                     {isFollowing ? t('profile.followingStatus') : t('profile.follow')}
@@ -400,14 +404,16 @@ export default function Profile({ params, onNavigate }) {
                             {t('profile.posts')}
                             {tab === 'posts' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" />}
                         </button>
-                        <button
-                            onClick={() => setTab('liked')}
-                            className={`pb-4 text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-2 transition-all relative ${tab === 'liked' ? 'text-neutral-900 dark:text-white' : 'text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'}`}
-                        >
-                            <Icon icon="mdi:heart-outline" className={tab === 'liked' ? 'text-rose-500' : ''} />
-                            {t('profile.liked')}
-                            {tab === 'liked' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" />}
-                        </button>
+                        {isOwnProfile && (
+                            <button
+                                onClick={() => setTab('liked')}
+                                className={`pb-4 text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-2 transition-all relative ${tab === 'liked' ? 'text-neutral-900 dark:text-white' : 'text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'}`}
+                            >
+                                <Icon icon="mdi:heart-outline" className={tab === 'liked' ? 'text-rose-500' : ''} />
+                                {t('profile.liked')}
+                                {tab === 'liked' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" />}
+                            </button>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 anim-up">

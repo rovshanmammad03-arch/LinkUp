@@ -19,11 +19,18 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  const [notifs, setNotifs] = useState([]);
 
   const currentLang = LANGUAGES.find(l => l.code === i18n.language) || LANGUAGES[0];
 
   const settingsRef = useRef(null);
   const notifRef = useRef(null);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    const all = (() => { try { return JSON.parse(localStorage.getItem('lu_notifications')) || []; } catch(e) { return []; } })();
+    setNotifs(all.filter(n => n.toUserId === currentUser.id));
+  }, [currentUser, notifOpen, currentRoute]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -149,7 +156,9 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
           <div className="relative" ref={notifRef}>
             <button onClick={toggleNotif} className="text-neutral-500 hover:text-neutral-900 dark:hover:text-white p-2 transition-colors relative flex items-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
               <Icon icon="mdi:bell-outline" className="text-xl" />
-              <span className="notif-dot hidden"></span>
+              {notifs.filter(n => !n.read).length > 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              )}
             </button>
             {notifOpen && (
               <div className="absolute right-0 top-full mt-2 w-80 max-w-[90vw] bg-white dark:bg-neutral-900 rounded-xl border border-black/10 dark:border-white/10 shadow-xl dark:shadow-2xl overflow-hidden z-[60]">
@@ -160,8 +169,32 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
                     className="text-[10px] text-brand-500 dark:text-brand-400 hover:text-brand-600 dark:hover:text-brand-300 transition-colors"
                   >{t('nav.viewAll')}</button>
                 </div>
-                <div className="max-h-80 overflow-y-auto p-4 text-center text-xs text-neutral-400 dark:text-neutral-500">
-                  {t('nav.noNotifications')}
+                <div className="max-h-80 overflow-y-auto">
+                  {notifs.length === 0 ? (
+                    <div className="p-4 text-center text-xs text-neutral-400 dark:text-neutral-500">{t('nav.noNotifications')}</div>
+                  ) : (
+                    notifs.slice(0, 5).map(n => {
+                      const sender = (() => { try { return (JSON.parse(localStorage.getItem('lu_users')) || []).find(u => u.id === n.fromUserId); } catch(e) { return null; } })();
+                      return (
+                        <div
+                          key={n.id}
+                          onClick={() => { setNotifOpen(false); onNavigate('notifications'); }}
+                          className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors ${!n.read ? 'bg-brand-500/5' : ''}`}
+                        >
+                          <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${sender?.grad || 'from-brand-500 to-purple-500'} flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden`}>
+                            {sender?.avatar ? <img src={sender.avatar} className="w-full h-full object-cover" /> : (sender?.name?.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase() || '?')}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs text-neutral-800 dark:text-neutral-200 leading-snug">
+                              <span className="font-semibold">{sender?.name}</span> {n.text}
+                            </p>
+                            <p className="text-[10px] text-neutral-400 mt-0.5">{(() => { const m = Math.floor((Date.now()-n.ts)/60000); return m < 1 ? 'İndi' : m < 60 ? m+' dəq' : Math.floor(m/60)+' saat'; })()}</p>
+                          </div>
+                          {!n.read && <div className="w-1.5 h-1.5 bg-brand-500 rounded-full shrink-0"></div>}
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </div>
             )}

@@ -11,6 +11,7 @@ import Profile from './pages/Profile';
 import Messages from './pages/Messages';
 import Notifications from './pages/Notifications';
 import NewPostModal from './components/feed/NewPostModal';
+import OnboardingModal from './components/onboarding/OnboardingModal';
 
 function AppContent() {
     const { currentUser, loading } = useAuth();
@@ -24,6 +25,7 @@ function AppContent() {
         return saved ? JSON.parse(saved) : {};
     });
     const [history, setHistory] = useState([]);
+    const [showOnboarding, setShowOnboarding] = useState(false);
 
     const handleNavigate = (route, params = {}, clearHistory = false) => {
         if (clearHistory) {
@@ -63,7 +65,7 @@ function AppContent() {
         switch (currentRoute) {
             case 'landing': return <Landing onNavigate={handleNavigate} />;
             case 'login': return <Login onNavigate={handleNavigate} />;
-            case 'register': return <Register onNavigate={handleNavigate} />;
+            case 'register': return <Register onNavigate={handleNavigate} onRegisterDone={() => setShowOnboarding(true)} />;
             case 'dashboard': return <Dashboard onNavigate={handleNavigate} />;
             case 'discover': return <Discover onNavigate={handleNavigate} />;
             case 'profile': return <Profile onNavigate={handleNavigate} params={routeParams} />;
@@ -96,6 +98,12 @@ function AppContent() {
             <main className="pt-20 pb-24 md:pb-8">
                 {renderPage()}
             </main>
+            {showOnboarding && (
+                <OnboardingModal onDone={() => {
+                    setShowOnboarding(false);
+                    handleNavigate('dashboard');
+                }} />
+            )}
         </div>
     );
 }

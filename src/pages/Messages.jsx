@@ -22,6 +22,7 @@ export default function Messages({ params, onNavigate }) {
     const [msgText, setMsgText] = useState('');
     const [search, setSearch] = useState('');
     const scrollRef = useRef();
+    const imageInputRef = useRef();
 
     const refreshConvos = () => {
         const msgs = DB.get('messages');
@@ -69,6 +70,25 @@ export default function Messages({ params, onNavigate }) {
         }]);
         setMsgText('');
         refreshConvos();
+    };
+
+    const handleImageSend = (e) => {
+        const file = e.target.files?.[0];
+        if (!file || !selectedUserId) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            DB.set('messages', [...DB.get('messages'), {
+                id: 'm_' + uid(),
+                from: currentUser.id,
+                to: selectedUserId,
+                text: '',
+                image: ev.target.result,
+                ts: Date.now()
+            }]);
+            refreshConvos();
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
     };
 
     const filteredConvos = conversations.filter(c =>
@@ -145,7 +165,10 @@ export default function Messages({ params, onNavigate }) {
                     <div className="flex-1 flex flex-col bg-white dark:bg-[#000]">
                         {/* Header */}
                         <div className="h-16 border-b border-black/8 dark:border-white/10 flex items-center justify-between px-6">
-                            <div className="flex items-center gap-3">
+                            <div
+                                className="flex items-center gap-3 cursor-pointer hover:opacity-75 transition-opacity"
+                                onClick={() => onNavigate('profile', { userId: selectedConvo.user.id })}
+                            >
                                 <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${selectedConvo.user.grad} flex items-center justify-center text-[10px] font-bold shadow-lg`}>
                                     {selectedConvo.user.avatar
                                         ? <img src={selectedConvo.user.avatar} className="w-full h-full object-cover rounded-full" />
@@ -156,11 +179,7 @@ export default function Messages({ params, onNavigate }) {
                                     <p className="text-[10px] text-neutral-500 mt-1 font-medium">{t('messages.active')}</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-5 text-neutral-500 dark:text-white">
-                                <button className="hover:opacity-60 transition-opacity">
-                                    <Icon icon="mdi:information-outline" className="text-2xl" />
-                                </button>
-                            </div>
+
                         </div>
 
                         {/* Messages */}
@@ -204,9 +223,17 @@ export default function Messages({ params, onNavigate }) {
                                             </div>
                                         )}
                                         <div className="flex flex-col gap-1 max-w-[70%]">
-                                            <div className={`ig-bubble ${isMe ? 'ig-bubble-me' : 'ig-bubble-them'}`}>
-                                                {m.text}
-                                            </div>
+                                            {m.image ? (
+                                                <img
+                                                    src={m.image}
+                                                    className={`rounded-2xl max-w-[260px] max-h-[260px] object-cover cursor-pointer ${isMe ? 'self-end' : 'self-start'}`}
+                                                    onClick={() => window.open(m.image, '_blank')}
+                                                />
+                                            ) : (
+                                                <div className={`ig-bubble ${isMe ? 'ig-bubble-me' : 'ig-bubble-them'}`}>
+                                                    {m.text}
+                                                </div>
+                                            )}
 
                                             {sharedPost && (
                                                 <div
@@ -249,9 +276,16 @@ export default function Messages({ params, onNavigate }) {
                         {/* Input */}
                         <div className="p-4">
                             <div className="ig-input-pill group">
-                                <button className="text-neutral-500 dark:text-white hover:opacity-70">
-                                    <Icon icon="mdi:emoticon-outline" className="text-2xl" />
+                                <button className="text-neutral-500 dark:text-white hover:opacity-70 transition-opacity" onClick={() => imageInputRef.current?.click()}>
+                                    <Icon icon="mdi:image-outline" className="text-2xl" />
                                 </button>
+                                <input
+                                    ref={imageInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={handleImageSend}
+                                />
                                 <input
                                     className="flex-1 bg-transparent border-none text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 py-3 outline-none"
                                     placeholder={t('messages.messagePlaceholder')}
@@ -259,19 +293,13 @@ export default function Messages({ params, onNavigate }) {
                                     onChange={(e) => setMsgText(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                                 />
-                                {msgText.trim() ? (
-                                    <button
-                                        onClick={handleSend}
-                                        className="text-brand-500 font-bold text-sm hover:text-brand-600 transition-colors px-2"
-                                    >
-                                        {t('messages.send')}
-                                    </button>
-                                ) : (
-                                    <div className="flex items-center gap-4 text-neutral-500 dark:text-white">
-                                        <button className="hover:opacity-70 transition-opacity"><Icon icon="mdi:microphone-outline" className="text-2xl" /></button>
-                                        <button className="hover:opacity-70 transition-opacity"><Icon icon="mdi:image-outline" className="text-2xl" /></button>
-                                    </div>
-                                )}
+                                <button
+                                    onClick={handleSend}
+                                    className={`transition-colors px-2 ${msgText.trim() ? 'text-brand-500 hover:text-brand-600' : 'text-neutral-300 dark:text-neutral-600'}`}
+                                    disabled={!msgText.trim()}
+                                >
+                                    <Icon icon="mdi:send" className="text-2xl" />
+                                </button>
                             </div>
                         </div>
                     </div>
