@@ -186,7 +186,18 @@
       "code": "Kod",
       "design": "Tasarım",
       "project": "Proje",
-      "other": "Diğer"
+      "other": "Diğer",
+      "learned": "Öğrendim"
+    },
+    "copyCode": "Kopyala",
+    "codeCopied": "Kopyalandı ✓",
+    "viewDesign": "Tasarıma Bak",
+    "viewSource": "Kaynağa Bak",
+    "viewDemo": "Canlı Demo",
+    "levels": {
+      "beginner": "Başlangıç",
+      "intermediate": "Orta",
+      "advanced": "İleri"
     }
   },
   "comments": {
@@ -229,8 +240,27 @@
       "code": "Kod",
       "design": "Tasarım",
       "project": "Proje",
-      "other": "Diğer"
-    }
+      "other": "Diğer",
+      "learned": "Öğrendim"
+    },
+    "codeLanguageLabel": "Programlama Dili",
+    "codePlaceholder": "Kodunuzu buraya yazın...",
+    "designLinkLabel": "Tasarım Linki",
+    "designLinkPlaceholder": "Figma, Behance, Dribbble...",
+    "toolsLabel": "Kullanılan Araçlar",
+    "projectNameLabel": "Proje Adı",
+    "projectNamePlaceholder": "Projenin adı...",
+    "projectDescLabel": "Kısa Açıklama",
+    "technologiesLabel": "Teknolojiler",
+    "technologiesPlaceholder": "React, Node.js, TypeScript",
+    "githubLabel": "GitHub Linki",
+    "demoLabel": "Canlı Demo Linki",
+    "topicLabel": "Konu",
+    "topicPlaceholder": "Ne öğrendiniz?",
+    "levelLabel": "Seviye",
+    "notesLabel": "Notlar",
+    "notesPlaceholder": "Öğrendikleriniz hakkında notlar...",
+    "sourceLinkLabel": "Kaynak Linki"
   },
   "newProject": {
     "title": "Proje Oluştur",

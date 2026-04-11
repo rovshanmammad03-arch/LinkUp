@@ -187,7 +187,18 @@
       "code": "Kod",
       "design": "Dizayn",
       "project": "Layihə",
-      "other": "Digər"
+      "other": "Digər",
+      "learned": "Öyrəndim"
+    },
+    "copyCode": "Kopyala",
+    "codeCopied": "Kopyalandı ✓",
+    "viewDesign": "Dizayna Bax",
+    "viewSource": "Mənbəyə Bax",
+    "viewDemo": "Canlı Demo",
+    "levels": {
+      "beginner": "Başlanğıc",
+      "intermediate": "Orta",
+      "advanced": "Qabaqcıl"
     }
   },
   "comments": {
@@ -230,8 +241,27 @@
       "code": "Kod",
       "design": "Dizayn",
       "project": "Layihə",
-      "other": "Digər"
-    }
+      "other": "Digər",
+      "learned": "Öyrəndim"
+    },
+    "codeLanguageLabel": "Proqramlaşdırma Dili",
+    "codePlaceholder": "Kodunuzu buraya yazın...",
+    "designLinkLabel": "Dizayn Linki",
+    "designLinkPlaceholder": "Figma, Behance, Dribbble...",
+    "toolsLabel": "İstifadə Edilən Alətlər",
+    "projectNameLabel": "Layihə Adı",
+    "projectNamePlaceholder": "Layihənin adı...",
+    "projectDescLabel": "Qısa Təsvir",
+    "technologiesLabel": "Texnologiyalar",
+    "technologiesPlaceholder": "React, Node.js, TypeScript",
+    "githubLabel": "GitHub Linki",
+    "demoLabel": "Canlı Demo Linki",
+    "topicLabel": "Mövzu",
+    "topicPlaceholder": "Nə öyrəndiniz?",
+    "levelLabel": "Səviyyə",
+    "notesLabel": "Qeydlər",
+    "notesPlaceholder": "Öyrəndikləriniz haqqında qeydlər...",
+    "sourceLinkLabel": "Mənbə Linki"
   },
   "newProject": {
     "title": "Layihə Yarat",

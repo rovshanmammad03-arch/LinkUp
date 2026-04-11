@@ -186,7 +186,18 @@
       "code": "Code",
       "design": "Design",
       "project": "Project",
-      "other": "Other"
+      "other": "Other",
+      "learned": "Learned"
+    },
+    "copyCode": "Copy",
+    "codeCopied": "Copied ✓",
+    "viewDesign": "View Design",
+    "viewSource": "View Source",
+    "viewDemo": "Live Demo",
+    "levels": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
     }
   },
   "comments": {
@@ -229,8 +240,27 @@
       "code": "Code",
       "design": "Design",
       "project": "Project",
-      "other": "Other"
-    }
+      "other": "Other",
+      "learned": "Learned"
+    },
+    "codeLanguageLabel": "Programming Language",
+    "codePlaceholder": "Write your code here...",
+    "designLinkLabel": "Design Link",
+    "designLinkPlaceholder": "Figma, Behance, Dribbble...",
+    "toolsLabel": "Tools Used",
+    "projectNameLabel": "Project Name",
+    "projectNamePlaceholder": "Project name...",
+    "projectDescLabel": "Short Description",
+    "technologiesLabel": "Technologies",
+    "technologiesPlaceholder": "React, Node.js, TypeScript",
+    "githubLabel": "GitHub Link",
+    "demoLabel": "Live Demo Link",
+    "topicLabel": "Topic",
+    "topicPlaceholder": "What did you learn?",
+    "levelLabel": "Level",
+    "notesLabel": "Notes",
+    "notesPlaceholder": "Notes about what you learned...",
+    "sourceLinkLabel": "Source Link"
   },
   "newProject": {
     "title": "Create Project",

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { DB, uid, initials } from '../../services/db';
+import { DB, uid, initials, parseTechnologies } from '../../services/db';
 import { Icon } from '@iconify/react';
 import { useTranslation } from 'react-i18next';
 
@@ -8,8 +8,231 @@ const POST_TYPES = [
     { value: 'code', icon: 'mdi:code-braces', color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20' },
     { value: 'design', icon: 'mdi:palette-outline', color: 'text-pink-500 bg-pink-500/10 border-pink-500/20' },
     { value: 'project', icon: 'mdi:rocket-launch-outline', color: 'text-green-500 bg-green-500/10 border-green-500/20' },
+    { value: 'learned', icon: 'mdi:lightbulb-outline', color: 'text-amber-500 bg-amber-500/10 border-amber-500/20' },
     { value: 'other', icon: 'mdi:star-four-points-outline', color: 'text-amber-500 bg-amber-500/10 border-amber-500/20' },
 ];
+
+const CODE_LANGUAGES = ['JavaScript', 'TypeScript', 'Python', 'Dart', 'Java', 'C++', 'HTML', 'CSS', 'SQL', 'Bash'];
+
+function CodeTypeForm({ metadata, onChange }) {
+    const { t } = useTranslation();
+    return (
+        <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{t('newPost.codeLanguageLabel')}</label>
+                <div className="bg-black/3 dark:bg-white/3 border border-black/8 dark:border-white/8 rounded-2xl px-4 py-3 focus-within:border-black/20 dark:focus-within:border-white/20 transition-colors">
+                    <select
+                        value={metadata.language ?? 'JavaScript'}
+                        onChange={e => onChange({ ...metadata, language: e.target.value })}
+                        className="w-full bg-transparent text-sm text-neutral-900 dark:text-white focus:outline-none"
+                    >
+                        {CODE_LANGUAGES.map(lang => (
+                            <option key={lang} value={lang}>{lang}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+            <div className="flex flex-col gap-2">
+                <div className="bg-black/3 dark:bg-white/3 border border-black/8 dark:border-white/8 rounded-2xl px-4 py-3 focus-within:border-black/20 dark:focus-within:border-white/20 transition-colors">
+                    <textarea
+                        value={metadata.code ?? ''}
+                        onChange={e => onChange({ ...metadata, code: e.target.value })}
+                        placeholder={t('newPost.codePlaceholder')}
+                        className="w-full bg-transparent font-mono text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none resize-none min-h-[200px] bg-black/5 dark:bg-black/50"
+                    />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+const DESIGN_TOOLS = ['Figma', 'Adobe XD', 'Sketch', 'Illustrator', 'Photoshop', 'Canva', 'Framer', 'Webflow'];
+
+function DesignTypeForm({ metadata, onChange }) {
+    const { t } = useTranslation();
+    const tools = metadata.tools ?? [];
+
+    const toggleTool = (tool) => {
+        const next = tools.includes(tool)
+            ? tools.filter(t => t !== tool)
+            : [...tools, tool];
+        onChange({ ...metadata, tools: next });
+    };
+
+    return (
+        <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{t('newPost.designLinkLabel')}</label>
+                <div className="flex items-center gap-3 bg-black/3 dark:bg-white/3 border border-black/8 dark:border-white/8 rounded-2xl px-4 py-3 focus-within:border-black/20 dark:focus-within:border-white/20 transition-colors">
+                    <Icon icon="mdi:link-variant" className="text-neutral-400 dark:text-neutral-500 text-xl shrink-0" />
+                    <input
+                        type="url"
+                        value={metadata.designLink ?? ''}
+                        onChange={e => onChange({ ...metadata, designLink: e.target.value })}
+                        placeholder={t('newPost.designLinkPlaceholder')}
+                        className="flex-1 bg-transparent text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none"
+                    />
+                </div>
+            </div>
+            <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{t('newPost.toolsLabel')}</label>
+                <div className="flex flex-wrap gap-2">
+                    {DESIGN_TOOLS.map(tool => (
+                        <button
+                            key={tool}
+                            type="button"
+                            onClick={() => toggleTool(tool)}
+                            className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all active:scale-95 ${
+                                tools.includes(tool)
+                                    ? 'bg-pink-500/10 text-pink-400 border-pink-500/20'
+                                    : 'bg-black/3 dark:bg-white/3 border-black/8 dark:border-white/8 text-neutral-500 dark:text-neutral-400 hover:border-black/15 dark:hover:border-white/15 hover:text-neutral-700 dark:hover:text-neutral-300'
+                            }`}
+                        >
+                            {tool}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function ProjectTypeForm({ metadata, onChange }) {
+    const { t } = useTranslation();
+    return (
+        <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{t('newPost.projectNameLabel')}</label>
+                <div className="flex items-center gap-3 bg-black/3 dark:bg-white/3 border border-black/8 dark:border-white/8 rounded-2xl px-4 py-3 focus-within:border-black/20 dark:focus-within:border-white/20 transition-colors">
+                    <input
+                        type="text"
+                        value={metadata.projectName ?? ''}
+                        onChange={e => onChange({ ...metadata, projectName: e.target.value })}
+                        placeholder={t('newPost.projectNamePlaceholder')}
+                        className="flex-1 bg-transparent text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none"
+                    />
+                </div>
+            </div>
+            <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{t('newPost.projectDescLabel')}</label>
+                <div className="bg-black/3 dark:bg-white/3 border border-black/8 dark:border-white/8 rounded-2xl px-4 py-3 focus-within:border-black/20 dark:focus-within:border-white/20 transition-colors">
+                    <textarea
+                        value={metadata.description ?? ''}
+                        onChange={e => onChange({ ...metadata, description: e.target.value })}
+                        className="w-full bg-transparent text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none resize-none min-h-[80px]"
+                    />
+                </div>
+            </div>
+            <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{t('newPost.technologiesLabel')}</label>
+                <div className="flex items-center gap-3 bg-black/3 dark:bg-white/3 border border-black/8 dark:border-white/8 rounded-2xl px-4 py-3 focus-within:border-black/20 dark:focus-within:border-white/20 transition-colors">
+                    <input
+                        type="text"
+                        value={metadata.technologiesInput ?? ''}
+                        onChange={e => onChange({ ...metadata, technologiesInput: e.target.value, technologies: parseTechnologies(e.target.value) })}
+                        placeholder={t('newPost.technologiesPlaceholder')}
+                        className="flex-1 bg-transparent text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none"
+                    />
+                </div>
+            </div>
+            <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{t('newPost.githubLabel')}</label>
+                <div className="flex items-center gap-3 bg-black/3 dark:bg-white/3 border border-black/8 dark:border-white/8 rounded-2xl px-4 py-3 focus-within:border-black/20 dark:focus-within:border-white/20 transition-colors">
+                    <Icon icon="mdi:github" className="text-neutral-400 dark:text-neutral-500 text-xl shrink-0" />
+                    <input
+                        type="url"
+                        value={metadata.githubUrl ?? ''}
+                        onChange={e => onChange({ ...metadata, githubUrl: e.target.value })}
+                        className="flex-1 bg-transparent text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none"
+                    />
+                </div>
+            </div>
+            <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{t('newPost.demoLabel')}</label>
+                <div className="flex items-center gap-3 bg-black/3 dark:bg-white/3 border border-black/8 dark:border-white/8 rounded-2xl px-4 py-3 focus-within:border-black/20 dark:focus-within:border-white/20 transition-colors">
+                    <Icon icon="mdi:link-variant" className="text-neutral-400 dark:text-neutral-500 text-xl shrink-0" />
+                    <input
+                        type="url"
+                        value={metadata.demoUrl ?? ''}
+                        onChange={e => onChange({ ...metadata, demoUrl: e.target.value })}
+                        className="flex-1 bg-transparent text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none"
+                    />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+const LEVELS = ['beginner', 'intermediate', 'advanced'];
+const LEVEL_STYLES = {
+    beginner: 'bg-green-500/10 text-green-400 border-green-500/20',
+    intermediate: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+    advanced: 'bg-red-500/10 text-red-400 border-red-500/20',
+};
+
+function LearnedTypeForm({ metadata, onChange }) {
+    const { t } = useTranslation();
+    const level = metadata.level ?? 'beginner';
+
+    return (
+        <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{t('newPost.topicLabel')}</label>
+                <div className="flex items-center gap-3 bg-black/3 dark:bg-white/3 border border-black/8 dark:border-white/8 rounded-2xl px-4 py-3 focus-within:border-black/20 dark:focus-within:border-white/20 transition-colors">
+                    <input
+                        type="text"
+                        value={metadata.topic ?? ''}
+                        onChange={e => onChange({ ...metadata, topic: e.target.value })}
+                        placeholder={t('newPost.topicPlaceholder')}
+                        className="flex-1 bg-transparent text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none"
+                    />
+                </div>
+            </div>
+            <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{t('newPost.levelLabel')}</label>
+                <div className="flex gap-2">
+                    {LEVELS.map(lvl => (
+                        <button
+                            key={lvl}
+                            type="button"
+                            onClick={() => onChange({ ...metadata, level: lvl })}
+                            className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all active:scale-95 ${
+                                level === lvl
+                                    ? LEVEL_STYLES[lvl]
+                                    : 'bg-black/3 dark:bg-white/3 border-black/8 dark:border-white/8 text-neutral-500 dark:text-neutral-400 hover:border-black/15 dark:hover:border-white/15 hover:text-neutral-700 dark:hover:text-neutral-300'
+                            }`}
+                        >
+                            {t(`post.levels.${lvl}`)}
+                        </button>
+                    ))}
+                </div>
+            </div>
+            <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{t('newPost.notesLabel')}</label>
+                <div className="bg-black/3 dark:bg-white/3 border border-black/8 dark:border-white/8 rounded-2xl px-4 py-3 focus-within:border-black/20 dark:focus-within:border-white/20 transition-colors">
+                    <textarea
+                        value={metadata.notes ?? ''}
+                        onChange={e => onChange({ ...metadata, notes: e.target.value })}
+                        placeholder={t('newPost.notesPlaceholder')}
+                        className="w-full bg-transparent text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none resize-none min-h-[80px]"
+                    />
+                </div>
+            </div>
+            <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{t('newPost.sourceLinkLabel')}</label>
+                <div className="flex items-center gap-3 bg-black/3 dark:bg-white/3 border border-black/8 dark:border-white/8 rounded-2xl px-4 py-3 focus-within:border-black/20 dark:focus-within:border-white/20 transition-colors">
+                    <Icon icon="mdi:link-variant" className="text-neutral-400 dark:text-neutral-500 text-xl shrink-0" />
+                    <input
+                        type="url"
+                        value={metadata.sourceUrl ?? ''}
+                        onChange={e => onChange({ ...metadata, sourceUrl: e.target.value })}
+                        className="flex-1 bg-transparent text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none"
+                    />
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export default function NewPostModal({ onClose, onPostCreated }) {
     const { currentUser } = useAuth();
@@ -17,6 +240,7 @@ export default function NewPostModal({ onClose, onPostCreated }) {
     const [caption, setCaption] = useState('');
     const [postType, setPostType] = useState('other');
     const [image, setImage] = useState('');
+    const [metadata, setMetadata] = useState({});
     const fileInputRef = useRef(null);
 
     const handleFileChange = (e) => {
@@ -36,6 +260,7 @@ export default function NewPostModal({ onClose, onPostCreated }) {
             caption,
             type: postType,
             image,
+            metadata,
             likes: [],
             comments: [],
             createdAt: Date.now()
@@ -43,6 +268,15 @@ export default function NewPostModal({ onClose, onPostCreated }) {
         DB.set('posts', [newPost, ...posts]);
         if (onPostCreated) onPostCreated();
         onClose();
+    };
+
+    const isPublishDisabled = () => {
+        if (!caption.trim()) return true;
+        if (postType === 'code') return !metadata.code?.trim();
+        if (postType === 'design') return !image && !metadata.designLink?.trim();
+        if (postType === 'project') return !metadata.projectName?.trim();
+        if (postType === 'learned') return !metadata.topic?.trim();
+        return false;
     };
 
     return (
@@ -56,7 +290,7 @@ export default function NewPostModal({ onClose, onPostCreated }) {
                 <span className="text-sm font-semibold text-neutral-900 dark:text-white">{t('newPost.title')}</span>
                 <button
                     onClick={handlePost}
-                    disabled={!caption.trim()}
+                    disabled={isPublishDisabled()}
                     className="px-5 py-2 rounded-xl text-sm font-bold text-white bg-brand-500 hover:bg-brand-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
                 >
                     {t('newPost.publish')}
@@ -124,7 +358,7 @@ export default function NewPostModal({ onClose, onPostCreated }) {
                             {POST_TYPES.map(pt => (
                                 <button
                                     key={pt.value}
-                                    onClick={() => setPostType(pt.value)}
+                                    onClick={() => { setPostType(pt.value); setMetadata({}); }}
                                     className={`flex flex-col items-center gap-2 py-4 rounded-2xl border transition-all active:scale-95 ${postType === pt.value ? pt.color + ' border-current' : 'bg-black/3 dark:bg-white/3 border-black/8 dark:border-white/8 text-neutral-400 dark:text-neutral-500 hover:border-black/15 dark:hover:border-white/15 hover:text-neutral-700 dark:hover:text-neutral-300'}`}
                                 >
                                     <Icon icon={pt.icon} className="text-2xl" />
@@ -133,6 +367,22 @@ export default function NewPostModal({ onClose, onPostCreated }) {
                             ))}
                         </div>
                     </div>
+
+                    {postType === 'code' && (
+                        <CodeTypeForm metadata={metadata} onChange={setMetadata} />
+                    )}
+
+                    {postType === 'design' && (
+                        <DesignTypeForm metadata={metadata} onChange={setMetadata} />
+                    )}
+
+                    {postType === 'project' && (
+                        <ProjectTypeForm metadata={metadata} onChange={setMetadata} />
+                    )}
+
+                    {postType === 'learned' && (
+                        <LearnedTypeForm metadata={metadata} onChange={setMetadata} />
+                    )}
 
                 </div>
             </div>

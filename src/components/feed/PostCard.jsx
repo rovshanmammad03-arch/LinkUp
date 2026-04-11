@@ -6,6 +6,8 @@ import CommentsModal from './CommentsModal';
 import SharePostModal from './SharePostModal';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { useTranslation } from 'react-i18next';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 function translateField(field, t) {
     const map = {
@@ -30,6 +32,7 @@ const POST_ICONS = {
     design: 'mdi:palette-outline',
     code: 'mdi:code-braces',
     project: 'mdi:rocket-launch-outline',
+    learned: 'mdi:lightbulb-outline',
     other: 'mdi:star-four-points-outline'
 };
 
@@ -37,6 +40,7 @@ const POST_LABELS = {
     design: 'bg-pink-500/10 text-pink-400 border-pink-500/20',
     code: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
     project: 'bg-green-500/10 text-green-400 border-green-500/20',
+    learned: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
     other: 'bg-amber-500/10 text-amber-400 border-amber-500/20'
 };
 
@@ -51,6 +55,7 @@ export default function PostCard({ post, index, onDelete, onUpdate, onNavigate }
     const [commentCount, setCommentCount] = useState(post.comments?.length || 0);
     const [showComments, setShowComments] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
+    const [copied, setCopied] = useState(false);
     const dropdownRef = useRef(null);
 
     useEffect(() => {
@@ -123,6 +128,16 @@ export default function PostCard({ post, index, onDelete, onUpdate, onNavigate }
         if (p) setCommentCount(p.comments?.length || 0);
     };
 
+    const handleCopy = async (code) => {
+        try {
+            await navigator.clipboard.writeText(code);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch {
+            // fallback
+        }
+    };
+
     const colorIdx = Math.abs(post.authorId.charCodeAt(post.authorId.length - 1)) % POST_COLORS.length;
     const placeholderGrad = POST_COLORS[colorIdx];
     const postIcon = POST_ICONS[post.type] || POST_ICONS.other;
@@ -179,7 +194,144 @@ export default function PostCard({ post, index, onDelete, onUpdate, onNavigate }
 
                 {/* Content */}
                 <div className="px-4 pb-3">
-                    {post.image ? (
+                    {post.type === 'code' ? (
+                        <div className="relative rounded-2xl overflow-hidden">
+                            <div className="flex items-center justify-between px-3 py-2 bg-neutral-900 rounded-t-2xl">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-full">
+                                    {post.metadata?.language ?? 'JavaScript'}
+                                </span>
+                                <button
+                                    onClick={() => handleCopy(post.metadata?.code ?? '')}
+                                    className="text-[10px] font-semibold text-neutral-400 hover:text-white transition-colors flex items-center gap-1"
+                                >
+                                    <Icon icon={copied ? 'mdi:check' : 'mdi:content-copy'} className="text-sm" />
+                                    {copied ? t('post.codeCopied') : t('post.copyCode')}
+                                </button>
+                            </div>
+                            <SyntaxHighlighter
+                                language={(post.metadata?.language ?? 'javascript').toLowerCase().replace('c++', 'cpp')}
+                                style={oneDark}
+                                customStyle={{ margin: 0, borderRadius: '0 0 1rem 1rem', fontSize: '13px', maxHeight: '320px' }}
+                            >
+                                {post.metadata?.code ?? ''}
+                            </SyntaxHighlighter>
+                        </div>
+                    ) : post.type === 'design' ? (
+                        <div className="flex flex-col gap-2">
+                            {post.image && (
+                                <div className="relative rounded-2xl overflow-hidden group">
+                                    <img src={post.image} className="w-full object-cover max-h-[450px]" alt="Post" />
+                                    <div className={`absolute bottom-3 right-3 px-2.5 py-1 rounded-full text-[9px] uppercase font-bold tracking-wider ${postLabelClass}`}>
+                                        {t('post.types.design')}
+                                    </div>
+                                </div>
+                            )}
+                            {(post.metadata?.tools ?? []).length > 0 && (
+                                <div className="flex flex-wrap gap-1.5 px-1">
+                                    {(post.metadata?.tools ?? []).map(tool => (
+                                        <span key={tool} className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-pink-500/10 text-pink-400 border border-pink-500/20">
+                                            {tool}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                            {post.metadata?.designLink && (
+                                <a
+                                    href={post.metadata.designLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5 text-xs font-semibold text-pink-400 hover:text-pink-300 transition-colors px-1"
+                                >
+                                    <Icon icon="mdi:open-in-new" className="text-sm" />
+                                    {t('post.viewDesign')}
+                                </a>
+                            )}
+                            {!post.image && (
+                                <div className={`w-full h-48 rounded-2xl bg-gradient-to-br ${placeholderGrad} flex flex-col items-center justify-center gap-3 relative overflow-hidden group`}>
+                                    <div className="absolute inset-0 bg-black/10 transition-opacity group-hover:opacity-0"></div>
+                                    <Icon icon={postIcon} className="text-4xl text-white/40 relative z-10" />
+                                    <span className="text-[10px] text-white/30 font-medium uppercase tracking-widest relative z-10">{t('post.types.design')}</span>
+                                    <div className={`absolute bottom-3 right-3 px-2.5 py-1 rounded-full text-[9px] uppercase font-bold tracking-wider ${postLabelClass} relative z-10`}>
+                                        {t('post.types.design')}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ) : post.type === 'project' ? (
+                        <div className="bg-black/3 dark:bg-white/3 border border-black/8 dark:border-white/8 rounded-2xl p-4 flex flex-col gap-3">
+                            <div className="flex items-start justify-between gap-2">
+                                {post.metadata?.projectName && (
+                                    <h3 className="text-base font-bold text-neutral-900 dark:text-white leading-tight">
+                                        {post.metadata.projectName}
+                                    </h3>
+                                )}
+                                <span className={`shrink-0 px-2.5 py-1 rounded-full text-[9px] uppercase font-bold tracking-wider border ${postLabelClass}`}>
+                                    {t('post.types.project')}
+                                </span>
+                            </div>
+                            {(post.metadata?.technologies ?? []).length > 0 && (
+                                <div className="flex flex-wrap gap-1.5">
+                                    {(post.metadata?.technologies ?? []).map(tech => (
+                                        <span key={tech} className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-500/10 text-green-400 border border-green-500/20">
+                                            {tech}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                            {(post.metadata?.githubUrl || post.metadata?.demoUrl) && (
+                                <div className="flex gap-2 flex-wrap">
+                                    {post.metadata?.githubUrl && (
+                                        <a href={post.metadata.githubUrl} target="_blank" rel="noopener noreferrer"
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-black/5 dark:bg-white/5 text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-colors border border-black/8 dark:border-white/8">
+                                            <Icon icon="mdi:github" className="text-sm" /> GitHub
+                                        </a>
+                                    )}
+                                    {post.metadata?.demoUrl && (
+                                        <a href={post.metadata.demoUrl} target="_blank" rel="noopener noreferrer"
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20 transition-colors">
+                                            <Icon icon="mdi:open-in-new" className="text-sm" /> {t('post.viewDemo')}
+                                        </a>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    ) : post.type === 'learned' ? (
+                        <div className="bg-black/3 dark:bg-white/3 border border-black/8 dark:border-white/8 rounded-2xl p-4 flex flex-col gap-3">
+                            <div className="flex items-start justify-between gap-2">
+                                {post.metadata?.topic && (
+                                    <h3 className="text-base font-bold text-neutral-900 dark:text-white leading-tight">
+                                        {post.metadata.topic}
+                                    </h3>
+                                )}
+                                <div className="flex items-center gap-2 shrink-0">
+                                    {post.metadata?.level && (
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                                            post.metadata.level === 'beginner' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                                            post.metadata.level === 'intermediate' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
+                                            'bg-red-500/10 text-red-400 border-red-500/20'
+                                        }`}>
+                                            {t(`post.levels.${post.metadata.level}`)}
+                                        </span>
+                                    )}
+                                    <span className={`px-2.5 py-1 rounded-full text-[9px] uppercase font-bold tracking-wider border ${postLabelClass}`}>
+                                        {t('post.types.learned')}
+                                    </span>
+                                </div>
+                            </div>
+                            {post.metadata?.notes && (
+                                <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                                    {post.metadata.notes}
+                                </p>
+                            )}
+                            {post.metadata?.sourceUrl && (
+                                <a href={post.metadata.sourceUrl} target="_blank" rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5 text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors">
+                                    <Icon icon="mdi:open-in-new" className="text-sm" />
+                                    {t('post.viewSource')}
+                                </a>
+                            )}
+                        </div>
+                    ) : post.image ? (
                         <div className="relative rounded-2xl overflow-hidden group">
                             <img src={post.image} className="w-full object-cover max-h-[450px]" alt="Post" />
                             <div className={`absolute bottom-3 right-3 px-2.5 py-1 rounded-full text-[9px] uppercase font-bold tracking-wider ${postLabelClass}`}>

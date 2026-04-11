@@ -186,7 +186,18 @@
       "code": "Код",
       "design": "Дизайн",
       "project": "Проект",
-      "other": "Другое"
+      "other": "Другое",
+      "learned": "Узнал"
+    },
+    "copyCode": "Копировать",
+    "codeCopied": "Скопировано ✓",
+    "viewDesign": "Открыть дизайн",
+    "viewSource": "Открыть источник",
+    "viewDemo": "Живое демо",
+    "levels": {
+      "beginner": "Начинающий",
+      "intermediate": "Средний",
+      "advanced": "Продвинутый"
     }
   },
   "comments": {
@@ -229,8 +240,27 @@
       "code": "Код",
       "design": "Дизайн",
       "project": "Проект",
-      "other": "Другое"
-    }
+      "other": "Другое",
+      "learned": "Узнал"
+    },
+    "codeLanguageLabel": "Язык программирования",
+    "codePlaceholder": "Напишите ваш код здесь...",
+    "designLinkLabel": "Ссылка на дизайн",
+    "designLinkPlaceholder": "Figma, Behance, Dribbble...",
+    "toolsLabel": "Использованные инструменты",
+    "projectNameLabel": "Название проекта",
+    "projectNamePlaceholder": "Название проекта...",
+    "projectDescLabel": "Краткое описание",
+    "technologiesLabel": "Технологии",
+    "technologiesPlaceholder": "React, Node.js, TypeScript",
+    "githubLabel": "Ссылка на GitHub",
+    "demoLabel": "Ссылка на демо",
+    "topicLabel": "Тема",
+    "topicPlaceholder": "Что вы узнали?",
+    "levelLabel": "Уровень",
+    "notesLabel": "Заметки",
+    "notesPlaceholder": "Заметки о том, что вы узнали...",
+    "sourceLinkLabel": "Ссылка на источник"
   },
   "newProject": {
     "title": "Создать проект",

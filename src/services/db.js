@@ -7,6 +7,11 @@ export const DB = {
 
 export function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7) }
 
+export function parseTechnologies(input) {
+    if (!input) return [];
+    return input.split(',').map(t => t.trim()).filter(Boolean);
+}
+
 export const GRADIENTS = [
     'from-brand-500 to-purple-500','from-cyan-500 to-green-500',
     'from-amber-500 to-rose-500','from-pink-500 to-brand-500',
@@ -67,7 +72,11 @@ export function seedIfEmpty() {
         {id:'post3',authorId:'seed_5',image:'',caption:'"FreshBite" restoran üçün branding etdim. Logo, menü kartı, və sosial media post şablonları. Adobe Illustrator ilə.',type:'design',likes:['seed_1','seed_3','seed_4','seed_7','seed_2'],comments:[{id:'c7',userId:'seed_3',text:'Logo çox yaxşı alınıb! Font nədir?',ts:Date.now()-75000},{id:'c8',userId:'seed_5',parentId:'c7',text:'Montserrat bold + Playfair Display. Combo çox uyğundur.',ts:Date.now()-70000}],createdAt:Date.now()-250000},
         {id:'post4',authorId:'seed_2',image:'',caption:'Kaggle competition-da top 5% girib. Titanic dataset üzərində feature engineering etdim. Random Forest və XGBoost ilə müqayisə etdim.',type:'project',likes:['seed_0','seed_7','seed_4'],comments:[{id:'c9',userId:'seed_7',text:'XGBoost həmişə yaxşı nəticə verir 😎',ts:Date.now()-90000},{id:'c10',userId:'seed_4',text:'Mən də Kaggle başlamaq istəyirdim, növbəti competition hansıdır?',ts:Date.now()-85000}],createdAt:Date.now()-350000},
         {id:'post5',authorId:'seed_6',image:'',caption:'MERN stack ilə e-ticaret saytı yazıram. İndi payment integration mərhələsindəyəm. Stripe istifadə edirəm.',type:'code',likes:['seed_0','seed_1'],comments:[{id:'c11',userId:'seed_1',text:'Stripe çox asandır, yaxşı seçim!',ts:Date.now()-45000}],createdAt:Date.now()-500000},
-        {id:'post6',authorId:'seed_3',image:'',caption:'Google Ads ilə kampaniya idarə etdim. CPC 0.30 AZN-ə saldım, conversion rate 4.2% oldu. Screenshots aşağıda.',type:'other',likes:['seed_5','seed_7'],comments:[],createdAt:Date.now()-600000}
+        {id:'post6',authorId:'seed_3',image:'',caption:'Google Ads ilə kampaniya idarə etdim. CPC 0.30 AZN-ə saldım, conversion rate 4.2% oldu. Screenshots aşağıda.',type:'other',likes:['seed_5','seed_7'],comments:[],createdAt:Date.now()-600000},
+        {id:'post7',authorId:'seed_0',image:'',caption:'React-də custom useFetch hook yazdım. Loading, error və data state-lərini avtomatik idarə edir.',type:'code',metadata:{language:'JavaScript',code:`import { useState, useEffect } from 'react';\n\nexport function useFetch(url) {\n  const [data, setData] = useState(null);\n  const [loading, setLoading] = useState(true);\n  const [error, setError] = useState(null);\n\n  useEffect(() => {\n    fetch(url)\n      .then(res => res.json())\n      .then(setData)\n      .catch(setError)\n      .finally(() => setLoading(false));\n  }, [url]);\n\n  return { data, loading, error };\n}`},likes:['seed_2','seed_6'],comments:[],createdAt:Date.now()-700000},
+        {id:'post8',authorId:'seed_1',image:'',caption:'LinkUp üçün onboarding ekranı dizayn etdim. Figma Auto Layout ilə responsive komponentlər.',type:'design',metadata:{designLink:'https://figma.com',tools:['Figma','Framer']},likes:['seed_5','seed_3','seed_0'],comments:[],createdAt:Date.now()-800000},
+        {id:'post9',authorId:'seed_2',image:'',caption:'Açıq mənbəli Python paket yazdım — CSV faylları üçün sürətli data validation kitabxanası.',type:'project',metadata:{projectName:'csv-validator',description:'CSV faylları üçün sürətli schema-based validation kitabxanası.',technologies:['Python','Pandas','PyPI'],githubUrl:'https://github.com',demoUrl:'https://pypi.org'},likes:['seed_0','seed_4','seed_7'],comments:[],createdAt:Date.now()-900000},
+        {id:'post10',authorId:'seed_4',image:'',caption:'Bu həftə Docker haqqında çox şey öyrəndim. Container-lar, image-lər, volume-lar — hamısı artıq aydındır!',type:'learned',metadata:{topic:'Docker & Containerization',level:'beginner',notes:'Container = izolə edilmiş mühit. Image = şablon. docker-compose ilə multi-container app idarə etmək çox asandır.',sourceUrl:'https://docs.docker.com'},likes:['seed_0','seed_2'],comments:[],createdAt:Date.now()-1000000}
     ]);
     DB.set('notifications',[]);
 }
