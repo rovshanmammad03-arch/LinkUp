@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { DB, getUser, initials, uid } from '../services/db';
+import { DB, getUser, initials, uid, addNotification } from '../services/db';
 import { Icon } from '@iconify/react';
 import { useTranslation } from 'react-i18next';
+import AddMemberModal from '../components/messages/AddMemberModal';
 
 function translateField(field, t) {
     const map = {
@@ -17,16 +18,22 @@ function translateField(field, t) {
 export default function Messages({ params, onNavigate }) {
     const { currentUser } = useAuth();
     const { t } = useTranslation();
+    const [tab, setTab] = useState(params?.projectId ? 'projects' : 'personal'); // 'personal' or 'projects'
     const [conversations, setConversations] = useState([]);
+    const [projectConversations, setProjectConversations] = useState([]);
     const [selectedUserId, setSelectedUserId] = useState(params?.userId || null);
+    const [selectedProjectId, setSelectedProjectId] = useState(params?.projectId || null);
     const [msgText, setMsgText] = useState('');
     const [search, setSearch] = useState('');
+    const [showManageTeam, setShowManageTeam] = useState(false);
+    const [showAddMember, setShowAddMember] = useState(false);
+    const [addMemberError, setAddMemberError] = useState('');
     const scrollRef = useRef();
     const imageInputRef = useRef();
 
     const refreshConvos = () => {
         const msgs = DB.get('messages');
-        const userConvos = msgs.filter(m => m.from === currentUser?.id || m.to === currentUser?.id);
+        const userConvos = msgs.filter(m => !m.projectId && (m.from === currentUser?.id || m.to === currentUser?.id));
 
         const uniqueUsers = new Set();
         userConvos.forEach(m => {
@@ -43,69 +50,234 @@ export default function Messages({ params, onNavigate }) {
             const user = getUser(params.userId);
             if (user) convos.unshift({ user, lastMsg: null });
         }
-        setConversations(convos);
+        setConversations(convos.sort((a, b) => (b.lastMsg?.ts || 0) - (a.lastMsg?.ts || 0)));
+
+        // Compute project conversations
+        const allProjects = DB.get('projects');
+        const myProjects = allProjects.filter(p =>
+            p.authorId === currentUser?.id ||
+            (p.applicants && p.applicants.some(a => {
+                const aId = typeof a === 'object' ? a.id : a;
+                const aStatus = typeof a === 'object' ? a.status : 'pending';
+                return aId === currentUser?.id && aStatus === 'accepted';
+            }))
+        );
+
+        const pConvos = myProjects.map(p => {
+            const lastMsg = msgs.filter(m => m.projectId === p.id).sort((a, b) => b.ts - a.ts)[0];
+            return { project: p, lastMsg };
+        }).sort((a, b) => (b.lastMsg?.ts || a.project.createdAt) - (a.lastMsg?.ts || b.project.createdAt));
+
+        setProjectConversations(pConvos);
     };
 
-    useEffect(() => { refreshConvos(); }, [currentUser, params?.userId]);
+    useEffect(() => { refreshConvos(); }, [currentUser, params?.userId, params?.projectId]);
 
     useEffect(() => {
         if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }, [selectedUserId, conversations]);
+    }, [selectedUserId, selectedProjectId, tab, conversations, projectConversations]);
 
-    const selectedConvo = conversations.find(c => c.user.id === selectedUserId);
+    const selectedUserConvo = conversations.find(c => c.user.id === selectedUserId);
+    const selectedProjectConvo = projectConversations.find(c => c.project.id === selectedProjectId);
 
-    const chatMsgs = DB.get('messages').filter(m =>
-        (m.from === currentUser?.id && m.to === selectedUserId) ||
-        (m.from === selectedUserId && m.to === currentUser?.id)
-    ).sort((a, b) => a.ts - b.ts);
+    const chatMsgs = DB.get('messages').filter(m => {
+        if (tab === 'personal') {
+            return !m.projectId && ((m.from === currentUser?.id && m.to === selectedUserId) ||
+                (m.from === selectedUserId && m.to === currentUser?.id));
+        } else {
+            return m.projectId === selectedProjectId;
+        }
+    }).sort((a, b) => a.ts - b.ts);
 
     const handleSend = () => {
-        if (!msgText.trim() || !selectedUserId) return;
-        DB.set('messages', [...DB.get('messages'), {
+        if (!msgText.trim()) return;
+        if (tab === 'personal' && !selectedUserId) return;
+        if (tab === 'projects' && !selectedProjectId) return;
+
+        const payload = {
             id: 'm_' + uid(),
             from: currentUser.id,
-            to: selectedUserId,
             text: msgText.trim(),
             ts: Date.now()
-        }]);
+        };
+
+        if (tab === 'personal') {
+            payload.to = selectedUserId;
+        } else {
+            payload.projectId = selectedProjectId;
+        }
+
+        DB.set('messages', [...DB.get('messages'), payload]);
         setMsgText('');
         refreshConvos();
     };
 
     const handleImageSend = (e) => {
         const file = e.target.files?.[0];
-        if (!file || !selectedUserId) return;
+        if (!file) return;
+        if (tab === 'personal' && !selectedUserId) return;
+        if (tab === 'projects' && !selectedProjectId) return;
+
         const reader = new FileReader();
         reader.onload = (ev) => {
-            DB.set('messages', [...DB.get('messages'), {
+            const payload = {
                 id: 'm_' + uid(),
                 from: currentUser.id,
-                to: selectedUserId,
                 text: '',
                 image: ev.target.result,
                 ts: Date.now()
-            }]);
+            };
+            if (tab === 'personal') payload.to = selectedUserId;
+            else payload.projectId = selectedProjectId;
+
+            DB.set('messages', [...DB.get('messages'), payload]);
             refreshConvos();
         };
         reader.readAsDataURL(file);
         e.target.value = '';
     };
 
-    const filteredConvos = conversations.filter(c =>
+    const handleRemoveMember = (memberId) => {
+        if (!selectedProjectId) return;
+        const allProjects = DB.get('projects');
+        const pIdx = allProjects.findIndex(p => p.id === selectedProjectId);
+        if (pIdx === -1) return;
+
+        allProjects[pIdx].applicants = allProjects[pIdx].applicants.map(a => {
+            const id = typeof a === 'object' ? a.id : a;
+            if (id === memberId) return { id, status: 'rejected' };
+            return a;
+        });
+
+        DB.set('projects', allProjects);
+
+        // Add a system message indicating removal
+        DB.set('messages', [...DB.get('messages'), {
+            id: 'm_' + uid(),
+            from: 'system',
+            projectId: selectedProjectId,
+            text: `${getUser(memberId)?.name} qrupdan çıxarıldı.`,
+            ts: Date.now()
+        }]);
+
+        refreshConvos();
+    };
+
+    const handleAddMember = (userId) => {
+        if (!selectedProjectId) return;
+        const allProjects = DB.get('projects');
+        const pIdx = allProjects.findIndex(p => p.id === selectedProjectId);
+        if (pIdx === -1) return;
+
+        const project = allProjects[pIdx];
+
+        // Artıq üzv olub-olmadığını yoxla
+        const alreadyMember = project.applicants.some(a => {
+            const id = typeof a === 'object' ? a.id : a;
+            const status = typeof a === 'object' ? a.status : 'pending';
+            return id === userId && status === 'accepted';
+        });
+        if (alreadyMember) {
+            setAddMemberError('Bu istifadəçi artıq qrupun üzvüdür.');
+            return;
+        }
+
+        // Əlavə et
+        allProjects[pIdx] = {
+            ...project,
+            applicants: [...project.applicants, { id: userId, status: 'accepted' }]
+        };
+        DB.set('projects', allProjects);
+
+        // Sistem mesajı
+        const addedUser = getUser(userId);
+        DB.set('messages', [...DB.get('messages'), {
+            id: 'm_' + uid(),
+            from: 'system',
+            projectId: selectedProjectId,
+            text: `${addedUser?.name} qrupa əlavə edildi.`,
+            ts: Date.now()
+        }]);
+
+        // Bildiriş
+        addNotification({
+            toUserId: userId,
+            fromUserId: currentUser.id,
+            type: 'group_add',
+            text: `${currentUser.name} sizi "${project.title}" qrupuna əlavə etdi.`,
+            route: 'messages',
+            routeParams: { projectId: selectedProjectId }
+        });
+
+        setShowAddMember(false);
+        refreshConvos();
+    };
+
+    const handleLeaveGroup = () => {
+        if (!selectedProjectId) return;
+        const allProjects = DB.get('projects');
+        const pIdx = allProjects.findIndex(p => p.id === selectedProjectId);
+        if (pIdx === -1) return;
+
+        allProjects[pIdx].applicants = allProjects[pIdx].applicants.map(a => {
+            const id = typeof a === 'object' ? a.id : a;
+            if (id === currentUser?.id) return { id, status: 'left' };
+            return a;
+        });
+
+        DB.set('projects', allProjects);
+
+        DB.set('messages', [...DB.get('messages'), {
+            id: 'm_' + uid(),
+            from: 'system',
+            projectId: selectedProjectId,
+            text: `${currentUser?.name} qrupdan çıxdı.`,
+            ts: Date.now()
+        }]);
+
+        setSelectedProjectId(null);
+        setShowManageTeam(false);
+        refreshConvos();
+    };
+
+    const filteredPersonalConvos = conversations.filter(c =>
         c.user.name.toLowerCase().includes(search.toLowerCase())
     );
 
+    const filteredProjectConvos = projectConversations.filter(c =>
+        c.project.title.toLowerCase().includes(search.toLowerCase())
+    );
+
+    const activeConvoList = tab === 'personal' ? filteredPersonalConvos : filteredProjectConvos;
+
     return (
+        <>
         <div className="max-w-6xl mx-auto h-[calc(100vh-120px)] anim-up">
             <div className="flex bg-white dark:bg-[#000] border border-black/10 dark:border-white/10 rounded-2xl overflow-hidden h-full shadow-xl dark:shadow-2xl">
 
                 {/* Sidebar */}
-                <div className="w-80 border-r border-black/8 dark:border-white/10 flex flex-col bg-white dark:bg-[#000]">
-                    <div className="p-5 border-b border-black/8 dark:border-white/10">
+                <div className="w-80 border-r border-black/8 dark:border-white/10 flex flex-col bg-white dark:bg-[#000] z-10 shrink-0">
+                    <div className="p-5 border-b border-black/8 dark:border-white/10 flex flex-col gap-4">
                         <span className="text-xl font-bold text-neutral-900 dark:text-white tracking-tight">{currentUser?.name}</span>
+
+                        {/* Tab Switcher */}
+                        <div className="flex bg-neutral-100 dark:bg-[#121212] p-1 rounded-xl">
+                            <button
+                                onClick={() => setTab('personal')}
+                                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${tab === 'personal' ? 'bg-white dark:bg-black text-neutral-900 dark:text-white shadow-sm' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'}`}
+                            >
+                                Şəxsi
+                            </button>
+                            <button
+                                onClick={() => setTab('projects')}
+                                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${tab === 'projects' ? 'bg-white dark:bg-black text-neutral-900 dark:text-white shadow-sm' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'}`}
+                            >
+                                <Icon icon="mdi:folder-account-outline" className="text-sm" /> Layihələr
+                            </button>
+                        </div>
                     </div>
 
-                    <div className="p-4">
+                    <div className="p-4 border-b border-black/5 dark:border-white/5">
                         <div className="relative">
                             <Icon icon="mdi:magnify" className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" />
                             <input
@@ -118,166 +290,240 @@ export default function Messages({ params, onNavigate }) {
                     </div>
 
                     <div className="flex-1 overflow-y-auto">
-                        <div className="px-5 py-2">
-                            <span className="text-sm font-bold text-neutral-900 dark:text-white uppercase tracking-wider">{t('messages.title')}</span>
-                        </div>
-                        {filteredConvos.length > 0 ? (
-                            filteredConvos.map((c, i) => (
-                                <div
-                                    key={i}
-                                    onClick={() => setSelectedUserId(c.user.id)}
-                                    className={`px-5 py-3 flex items-center gap-4 cursor-pointer transition-colors ${
-                                        selectedUserId === c.user.id
-                                            ? 'bg-neutral-100 dark:bg-[#121212]'
-                                            : 'hover:bg-neutral-50 dark:hover:bg-[#121212]'
-                                    }`}
-                                >
-                                    <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${c.user.grad} p-[2px] shrink-0`}>
-                                        <div className="w-full h-full rounded-full bg-white dark:bg-black p-[2px]">
-                                            {c.user.avatar ? (
-                                                <img src={c.user.avatar} className="w-full h-full object-cover rounded-full" />
-                                            ) : (
-                                                <div className="w-full h-full rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-xs font-bold text-neutral-700 dark:text-white">
-                                                    {initials(c.user.name)}
-                                                </div>
-                                            )}
+                        {activeConvoList.length > 0 ? (
+                            activeConvoList.map((item, i) => {
+                                const isProject = tab === 'projects';
+                                const id = isProject ? item.project.id : item.user.id;
+                                const isSelected = isProject ? selectedProjectId === id : selectedUserId === id;
+                                const name = isProject ? item.project.title : item.user.name;
+                                const lastMsgObj = item.lastMsg;
+                                const lastMsgText = lastMsgObj?.text || (lastMsgObj?.image ? 'Şəkil göndərildi' : (isProject ? 'Qrup yaradıldı' : t('messages.startTyping')));
+                                const lastMsgSender = lastMsgObj?.from === currentUser?.id ? `${t('messages.you')} ` : (lastMsgObj?.from === 'system' ? 'Sistem: ' : (isProject && lastMsgObj ? `${getUser(lastMsgObj.from)?.name.split(' ')[0]}: ` : ''));
+
+                                return (
+                                    <div
+                                        key={id}
+                                        onClick={() => {
+                                            if (isProject) {
+                                                setSelectedProjectId(id);
+                                                setSelectedUserId(null);
+                                            } else {
+                                                setSelectedUserId(id);
+                                                setSelectedProjectId(null);
+                                            }
+                                        }}
+                                        className={`px-5 py-3 flex items-center gap-4 cursor-pointer transition-colors ${isSelected
+                                                ? 'bg-neutral-100 dark:bg-[#121212]'
+                                                : 'hover:bg-neutral-50 dark:hover:bg-[#121212]'
+                                            }`}
+                                    >
+                                        <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${isProject ? item.project.grad : item.user.grad} p-[2px] shrink-0 shadow-sm border border-black/5 dark:border-white/5`}>
+                                            <div className="w-full h-full rounded-full bg-white dark:bg-black flex items-center justify-center overflow-hidden">
+                                                {isProject ? (
+                                                    <Icon icon="mdi:rocket-launch-outline" className="text-2xl text-neutral-700 dark:text-neutral-300" />
+                                                ) : (
+                                                    item.user.avatar ? (
+                                                        <img src={item.user.avatar} className="w-full h-full object-cover rounded-full" />
+                                                    ) : (
+                                                        <div className="w-full h-full rounded-full flex items-center justify-center text-xs font-bold text-neutral-700 dark:text-white">
+                                                            {initials(item.user.name)}
+                                                        </div>
+                                                    )
+                                                )}
+                                            </div>
                                         </div>
+                                        <div className="min-w-0 flex-1">
+                                            <h4 className="text-sm font-bold text-neutral-900 dark:text-white truncate">{name}</h4>
+                                            <p className="text-xs text-neutral-500 truncate mt-0.5">
+                                                {lastMsgSender}{lastMsgText}
+                                            </p>
+                                        </div>
+                                        {!lastMsgObj && !isProject && <div className="w-2 h-2 bg-brand-500 rounded-full shrink-0"></div>}
                                     </div>
-                                    <div className="min-w-0 flex-1">
-                                        <h4 className="text-sm font-medium text-neutral-900 dark:text-white truncate">{c.user.name}</h4>
-                                        <p className="text-xs text-neutral-500 truncate mt-0.5">
-                                            {c.lastMsg?.from === currentUser.id ? t('messages.you') : ''}{c.lastMsg?.text || t('messages.startTyping')}
-                                        </p>
-                                    </div>
-                                    {!c.lastMsg && <div className="w-2 h-2 bg-brand-500 rounded-full shrink-0"></div>}
-                                </div>
-                            ))
+                                )
+                            })
                         ) : (
                             <div className="p-10 text-center text-neutral-400 dark:text-neutral-600">
-                                <p className="text-xs font-medium uppercase tracking-widest leading-loose">{t('messages.noConversations')}</p>
+                                <p className="text-xs font-medium uppercase tracking-widest leading-loose">Söhbət tapılmadı</p>
                             </div>
                         )}
                     </div>
                 </div>
 
                 {/* Chat Window */}
-                {selectedConvo ? (
-                    <div className="flex-1 flex flex-col bg-white dark:bg-[#000]">
+                {(tab === 'personal' && selectedUserConvo) || (tab === 'projects' && selectedProjectConvo) ? (
+                    <div className="flex-1 flex flex-col bg-white dark:bg-[#000] relative">
                         {/* Header */}
-                        <div className="h-16 border-b border-black/8 dark:border-white/10 flex items-center justify-between px-6">
-                            <div
-                                className="flex items-center gap-3 cursor-pointer hover:opacity-75 transition-opacity"
-                                onClick={() => onNavigate('profile', { userId: selectedConvo.user.id })}
-                            >
-                                <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${selectedConvo.user.grad} flex items-center justify-center text-[10px] font-bold shadow-lg`}>
-                                    {selectedConvo.user.avatar
-                                        ? <img src={selectedConvo.user.avatar} className="w-full h-full object-cover rounded-full" />
-                                        : initials(selectedConvo.user.name)}
-                                </div>
-                                <div>
-                                    <h4 className="text-sm font-bold text-neutral-900 dark:text-white leading-none">{selectedConvo.user.name}</h4>
-                                    <p className="text-[10px] text-neutral-500 mt-1 font-medium">{t('messages.active')}</p>
-                                </div>
-                            </div>
-
-                        </div>
-
-                        {/* Messages */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-4 flex flex-col scroll-smooth" ref={scrollRef}>
-                            {/* Profile header in chat */}
-                            <div className="flex flex-col items-center mb-8">
-                                <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${selectedConvo.user.grad} p-1 mb-3`}>
-                                    <div className="w-full h-full rounded-full bg-white dark:bg-black p-1">
-                                        {selectedConvo.user.avatar
-                                            ? <img src={selectedConvo.user.avatar} className="w-full h-full object-cover rounded-full" />
-                                            : <div className="w-full h-full flex items-center justify-center text-xl font-bold text-neutral-700 dark:text-white">{initials(selectedConvo.user.name)}</div>}
+                        <div className="h-16 border-b border-black/8 dark:border-white/10 flex items-center justify-between px-6 bg-white/80 dark:bg-black/80 backdrop-blur-md sticky top-0 z-10">
+                            {tab === 'personal' ? (
+                                <div
+                                    className="flex items-center gap-3 cursor-pointer hover:opacity-75 transition-opacity"
+                                    onClick={() => onNavigate('profile', { userId: selectedUserConvo.user.id })}
+                                >
+                                    <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${selectedUserConvo.user.grad} flex items-center justify-center text-[10px] font-bold shadow-lg text-neutral-900 dark:text-white`}>
+                                        {selectedUserConvo.user.avatar
+                                            ? <img src={selectedUserConvo.user.avatar} className="w-full h-full object-cover rounded-full" />
+                                            : initials(selectedUserConvo.user.name)}
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-bold text-neutral-900 dark:text-white leading-none">{selectedUserConvo.user.name}</h4>
+                                        <p className="text-[10px] text-neutral-500 mt-1 font-medium">{t('messages.active')}</p>
                                     </div>
                                 </div>
-                                <h3 className="text-lg font-bold text-neutral-900 dark:text-white">{selectedConvo.user.name}</h3>
-                                <p className="text-[11px] text-neutral-500 mt-1 tracking-wider uppercase font-bold">
-                                    {translateField(selectedConvo.user.field, t)} · {selectedConvo.user.university}
-                                </p>
-                                <button
-                                    onClick={() => onNavigate('profile', { userId: selectedConvo.user.id })}
-                                    className="mt-4 px-4 py-1.5 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-700 dark:text-white text-xs font-bold rounded-lg transition-colors"
-                                >
-                                    {t('messages.viewProfile')}
-                                </button>
+                            ) : (
+                                <div className="flex items-center justify-between w-full">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${selectedProjectConvo.project.grad} flex items-center justify-center shadow-lg text-neutral-900 dark:text-white`}>
+                                            <Icon icon="mdi:rocket-launch-outline" className="text-sm" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-bold text-neutral-900 dark:text-white leading-none line-clamp-1">{selectedProjectConvo.project.title}</h4>
+                                            <p className="text-[10px] text-neutral-500 mt-1 font-medium flex items-center gap-1">
+                                                <Icon icon="mdi:account-multiple" /> Komanda Qrupu
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            onClick={() => setShowManageTeam(true)}
+                                            className="px-3 py-1.5 flex items-center gap-1.5 bg-neutral-100 dark:bg-[rgba(255,255,255,0.05)] hover:bg-neutral-200 dark:hover:bg-[rgba(255,255,255,0.1)] rounded-lg text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-colors"
+                                        >
+                                            <Icon icon="mdi:account-multiple-outline" className="text-sm" /> İştirakçılar
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Messages Area */}
+                        <div className="flex-1 overflow-y-auto p-6 flex flex-col scroll-smooth relative" ref={scrollRef}>
+                            <div className="flex flex-col items-center mb-8 pt-4">
+                                {tab === 'personal' ? (
+                                    <>
+                                        <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${selectedUserConvo.user.grad} p-1 mb-3`}>
+                                            <div className="w-full h-full rounded-full bg-white dark:bg-black p-1">
+                                                {selectedUserConvo.user.avatar
+                                                    ? <img src={selectedUserConvo.user.avatar} className="w-full h-full object-cover rounded-full" />
+                                                    : <div className="w-full h-full flex items-center justify-center text-xl font-bold text-neutral-700 dark:text-white">{initials(selectedUserConvo.user.name)}</div>}
+                                            </div>
+                                        </div>
+                                        <h3 className="text-lg font-bold text-neutral-900 dark:text-white">{selectedUserConvo.user.name}</h3>
+                                        <p className="text-[11px] text-neutral-500 mt-1 tracking-wider uppercase font-bold">
+                                            {translateField(selectedUserConvo.user.field, t)} · {selectedUserConvo.user.university}
+                                        </p>
+                                        <button
+                                            onClick={() => onNavigate('profile', { userId: selectedUserConvo.user.id })}
+                                            className="mt-4 px-4 py-1.5 bg-neutral-100 dark:bg-[rgba(255,255,255,0.05)] hover:bg-neutral-200 dark:hover:bg-[rgba(255,255,255,0.1)] text-neutral-700 dark:text-white text-xs font-bold rounded-lg transition-colors"
+                                        >
+                                            {t('messages.viewProfile')}
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className={`w-20 h-20 rounded-[24px] bg-gradient-to-br ${selectedProjectConvo.project.grad} p-1 mb-3 shadow-lg`}>
+                                            <div className="w-full h-full rounded-[20px] bg-white dark:bg-black flex items-center justify-center text-3xl text-neutral-800 dark:text-neutral-200">
+                                                <Icon icon="mdi:rocket-launch-outline" />
+                                            </div>
+                                        </div>
+                                        <h3 className="text-lg font-bold text-neutral-900 dark:text-white text-center max-w-sm">{selectedProjectConvo.project.title}</h3>
+                                        <p className="text-[11px] text-neutral-500 mt-2 text-center max-w-md bg-neutral-100 dark:bg-[rgba(255,255,255,0.05)] px-4 py-2 rounded-xl">
+                                            Bu, layihənizin aktiv müraciətçiləri və rəhbəri üçün qapalı qrup çatıdır.
+                                        </p>
+                                    </>
+                                )}
                             </div>
 
-                            {chatMsgs.map((m, i) => {
-                                const isMe = m.from === currentUser?.id;
-                                const sharedPost = m.postId ? DB.get('posts').find(p => p.id === m.postId) : null;
+                            <div className="space-y-4 flex-1 flex flex-col justify-end pr-2">
+                                {chatMsgs.map((m, i) => {
+                                    const isSystem = m.from === 'system';
+                                    const isMe = m.from === currentUser?.id;
+                                    const sender = isSystem ? null : getUser(m.from);
+                                    const sharedPost = m.postId ? DB.get('posts').find(p => p.id === m.postId) : null;
+                                    const showSenderInfo = tab === 'projects' && !isMe && !isSystem && (i === 0 || chatMsgs[i - 1].from !== m.from);
 
-                                return (
-                                    <div key={m.id || i} className={`flex items-end gap-2 ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                        {!isMe && (
-                                            <div className="w-6 h-6 rounded-full overflow-hidden mb-1 shrink-0">
-                                                {selectedConvo.user.avatar ? (
-                                                    <img src={selectedConvo.user.avatar} className="w-full h-full object-cover" />
+                                    if (isSystem) {
+                                        return (
+                                            <div key={m.id || i} className="flex justify-center my-4">
+                                                <span className="px-4 py-1.5 bg-neutral-100 dark:bg-[rgba(255,255,255,0.05)] text-neutral-500 dark:text-neutral-400 text-[10px] font-bold rounded-full uppercase tracking-wider">
+                                                    {m.text}
+                                                </span>
+                                            </div>
+                                        );
+                                    }
+
+                                    return (
+                                        <div key={m.id || i} className={`flex items-end gap-2 ${isMe ? 'justify-end' : 'justify-start'} ${showSenderInfo ? 'mt-6' : 'mt-1'}`}>
+                                            {!isMe && (
+                                                <div className="flex flex-col items-center justify-end w-7 h-7 mb-0.5 shrink-0">
+                                                    {(showSenderInfo || i === chatMsgs.length - 1 || chatMsgs[i + 1]?.from !== m.from) ? (
+                                                        <div
+                                                            className="w-7 h-7 rounded-full overflow-hidden cursor-pointer active:scale-95 transition-transform"
+                                                            onClick={() => sender && onNavigate('profile', { userId: sender.id })}
+                                                        >
+                                                            {sender?.avatar ? (
+                                                                <img src={sender.avatar} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className={`w-full h-full bg-gradient-to-br ${sender?.grad || 'from-neutral-400 to-neutral-500'} flex items-center justify-center text-[9px] font-bold text-white`}>
+                                                                    {initials(sender?.name)}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ) : <div className="w-7 h-7" />}
+                                                </div>
+                                            )}
+
+                                            <div className={`flex flex-col max-w-[70%] group relative ${isMe ? 'items-end' : 'items-start'}`}>
+                                                {showSenderInfo && (
+                                                    <span className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 mb-1 ml-1">{sender?.name}</span>
+                                                )}
+
+                                                {m.image ? (
+                                                    <img
+                                                        src={m.image}
+                                                        className={`rounded-2xl border border-black/5 dark:border-white/5 opacity-90 hover:opacity-100 transition-opacity max-w-[260px] max-h-[260px] object-cover cursor-pointer shadow-sm ${isMe ? 'self-end rounded-br-sm' : 'self-start rounded-bl-sm'}`}
+                                                        onClick={() => window.open(m.image, '_blank')}
+                                                    />
                                                 ) : (
-                                                    <div className={`w-full h-full bg-gradient-to-br ${selectedConvo.user.grad} flex items-center justify-center text-[8px] font-bold`}>
-                                                        {initials(selectedConvo.user.name)}
+                                                    <div className={`ig-bubble shadow-sm ${isMe ? 'ig-bubble-me rounded-br-sm' : 'ig-bubble-them rounded-bl-sm'}`}>
+                                                        {m.text}
+                                                    </div>
+                                                )}
+
+                                                <span className={`text-[9px] text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity absolute top-1/2 -translate-y-1/2 ${isMe ? 'right-[105%]' : 'left-[105%]'} whitespace-nowrap`}>
+                                                    {new Date(m.ts).toLocaleTimeString([], { timeStyle: 'short' })}
+                                                </span>
+
+                                                {/* Shared Post code would go here identically */}
+                                                {sharedPost && (
+                                                    <div
+                                                        onClick={() => onNavigate('dashboard', { postId: sharedPost.id })}
+                                                        className={`cursor-pointer overflow-hidden rounded-2xl border border-black/8 dark:border-white/10 bg-white dark:bg-[#121212] transition-all hover:border-black/15 dark:hover:border-white/20 hover:shadow-md active:scale-95 group/post mt-2 w-64 ${isMe ? 'self-end' : 'self-start'}`}
+                                                    >
+                                                        {/* Post preview simplified */}
+                                                        <div className="p-3">
+                                                            <div className="flex items-center gap-2 mb-2">
+                                                                <div className={`w-4 h-4 rounded-full bg-gradient-to-br ${getUser(sharedPost.authorId)?.grad} flex items-center justify-center text-[6px] font-black text-white`}>
+                                                                    {initials(getUser(sharedPost.authorId)?.name)}
+                                                                </div>
+                                                                <span className="text-[10px] font-bold text-neutral-700 dark:text-neutral-300">{getUser(sharedPost.authorId)?.name}</span>
+                                                            </div>
+                                                            <p className="text-[11px] text-neutral-500 dark:text-neutral-400 line-clamp-2 leading-relaxed">Pyləşməyə baxın: "{sharedPost.caption}"</p>
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
-                                        )}
-                                        <div className="flex flex-col gap-1 max-w-[70%]">
-                                            {m.image ? (
-                                                <img
-                                                    src={m.image}
-                                                    className={`rounded-2xl max-w-[260px] max-h-[260px] object-cover cursor-pointer ${isMe ? 'self-end' : 'self-start'}`}
-                                                    onClick={() => window.open(m.image, '_blank')}
-                                                />
-                                            ) : (
-                                                <div className={`ig-bubble ${isMe ? 'ig-bubble-me' : 'ig-bubble-them'}`}>
-                                                    {m.text}
-                                                </div>
-                                            )}
-
-                                            {sharedPost && (
-                                                <div
-                                                    onClick={() => onNavigate('dashboard', { postId: sharedPost.id })}
-                                                    className={`cursor-pointer overflow-hidden rounded-2xl border border-black/8 dark:border-white/10 bg-neutral-50 dark:bg-[#121212] transition-all hover:border-black/15 dark:hover:border-white/20 active:scale-95 group ${isMe ? 'self-end' : 'self-start'}`}
-                                                >
-                                                    <div className="aspect-video relative overflow-hidden bg-neutral-100 dark:bg-neutral-900 border-b border-black/5 dark:border-white/5">
-                                                        {sharedPost.image ? (
-                                                            <img src={sharedPost.image} className="w-full h-full object-cover" alt="Shared Post" />
-                                                        ) : (
-                                                            <div className="w-full h-full flex flex-col items-center justify-center text-center p-4">
-                                                                <Icon icon={sharedPost.type === 'code' ? 'mdi:code-braces' : sharedPost.type === 'design' ? 'mdi:palette-outline' : 'mdi:format-quote-close'} className="text-3xl text-brand-400/30 mb-2" />
-                                                                <p className="text-[10px] text-neutral-500 font-medium line-clamp-2 px-2 italic">"{sharedPost.caption}"</p>
-                                                            </div>
-                                                        )}
-                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                            <div className="bg-white/10 backdrop-blur-md rounded-full px-3 py-1.5 flex items-center gap-2 text-[10px] font-bold text-white border border-white/10">
-                                                                <Icon icon="mdi:eye-outline" className="text-sm" />
-                                                                {t('messages.viewPost')}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="p-3">
-                                                        <div className="flex items-center gap-2 mb-2">
-                                                            <div className={`w-4 h-4 rounded-full bg-gradient-to-br ${getUser(sharedPost.authorId)?.grad} flex items-center justify-center text-[6px] font-black text-white`}>
-                                                                {initials(getUser(sharedPost.authorId)?.name)}
-                                                            </div>
-                                                            <span className="text-[9px] font-bold text-neutral-500 dark:text-neutral-400">{getUser(sharedPost.authorId)?.name}</span>
-                                                        </div>
-                                                        <p className="text-[11px] text-neutral-600 dark:text-neutral-300 line-clamp-2 leading-relaxed">{sharedPost.caption}</p>
-                                                    </div>
-                                                </div>
-                                            )}
                                         </div>
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })}
+                            </div>
                         </div>
 
                         {/* Input */}
-                        <div className="p-4">
-                            <div className="ig-input-pill group">
-                                <button className="text-neutral-500 dark:text-white hover:opacity-70 transition-opacity" onClick={() => imageInputRef.current?.click()}>
-                                    <Icon icon="mdi:image-outline" className="text-2xl" />
+                        <div className="p-4 bg-white dark:bg-[#000] border-t border-black/5 dark:border-white/5">
+                            <div className="ig-input-pill group focus-within:ring-2 focus-within:ring-brand-500/20">
+                                <button className="text-neutral-400 hover:text-brand-500 dark:text-neutral-500 dark:hover:text-brand-400 transition-colors" onClick={() => imageInputRef.current?.click()}>
+                                    <Icon icon="mdi:image-outline" className="text-xl" />
                                 </button>
                                 <input
                                     ref={imageInputRef}
@@ -287,33 +533,138 @@ export default function Messages({ params, onNavigate }) {
                                     onChange={handleImageSend}
                                 />
                                 <input
-                                    className="flex-1 bg-transparent border-none text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 py-3 outline-none"
-                                    placeholder={t('messages.messagePlaceholder')}
+                                    className="flex-1 bg-transparent border-none text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 py-3 px-2 outline-none"
+                                    placeholder={tab === 'projects' ? t('messages.messagePlaceholder') + ' (Qrup)' : t('messages.messagePlaceholder')}
                                     value={msgText}
                                     onChange={(e) => setMsgText(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                                 />
                                 <button
                                     onClick={handleSend}
-                                    className={`transition-colors px-2 ${msgText.trim() ? 'text-brand-500 hover:text-brand-600' : 'text-neutral-300 dark:text-neutral-600'}`}
+                                    className={`transition-colors p-2 rounded-xl ${msgText.trim() ? 'text-white bg-brand-500 hover:bg-brand-600 scale-100' : 'text-neutral-300 dark:text-neutral-600 bg-transparent scale-90'}`}
                                     disabled={!msgText.trim()}
                                 >
-                                    <Icon icon="mdi:send" className="text-2xl" />
+                                    <Icon icon="mdi:send" className="text-lg" />
                                 </button>
                             </div>
                         </div>
+
+                        {/* Manage Team Drawer */}
+                        {showManageTeam && tab === 'projects' && selectedProjectConvo && (
+                            <div className="absolute right-0 top-16 bottom-0 w-80 bg-white dark:bg-[#0a0a0a] border-l border-black/8 dark:border-white/5 shadow-2xl z-20 anim-up flex flex-col">
+                                <div className="p-5 border-b border-black/8 dark:border-white/5 flex items-center justify-between">
+                                    <h3 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+                                        <Icon icon="mdi:account-group" className="text-brand-500" /> Komanda ({selectedProjectConvo.project.applicants?.filter(a => (typeof a === 'object' ? a.status : 'pending') === 'accepted').length + 1})
+                                    </h3>
+                                    <div className="flex items-center gap-2">
+                                        {selectedProjectConvo.project.authorId === currentUser?.id && (
+                                            <button
+                                                onClick={() => setShowAddMember(true)}
+                                                className="px-2.5 py-1.5 flex items-center gap-1.5 bg-brand-500/10 hover:bg-brand-500 text-brand-500 hover:text-white rounded-lg text-xs font-bold transition-colors"
+                                                title="Üzv Əlavə Et"
+                                            >
+                                                <Icon icon="mdi:account-plus-outline" className="text-sm" /> Üzv Əlavə Et
+                                            </button>
+                                        )}
+                                        <button onClick={() => setShowManageTeam(false)} className="text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">
+                                            <Icon icon="mdi:close" className="text-xl" />
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                                    {/* Author */}
+                                    {(() => {
+                                        const author = getUser(selectedProjectConvo.project.authorId);
+                                        return author && (
+                                            <div className="flex items-center justify-between p-3 rounded-xl border border-brand-500/20 bg-brand-500/5">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-brand-500/30">
+                                                        {author.avatar ? <img src={author.avatar} className="w-full h-full object-cover" /> : <div className={`w-full h-full bg-gradient-to-br ${author.grad} flex items-center justify-center text-[10px] font-bold text-white`}>{initials(author.name)}</div>}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-xs font-bold text-neutral-900 dark:text-white">{author.name}</h4>
+                                                        <p className="text-[9px] font-bold text-brand-500 uppercase tracking-widest mt-0.5">Admin</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+
+                                    {/* Applicants */}
+                                    {selectedProjectConvo.project.applicants?.map(app => {
+                                        const appStatus = typeof app === 'object' ? app.status : 'pending';
+                                        if (appStatus !== 'accepted') return null;
+
+                                        const appId = typeof app === 'object' ? app.id : app;
+                                        const user = getUser(appId);
+                                        if (!user) return null;
+
+                                        return (
+                                            <div key={appId} className="flex items-center justify-between p-3 rounded-xl border border-black/5 dark:border-white/5 hover:border-black/10 dark:hover:border-white/10 transition-colors group">
+                                                <div className="flex items-center gap-3 cursor-pointer" onClick={() => onNavigate('profile', { userId: appId })}>
+                                                    <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-black/5 dark:border-white/5">
+                                                        {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : <div className={`w-full h-full bg-gradient-to-br ${user.grad} flex items-center justify-center text-[10px] font-bold text-white`}>{initials(user.name)}</div>}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-xs font-bold text-neutral-900 dark:text-white group-hover:text-brand-500 transition-colors">{user.name}</h4>
+                                                        <p className="text-[9px] text-neutral-500 uppercase tracking-widest mt-0.5">{user.field}</p>
+                                                    </div>
+                                                </div>
+                                                {selectedProjectConvo.project.authorId === currentUser?.id && (
+                                                    <button
+                                                        onClick={() => handleRemoveMember(appId)}
+                                                        className="w-8 h-8 rounded-lg flex items-center justify-center text-rose-500 bg-rose-500/10 hover:bg-rose-500 hover:text-white transition-colors opacity-0 group-hover:opacity-100"
+                                                        title="Qrupdan çıxar"
+                                                    >
+                                                        <Icon icon="mdi:account-remove-outline" className="text-sm" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                {selectedProjectConvo.project.authorId !== currentUser?.id && (
+                                    <div className="p-4 border-t border-black/8 dark:border-white/5">
+                                        <button
+                                            onClick={handleLeaveGroup}
+                                            className="w-full py-3 flex items-center justify-center gap-2 rounded-xl text-xs font-bold text-rose-500 bg-rose-500/10 hover:bg-rose-500 hover:text-white transition-colors active:scale-95"
+                                        >
+                                            <Icon icon="mdi:exit-run" className="text-base" />
+                                            Qrupdan Çıx
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 ) : (
                     /* Empty state */
-                    <div className="flex-1 flex flex-col items-center justify-center text-center p-10">
-                        <div className="w-24 h-24 rounded-full border-2 border-neutral-200 dark:border-white flex items-center justify-center mb-6">
-                            <Icon icon="mdi:chat-processing-outline" className="text-5xl text-neutral-400 dark:text-white" />
+                    <div className="flex-1 flex flex-col items-center justify-center text-center p-10 bg-neutral-50/50 dark:bg-black/50">
+                        <div className="w-24 h-24 rounded-full bg-white dark:bg-[#111] shadow-xl flex items-center justify-center mb-6 border border-black/5 dark:border-white/5">
+                            <Icon icon={tab === 'projects' ? 'mdi:folder-account-outline' : 'mdi:chat-processing-outline'} className="text-5xl text-neutral-300 dark:text-neutral-700" />
                         </div>
-                        <h2 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">{t('messages.emptyTitle')}</h2>
-                        <p className="text-sm text-neutral-500 max-w-xs">{t('messages.emptyDesc')}</p>
+                        <h2 className="text-xl font-bold text-neutral-900 dark:text-white mb-2 tracking-tight">
+                            {tab === 'projects' ? 'Layihə Qrupları' : t('messages.emptyTitle')}
+                        </h2>
+                        <p className="text-sm text-neutral-500 max-w-xs leading-relaxed">
+                            {tab === 'projects' ? 'Layihələrinizə müraciət edən və qəbul olunmuş komanda yoldaşlarınızla ortaq qrup çatları burada görünəcək.' : t('messages.emptyDesc')}
+                        </p>
                     </div>
                 )}
             </div>
         </div>
+        {showAddMember && selectedProjectConvo && (
+            <AddMemberModal
+                projectId={selectedProjectId}
+                currentMembers={selectedProjectConvo.project.applicants || []}
+                adminId={selectedProjectConvo.project.authorId}
+                onAdd={handleAddMember}
+                onClose={() => { setShowAddMember(false); setAddMemberError(''); }}
+                error={addMemberError}
+                onClearError={() => setAddMemberError('')}
+            />
+        )}
+        </>
     );
 }
+

@@ -28,13 +28,25 @@ export default function ProjectApplicantsModal({ project, onClose, onNavigate, o
         });
 
         DB.set('projects', allProjects);
+
+        // Send System Message to Group
+        const msgs = DB.get('messages');
+        msgs.push({
+            id: 'm_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+            from: 'system',
+            projectId: project.id,
+            text: `${getUser(applicantId)?.name} qrupa qatıldı!`,
+            ts: Date.now()
+        });
+        DB.set('messages', msgs);
+
         addNotification({
             toUserId: applicantId,
             fromUserId: project.authorId,
             type: 'project_accept',
-            text: `"${project.title}" layihəsinə müraciətiniz qəbul edildi`,
-            route: 'discover',
-            routeParams: {},
+            text: `"${project.title}" layihəsinə müraciətiniz qəbul edildi. Qrup çatına daxil ola bilərsiniz.`,
+            route: 'messages',
+            routeParams: { projectId: project.id },
         });
         if (onProjectUpdated) onProjectUpdated(allProjects[pIdx]);
     };
@@ -118,12 +130,22 @@ export default function ProjectApplicantsModal({ project, onClose, onNavigate, o
                                             <Icon icon="mdi:account-circle-outline" className="text-base" />
                                             {t('discover.project.viewAuthor')}
                                         </button>
-                                        <button 
-                                            onClick={() => { onNavigate('messages', { userId: u.id }); onClose(); }}
-                                            className="w-9 h-9 flex items-center justify-center bg-brand-500/10 text-brand-500 rounded-xl hover:bg-brand-500 hover:text-white transition-all active:scale-95"
-                                        >
-                                            <Icon icon="mdi:chat-processing-outline" className="text-base" />
-                                        </button>
+                                        {status === 'accepted' ? (
+                                            <button 
+                                                onClick={() => { onNavigate('messages', { projectId: project.id }); onClose(); }}
+                                                className="flex-1 py-2 flex items-center justify-center gap-1.5 bg-brand-500 text-white rounded-xl hover:bg-brand-600 transition-all text-[11px] font-bold active:scale-95 shadow-sm shadow-brand-500/20"
+                                            >
+                                                <Icon icon="mdi:account-group-outline" className="text-base" />
+                                                Qrup Çatı
+                                            </button>
+                                        ) : (
+                                            <button 
+                                                onClick={() => { onNavigate('messages', { userId: u.id }); onClose(); }}
+                                                className="w-9 h-9 flex items-center justify-center bg-brand-500/10 text-brand-500 rounded-xl hover:bg-brand-500 hover:text-white transition-all active:scale-95"
+                                            >
+                                                <Icon icon="mdi:chat-processing-outline" className="text-base" />
+                                            </button>
+                                        )}
                                         {status === 'pending' && (
                                             <>
                                                 <button 
