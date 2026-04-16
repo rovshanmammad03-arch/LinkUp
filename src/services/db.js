@@ -98,3 +98,51 @@ export function addNotification({ toUserId, fromUserId, type, text, route, route
     // Max 50 notification saxla
     DB.set('notifications', notifs.slice(0, 50));
 }
+
+/**
+ * E-poçtu DB-də axtarır, tapılarsa 6 rəqəmli token generasiya edib
+ * lu_reset_token açarı ilə saxlayır.
+ * @param {string} email
+ * @returns {{ success: boolean, token?: string, error?: string }}
+ */
+export function generateResetToken(email) {
+    const users = DB.get('users');
+    const user = users.find(function(u) { return u.email === email; });
+    if (!user) return { success: false, error: 'not_found' };
+    const token = Math.floor(100000 + Math.random() * 900000);
+    DB.setOne('reset_token', { email, token: String(token), expiresAt: Date.now() + 15 * 60 * 1000 });
+    return { success: true, token: String(token) };
+}
+
+/**
+ * Daxil edilmiş tokeni DB-dəki token ilə müqayisə edir və müddətini yoxlayır.
+ * @param {string} email
+ * @param {string} token
+ * @returns {{ success: boolean, error?: 'wrong_token' | 'expired' | 'not_found' }}
+ */
+export function verifyToken(email, token) {
+    const record = DB.getOne('reset_token');
+    if (!record) return { success: false, error: 'not_found' };
+    if (record.email !== email) return { success: false, error: 'wrong_token' };
+    if (Date.now() >= record.expiresAt) return { success: false, error: 'expired' };
+    if (record.token !== token) return { success: false, error: 'wrong_token' };
+    return { success: true };
+}
+
+/**
+ * İstifadəçinin şifrəsini yeniləyir və token məlumatını silir.
+ * @param {string} email
+ * @param {string} newPassword
+ * @returns {{ success: boolean, error?: string }}
+ */
+export function resetPassword(email, newPassword) {
+    const users = DB.get('users');
+    const userIndex = users.findIndex(function(u) { return u.email === email; });
+    if (userIndex === -1) return { success: false, error: 'not_found' };
+    const updatedUsers = users.map(function(u) {
+        return u.email === email ? Object.assign({}, u, { password: newPassword }) : u;
+    });
+    DB.set('users', updatedUsers);
+    DB.setOne('reset_token', null);
+    return { success: true };
+}

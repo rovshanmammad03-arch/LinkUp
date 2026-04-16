@@ -227,47 +227,12 @@ export default function Discover({ onNavigate }) {
                         </button>
                     </div>
 
-                    {tab === 'people' ? (
-                        <div className="flex items-center gap-3">
-                            <div className="relative">
-                                <button 
-                                    onClick={() => setIsSortOpen(!isSortOpen)}
-                                    className={`h-11 px-5 discover-btn-base discover-btn-glow ${isSortOpen ? 'discover-btn-active' : ''}`}
-                                >
-                                    <span className="text-sm font-bold">{t(`discover.sort${sortBy.charAt(0).toUpperCase() + sortBy.slice(1)}`)}</span>
-                                    <Icon icon="mdi:chevron-down" className={`text-lg transition-transform ${isSortOpen ? 'rotate-180' : ''}`} />
-                                </button>
-
-                                {isSortOpen && (
-                                    <>
-                                        <div className="fixed inset-0 z-40" onClick={() => setIsSortOpen(false)} />
-                                        <div className="sort-menu">
-                                            {[
-                                                { key: 'newest', label: t('discover.sortNewest') },
-                                                { key: 'popular', label: t('discover.sortPopular') },
-                                                { key: 'skills', label: t('discover.sortMostSkills') },
-                                            ].map((opt) => (
-                                                <div 
-                                                    key={opt.key}
-                                                    onClick={() => { setSortBy(opt.key); setIsSortOpen(false); }}
-                                                    className={`sort-item ${sortBy === opt.key ? 'selected' : ''}`}
-                                                >
-                                                    {opt.label}
-                                                    {sortBy === opt.key && <Icon icon="mdi:check" className="text-white" />}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    ) : (
+                    {tab === 'projects' && (
                         <button 
                             onClick={() => onNavigate('new-project')}
                             className="flex items-center gap-2 px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-brand-500/20 active:scale-95 anim-up"
                         >
                             <Icon icon="mdi:plus" className="text-lg" /> {t('discover.createProject')}
-                        </button>
                     )}
                 </div>
             </div>

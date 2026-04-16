@@ -59,6 +59,13 @@ export default function Login({ onNavigate }) {
                             required 
                         />
                     </div>
+                    <button
+                        type="button"
+                        onClick={() => onNavigate('forgot-password')}
+                        className="text-xs text-brand-400 hover:text-brand-300 transition-colors text-right w-full"
+                    >
+                        {t('forgotPassword.forgotLink')}
+                    </button>
                     <button type="submit" className="btn-primary w-full py-3 mt-4 text-base flex items-center justify-center gap-2 shadow-xl shadow-brand-500/30">
                         {t('auth.loginBtn')} <Icon icon="mdi:arrow-right" />
                     </button>

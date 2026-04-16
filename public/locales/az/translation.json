@@ -288,6 +288,35 @@
       "xlarge": "5+ nəfər"
     }
   },
+  "forgotPassword": {
+    "forgotLink": "Şifrəni unutdum?",
+    "title": "Şifrəni Sıfırla",
+    "step1Title": "E-poçtunuzu daxil edin",
+    "step1Desc": "Qeydiyyatda istifadə etdiyiniz e-poçtu daxil edin",
+    "emailLabel": "E-poçt",
+    "sendCodeBtn": "Kodu Göndər",
+    "step2Title": "Kodu daxil edin",
+    "step2Desc": "E-poçtunuza göndərilən 6 rəqəmli kodu daxil edin",
+    "demoCodeMsg": "Demo üçün kodunuz: {{code}}",
+    "tokenLabel": "Sıfırlama Kodu",
+    "tokenPlaceholder": "123456",
+    "verifyBtn": "Doğrula",
+    "step3Title": "Yeni şifrə təyin edin",
+    "step3Desc": "Hesabınız üçün yeni şifrə seçin",
+    "newPasswordLabel": "Yeni Şifrə",
+    "confirmPasswordLabel": "Şifrəni Təkrarla",
+    "resetBtn": "Şifrəni Sıfırla",
+    "successMsg": "Şifrəniz uğurla yeniləndi! Giriş səhifəsinə yönləndirilirsiniz...",
+    "backToLogin": "Girişə Qayıt",
+    "backToEmail": "E-poçtu dəyiş",
+    "errors": {
+      "emailNotFound": "Bu e-poçt qeydiyyatda yoxdur",
+      "wrongToken": "Kod yanlışdır",
+      "expiredToken": "Kodun müddəti bitib, yenidən cəhd edin",
+      "passwordTooShort": "Şifrə minimum 8 simvol olmalıdır",
+      "passwordMismatch": "Şifrələr uyğun gəlmir"
+    }
+  },
   "profile": {
     "editProfile": "Profili Düzənlə",
     "posts": "Paylaşımlar",

@@ -13,6 +13,7 @@ import Notifications from './pages/Notifications';
 import NewPostModal from './components/feed/NewPostModal';
 import OnboardingModal from './components/onboarding/OnboardingModal';
 import NewProject from './pages/NewProject';
+import ForgotPassword from './pages/ForgotPassword';
 
 function AppContent() {
     const { currentUser, loading } = useAuth();
@@ -59,7 +60,7 @@ function AppContent() {
 
     // Route logic
     const renderPage = () => {
-        if (!currentUser && currentRoute !== 'login' && currentRoute !== 'register') {
+        if (!currentUser && currentRoute !== 'login' && currentRoute !== 'register' && currentRoute !== 'forgot-password') {
             return <Landing onNavigate={handleNavigate} />;
         }
 
@@ -73,6 +74,7 @@ function AppContent() {
             case 'messages': return <Messages onNavigate={handleNavigate} params={routeParams} />;
             case 'notifications': return <Notifications onNavigate={handleNavigate} />;
             case 'new-project': return <NewProject onNavigate={handleNavigate} params={routeParams} />;
+            case 'forgot-password': return <ForgotPassword onNavigate={handleNavigate} />;
             case 'new-post': return (
                 <>
                     <Dashboard onNavigate={handleNavigate} />

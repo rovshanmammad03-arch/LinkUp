@@ -287,6 +287,35 @@
       "xlarge": "5+ человек"
     }
   },
+  "forgotPassword": {
+    "forgotLink": "Забыли пароль?",
+    "title": "Сброс пароля",
+    "step1Title": "Введите вашу почту",
+    "step1Desc": "Введите email, который вы использовали при регистрации",
+    "emailLabel": "Эл. почта",
+    "sendCodeBtn": "Отправить код",
+    "step2Title": "Введите код",
+    "step2Desc": "Введите 6-значный код, отправленный на вашу почту",
+    "demoCodeMsg": "Ваш демо-код: {{code}}",
+    "tokenLabel": "Код сброса",
+    "tokenPlaceholder": "123456",
+    "verifyBtn": "Подтвердить",
+    "step3Title": "Установите новый пароль",
+    "step3Desc": "Выберите новый пароль для вашего аккаунта",
+    "newPasswordLabel": "Новый пароль",
+    "confirmPasswordLabel": "Подтвердите пароль",
+    "resetBtn": "Сбросить пароль",
+    "successMsg": "Ваш пароль успешно обновлён! Перенаправление на страницу входа...",
+    "backToLogin": "Вернуться к входу",
+    "backToEmail": "Изменить почту",
+    "errors": {
+      "emailNotFound": "Этот email не зарегистрирован",
+      "wrongToken": "Неверный код",
+      "expiredToken": "Срок действия кода истёк, попробуйте снова",
+      "passwordTooShort": "Пароль должен содержать минимум 8 символов",
+      "passwordMismatch": "Пароли не совпадают"
+    }
+  },
   "profile": {
     "editProfile": "Редактировать профиль",
     "posts": "Публикации",

@@ -287,6 +287,35 @@
       "xlarge": "5+ people"
     }
   },
+  "forgotPassword": {
+    "forgotLink": "Forgot password?",
+    "title": "Reset Password",
+    "step1Title": "Enter your email",
+    "step1Desc": "Enter the email you used during registration",
+    "emailLabel": "Email",
+    "sendCodeBtn": "Send Code",
+    "step2Title": "Enter the code",
+    "step2Desc": "Enter the 6-digit code sent to your email",
+    "demoCodeMsg": "Your demo code: {{code}}",
+    "tokenLabel": "Reset Code",
+    "tokenPlaceholder": "123456",
+    "verifyBtn": "Verify",
+    "step3Title": "Set new password",
+    "step3Desc": "Choose a new password for your account",
+    "newPasswordLabel": "New Password",
+    "confirmPasswordLabel": "Confirm Password",
+    "resetBtn": "Reset Password",
+    "successMsg": "Your password has been updated successfully! Redirecting to login...",
+    "backToLogin": "Back to Login",
+    "backToEmail": "Change email",
+    "errors": {
+      "emailNotFound": "This email is not registered",
+      "wrongToken": "Incorrect code",
+      "expiredToken": "Code has expired, please try again",
+      "passwordTooShort": "Password must be at least 8 characters",
+      "passwordMismatch": "Passwords do not match"
+    }
+  },
   "profile": {
     "editProfile": "Edit Profile",
     "posts": "Posts",

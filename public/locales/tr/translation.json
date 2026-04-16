@@ -287,6 +287,35 @@
       "xlarge": "5+ kişi"
     }
   },
+  "forgotPassword": {
+    "forgotLink": "Şifremi unuttum?",
+    "title": "Şifreyi Sıfırla",
+    "step1Title": "E-postanızı girin",
+    "step1Desc": "Kayıt sırasında kullandığınız e-postayı girin",
+    "emailLabel": "E-posta",
+    "sendCodeBtn": "Kod Gönder",
+    "step2Title": "Kodu girin",
+    "step2Desc": "E-postanıza gönderilen 6 haneli kodu girin",
+    "demoCodeMsg": "Demo kodunuz: {{code}}",
+    "tokenLabel": "Sıfırlama Kodu",
+    "tokenPlaceholder": "123456",
+    "verifyBtn": "Doğrula",
+    "step3Title": "Yeni şifre belirleyin",
+    "step3Desc": "Hesabınız için yeni bir şifre seçin",
+    "newPasswordLabel": "Yeni Şifre",
+    "confirmPasswordLabel": "Şifreyi Onayla",
+    "resetBtn": "Şifreyi Sıfırla",
+    "successMsg": "Şifreniz başarıyla güncellendi! Giriş sayfasına yönlendiriliyorsunuz...",
+    "backToLogin": "Girişe Dön",
+    "backToEmail": "E-postayı değiştir",
+    "errors": {
+      "emailNotFound": "Bu e-posta kayıtlı değil",
+      "wrongToken": "Kod yanlış",
+      "expiredToken": "Kodun süresi doldu, tekrar deneyin",
+      "passwordTooShort": "Şifre en az 8 karakter olmalıdır",
+      "passwordMismatch": "Şifreler eşleşmiyor"
+    }
+  },
   "profile": {
     "editProfile": "Profili Düzenle",
     "posts": "Gönderiler",
