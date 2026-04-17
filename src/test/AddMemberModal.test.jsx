@@ -13,9 +13,11 @@ vi.mock('@iconify/react', () => ({
 }));
 
 const mockUsers = [
-    { id: 'u1', name: 'Ayxan Quliyev', field: 'Proqramlaşdırma', grad: 'from-brand-500 to-brand-600' },
+    { id: 'u1', name: 'Ayxan Quliyev', field: 'Proqramlaşdırma', grad: 'from-brand-500 to-brand-600', followers: ['u2', 'u3'] },
     { id: 'u2', name: 'Leyla Məmmədova', field: 'Dizayn', grad: 'from-pink-500 to-rose-500' },
     { id: 'u3', name: 'Rəşad Əliyev', field: 'Proqramlaşdırma', grad: 'from-blue-500 to-indigo-600' },
+    // admin1 istifadəçisi — u1, u2, u3 onun takipçisidir
+    { id: 'admin1', name: 'Admin İstifadəçi', field: 'Proqramlaşdırma', grad: 'from-brand-500 to-brand-600', followers: ['u1', 'u2', 'u3'] },
 ];
 
 beforeEach(() => {

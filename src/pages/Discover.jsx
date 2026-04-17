@@ -129,6 +129,9 @@ export default function Discover({ onNavigate }) {
         const updated = allProjects.filter(p => p.id !== projectToDeleteId);
         DB.set('projects', updated);
         setProjects(updated);
+        // Layihəyə aid showcase-ləri də sil
+        const allShowcases = DB.get('showcases');
+        DB.set('showcases', allShowcases.filter(s => s.projectId !== projectToDeleteId));
         setProjectToDeleteId(null);
     };
 

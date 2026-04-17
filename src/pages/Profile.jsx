@@ -6,6 +6,9 @@ import { useScrollLock } from '../hooks/useScrollLock';
 import PostCard from '../components/feed/PostCard';
 import ConfirmModal from '../components/common/ConfirmModal';
 import { useTranslation } from 'react-i18next';
+import * as showcaseService from '../services/showcaseService';
+import ShowcaseList from '../components/profile/ShowcaseList';
+import ShowcaseModal from '../components/profile/ShowcaseModal';
 
 const SKILL_LEVEL_KEYS = ['beginner', 'intermediate', 'advanced'];
 const SKILL_LEVELS_AZ = ['Başlanğıc', 'Orta', 'Qabaqcıl'];
@@ -44,6 +47,9 @@ export default function Profile({ params, onNavigate }) {
     const [selectedPost, setSelectedPost] = useState(null);
     const [userList, setUserList] = useState({ open: false, type: '', data: [] });
     const [targetUser, setTargetUser] = useState(null);
+    const [showcases, setShowcases] = useState([]);
+    const [showcaseModal, setShowcaseModal] = useState(null);
+    const [showcaseToDeleteId, setShowcaseToDeleteId] = useState(null);
 
     // Edit form state
     const [form, setForm] = useState({});
@@ -59,7 +65,7 @@ export default function Profile({ params, onNavigate }) {
     const [isNewSkillLevelOpen, setIsNewSkillLevelOpen] = useState(false);
     const [isNewLinkTypeOpen, setIsNewLinkTypeOpen] = useState(false);
 
-    useScrollLock(editOpen || !!selectedPost || userList.open || !!projectToDeleteId);
+    useScrollLock(editOpen || !!selectedPost || userList.open || !!projectToDeleteId || !!showcaseModal || !!showcaseToDeleteId);
 
     const isOwnProfile = !params?.userId || params.userId === currentUser?.id;
 
@@ -89,6 +95,9 @@ export default function Profile({ params, onNavigate }) {
         // Load this user's projects
         const allProjects = DB.get('projects');
         setUserProjects(allProjects.filter(p => p.authorId === targetUser.id));
+
+        // Load all showcases
+        setShowcases(showcaseService.getAll());
 
         // Stats are based on user's own posts, regardless of active tab view
         setStats({
@@ -224,7 +233,22 @@ export default function Profile({ params, onNavigate }) {
         const updated = allProjects.filter(p => p.id !== projectToDeleteId);
         DB.set('projects', updated);
         setUserProjects(updated.filter(p => p.authorId === targetUser?.id));
+        // Layihəyə aid showcase-ləri də sil
+        const allShowcases = DB.get('showcases');
+        DB.set('showcases', allShowcases.filter(s => s.projectId !== projectToDeleteId));
+        setShowcases(prev => prev.filter(s => s.projectId !== projectToDeleteId));
         setProjectToDeleteId(null);
+    };
+
+    const handleAddShowcase = (showcase) => {
+        setShowcases(prev => [...prev, showcase]);
+        setShowcaseModal(null);
+    };
+
+    const handleDeleteShowcase = (id) => {
+        showcaseService.remove(id);
+        setShowcases(prev => prev.filter(s => s.id !== id));
+        setShowcaseToDeleteId(null);
     };
 
     const addSkill = () => {
@@ -456,7 +480,11 @@ export default function Profile({ params, onNavigate }) {
                                 userProjects.map((p, i) => (
                                     <div
                                         key={p.id}
-                                        className="bg-white dark:bg-[#111]/80 border border-black/8 dark:border-white/5 rounded-[28px] p-6 group hover:border-black/15 dark:hover:border-white/10 transition-all shadow-sm dark:shadow-xl anim-up"
+                                        className={`bg-white dark:bg-[#111]/80 border rounded-[28px] p-6 group transition-all shadow-sm dark:shadow-xl anim-up ${
+                                            p.status === 'completed' && showcases.some(s => s.projectId === p.id)
+                                                ? 'border-emerald-500/30 dark:border-emerald-500/20 hover:border-emerald-500/50 dark:hover:border-emerald-500/30'
+                                                : 'border-black/8 dark:border-white/5 hover:border-black/15 dark:hover:border-white/10'
+                                        }`}
                                         style={{ animationDelay: `${i * 0.05}s` }}
                                     >
                                         <div className="flex items-start justify-between gap-4 mb-4">
@@ -560,6 +588,33 @@ export default function Profile({ params, onNavigate }) {
                                                 </button>
                                             )}
                                         </div>
+
+                                        {/* Showcase section — only for completed projects */}
+                                        {p.status === 'completed' && (
+                                            <div className={`mt-4 pt-4 border-t ${showcases.some(s => s.projectId === p.id) ? 'border-emerald-500/20' : 'border-black/5 dark:border-white/5'}`}>
+                                                {showcases.some(s => s.projectId === p.id) && (
+                                                    <div className="flex items-center gap-1.5 mb-3">
+                                                        <Icon icon="mdi:star-circle-outline" className="text-emerald-400 text-sm" />
+                                                        <span className="text-[10px] font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-widest">Showcase</span>
+                                                    </div>
+                                                )}
+                                                <ShowcaseList
+                                                    showcases={showcases.filter(s => s.projectId === p.id)}
+                                                    currentUserId={currentUser?.id}
+                                                    isOwnProfile={isOwnProfile}
+                                                    onDelete={(id) => setShowcaseToDeleteId(id)}
+                                                />
+                                                {isOwnProfile && showcaseService.isParticipant(currentUser?.id, p) && (
+                                                    <button
+                                                        onClick={() => setShowcaseModal(p.id)}
+                                                        className="mt-3 flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold transition-all active:scale-95"
+                                                    >
+                                                        <Icon icon="mdi:plus-circle-outline" className="text-base" />
+                                                        Showcase Əlavə Et
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 ))
                             ) : (
@@ -950,6 +1005,25 @@ export default function Profile({ params, onNavigate }) {
                     cancelText={t('post.cancel')}
                     onConfirm={confirmDeleteProject}
                     onCancel={() => setProjectToDeleteId(null)}
+                />
+            )}
+
+            {showcaseModal !== null && (
+                <ShowcaseModal
+                    projectId={showcaseModal}
+                    onClose={() => setShowcaseModal(null)}
+                    onSaved={handleAddShowcase}
+                />
+            )}
+
+            {showcaseToDeleteId !== null && (
+                <ConfirmModal
+                    title="Showcase-i sil"
+                    message="Bu showcase elementini silmək istədiyinizə əminsiniz?"
+                    confirmText="Sil"
+                    cancelText="Ləğv et"
+                    onConfirm={() => handleDeleteShowcase(showcaseToDeleteId)}
+                    onCancel={() => setShowcaseToDeleteId(null)}
                 />
             )}
         </>

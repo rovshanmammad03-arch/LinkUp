@@ -1,6 +1,6 @@
 export const DB = {
     get: function(k) { try { return JSON.parse(localStorage.getItem('lu_' + k)) || [] } catch(e) { return [] } },
-    set: function(k, v) { localStorage.setItem('lu_' + k, JSON.stringify(v)) },
+    set: function(k, v) { try { localStorage.setItem('lu_' + k, JSON.stringify(v)) } catch(e) { console.error('localStorage yazma xətası:', e); throw e; } },
     getOne: function(k) { try { return JSON.parse(localStorage.getItem('lu_' + k)) } catch(e) { return null } },
     setOne: function(k, v) { localStorage.setItem('lu_' + k, JSON.stringify(v)) }
 };
