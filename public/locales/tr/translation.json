@@ -353,6 +353,10 @@
     "liked": "Beğendiklerim",
     "followersTitle": "Takipçiler",
     "followingTitle": "Takip Edilenler",
-    "loading": "Yükleniyor..."
+    "loading": "Yükleniyor...",
+    "projects": "Projeler",
+    "noProjectsYet": "Henüz proje yok.",
+    "manageProject": "Yönet",
+    "editProject": "Düzenle"
   }
 }

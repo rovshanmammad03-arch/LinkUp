@@ -353,6 +353,10 @@
     "liked": "Понравившееся",
     "followersTitle": "Подписчики",
     "followingTitle": "Подписки",
-    "loading": "Загрузка..."
+    "loading": "Загрузка...",
+    "projects": "Проекты",
+    "noProjectsYet": "Проектов пока нет.",
+    "manageProject": "Управлять",
+    "editProject": "Редактировать"
   }
 }

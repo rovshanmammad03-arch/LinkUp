@@ -353,6 +353,10 @@
     "liked": "Liked",
     "followersTitle": "Followers",
     "followingTitle": "Following",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "projects": "Projects",
+    "noProjectsYet": "No projects yet.",
+    "manageProject": "Manage",
+    "editProject": "Edit"
   }
 }

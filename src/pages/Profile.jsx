@@ -4,6 +4,7 @@ import { DB, initials } from '../services/db';
 import { Icon } from '@iconify/react';
 import { useScrollLock } from '../hooks/useScrollLock';
 import PostCard from '../components/feed/PostCard';
+import ConfirmModal from '../components/common/ConfirmModal';
 import { useTranslation } from 'react-i18next';
 
 const SKILL_LEVEL_KEYS = ['beginner', 'intermediate', 'advanced'];
@@ -35,6 +36,9 @@ export default function Profile({ params, onNavigate }) {
     const { t } = useTranslation();
     const [tab, setTab] = useState('posts');
     const [posts, setPosts] = useState([]);
+    const [userProjects, setUserProjects] = useState([]);
+    const [openProjectOptionsId, setOpenProjectOptionsId] = useState(null);
+    const [projectToDeleteId, setProjectToDeleteId] = useState(null);
     const [stats, setStats] = useState({ posts: 0, following: 0, followers: 0 });
     const [editOpen, setEditOpen] = useState(false);
     const [selectedPost, setSelectedPost] = useState(null);
@@ -55,7 +59,7 @@ export default function Profile({ params, onNavigate }) {
     const [isNewSkillLevelOpen, setIsNewSkillLevelOpen] = useState(false);
     const [isNewLinkTypeOpen, setIsNewLinkTypeOpen] = useState(false);
 
-    useScrollLock(editOpen || !!selectedPost || userList.open);
+    useScrollLock(editOpen || !!selectedPost || userList.open || !!projectToDeleteId);
 
     const isOwnProfile = !params?.userId || params.userId === currentUser?.id;
 
@@ -81,7 +85,11 @@ export default function Profile({ params, onNavigate }) {
         }
         
         setPosts(filtered);
-        
+
+        // Load this user's projects
+        const allProjects = DB.get('projects');
+        setUserProjects(allProjects.filter(p => p.authorId === targetUser.id));
+
         // Stats are based on user's own posts, regardless of active tab view
         setStats({
             posts: allPosts.filter(p => p.authorId === targetUser.id).length,
@@ -200,6 +208,23 @@ export default function Profile({ params, onNavigate }) {
             reader.readAsDataURL(file);
         };
         inp.click();
+    };
+
+    const handleToggleProjectStatus = (projectId) => {
+        const allProjects = DB.get('projects');
+        const pIdx = allProjects.findIndex(p => p.id === projectId);
+        if (pIdx === -1) return;
+        allProjects[pIdx].status = allProjects[pIdx].status === 'completed' ? 'active' : 'completed';
+        DB.set('projects', allProjects);
+        setUserProjects(allProjects.filter(p => p.authorId === targetUser.id));
+    };
+
+    const confirmDeleteProject = () => {
+        const allProjects = DB.get('projects');
+        const updated = allProjects.filter(p => p.id !== projectToDeleteId);
+        DB.set('projects', updated);
+        setUserProjects(updated.filter(p => p.authorId === targetUser?.id));
+        setProjectToDeleteId(null);
     };
 
     const addSkill = () => {
@@ -404,6 +429,15 @@ export default function Profile({ params, onNavigate }) {
                             {t('profile.posts')}
                             {tab === 'posts' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" />}
                         </button>
+                        <button
+                            onClick={() => setTab('projects')}
+                            className={`pb-4 text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-2 transition-all relative ${tab === 'projects' ? 'text-neutral-900 dark:text-white' : 'text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'}`}
+                        >
+                            <Icon icon="mdi:folder-star-outline" className={tab === 'projects' ? 'text-emerald-400' : ''} />
+                            {t('profile.projects')}
+
+                            {tab === 'projects' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />}
+                        </button>
                         {isOwnProfile && (
                             <button
                                 onClick={() => setTab('liked')}
@@ -416,43 +450,173 @@ export default function Profile({ params, onNavigate }) {
                         )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 anim-up">
-                        {posts.length > 0 ? (
-                            posts.map((p, i) => (
-                                <div
-                                    key={p.id}
-                                    onClick={() => setSelectedPost(p)}
-                                    className="aspect-square bg-black/5 dark:bg-white/5 border border-black/8 dark:border-white/5 rounded-[32px] overflow-hidden group relative cursor-pointer shadow-sm dark:shadow-lg hover:border-black/15 dark:hover:border-white/10 transition-all"
-                                >
-                                    {p.image ? (
-                                        <img src={p.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                                    ) : (
-                                        <div className="w-full h-full flex flex-col items-center justify-center bg-brand-500/5 text-brand-400/40 p-6 text-center">
-                                            <Icon icon={p.type === 'code' ? 'mdi:code-braces' : p.type === 'design' ? 'mdi:palette-outline' : 'mdi:format-quote-close'} className="text-4xl mb-3" />
-                                            <p className="text-[10px] font-medium leading-relaxed italic line-clamp-3">"{p.caption}"</p>
+                    {tab === 'projects' ? (
+                        <div className="grid grid-cols-1 gap-4 anim-up">
+                            {userProjects.length > 0 ? (
+                                userProjects.map((p, i) => (
+                                    <div
+                                        key={p.id}
+                                        className="bg-white dark:bg-[#111]/80 border border-black/8 dark:border-white/5 rounded-[28px] p-6 group hover:border-black/15 dark:hover:border-white/10 transition-all shadow-sm dark:shadow-xl anim-up"
+                                        style={{ animationDelay: `${i * 0.05}s` }}
+                                    >
+                                        <div className="flex items-start justify-between gap-4 mb-4">
+                                            <div className="flex items-center gap-4">
+                                                <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${p.grad} flex items-center justify-center shrink-0 shadow-lg shadow-black/20`}>
+                                                    <Icon icon="mdi:folder-star-outline" className="text-white text-xl" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <h3 className="text-base font-bold text-neutral-900 dark:text-white group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors leading-tight">{p.title}</h3>
+                                                    {p.projectType && (
+                                                        <p className="text-[11px] text-neutral-500 font-medium mt-0.5">{p.projectType}</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${
+                                                    p.status === 'completed'
+                                                        ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
+                                                        : 'text-brand-600 dark:text-brand-400 bg-brand-400/10 border border-brand-500/20'
+                                                }`}>
+                                                    {p.status === 'completed' ? t('discover.project.completed') : t('discover.project.active')}
+                                                </span>
+                                                {isOwnProfile && (
+                                                    <div className="relative">
+                                                        <button
+                                                            onClick={() => setOpenProjectOptionsId(openProjectOptionsId === p.id ? null : p.id)}
+                                                            className={`w-8 h-8 flex items-center justify-center rounded-xl border transition-all ${
+                                                                openProjectOptionsId === p.id
+                                                                    ? 'bg-black/10 dark:bg-white/10 border-black/15 dark:border-white/15 text-neutral-900 dark:text-white'
+                                                                    : 'border-black/8 dark:border-white/8 text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'
+                                                            }`}
+                                                        >
+                                                            <Icon icon="mdi:dots-vertical" className="text-base" />
+                                                        </button>
+                                                        {openProjectOptionsId === p.id && (
+                                                            <>
+                                                                <div className="fixed inset-0 z-40" onClick={() => setOpenProjectOptionsId(null)} />
+                                                                <div className="absolute top-full right-0 mt-2 w-52 bg-white dark:bg-[#0a0a0a] border border-black/8 dark:border-white/10 rounded-2xl shadow-xl dark:shadow-2xl py-2 z-50 anim-up overflow-hidden">
+                                                                    <button
+                                                                        onClick={() => { onNavigate('new-project', { projectId: p.id }); setOpenProjectOptionsId(null); }}
+                                                                        className="w-full px-4 py-2.5 flex items-center gap-3 text-xs font-bold text-brand-500 dark:text-brand-400 hover:bg-brand-500/10 transition-all text-left"
+                                                                    >
+                                                                        <Icon icon="mdi:pencil-outline" className="text-lg" />
+                                                                        {t('profile.editProject')}
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => { handleToggleProjectStatus(p.id); setOpenProjectOptionsId(null); }}
+                                                                        className="w-full px-4 py-2.5 flex items-center gap-3 text-xs font-bold text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all text-left"
+                                                                    >
+                                                                        <Icon icon={p.status === 'completed' ? 'mdi:play-circle-outline' : 'mdi:check-circle-outline'} className="text-lg" />
+                                                                        {p.status === 'completed' ? t('discover.project.makeActive') : t('discover.project.markComplete')}
+                                                                    </button>
+                                                                    <div className="mx-3 my-1 border-t border-black/5 dark:border-white/5" />
+                                                                    <button
+                                                                        onClick={() => { setProjectToDeleteId(p.id); setOpenProjectOptionsId(null); }}
+                                                                        className="w-full px-4 py-2.5 flex items-center gap-3 text-xs font-bold text-rose-500 hover:bg-rose-500/10 transition-all text-left"
+                                                                    >
+                                                                        <Icon icon="mdi:delete-outline" className="text-lg" />
+                                                                        {t('discover.project.delete')}
+                                                                    </button>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                    )}
-                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6 backdrop-blur-[2px]">
-                                        <div className="flex items-center gap-2 text-white font-bold">
-                                            <Icon icon="mdi:heart" className="text-xl text-rose-500" />
-                                            {p.likes?.length || 0}
-                                        </div>
-                                        <div className="flex items-center gap-2 text-white font-bold">
-                                            <Icon icon="mdi:comment" className="text-xl text-brand-400" />
-                                            {p.comments?.length || 0}
+
+                                        <p className="text-[13px] text-neutral-500 dark:text-neutral-400 font-light leading-relaxed mb-4 line-clamp-2">{p.desc}</p>
+
+                                        {p.skills?.length > 0 && (
+                                            <div className="flex flex-wrap gap-2 mb-4">
+                                                {p.skills.slice(0, 5).map((sk, si) => (
+                                                    <span key={si} className="px-3 py-1 bg-neutral-100 dark:bg-black/30 border border-black/5 dark:border-white/5 rounded-xl text-[10px] font-semibold text-neutral-500 dark:text-neutral-400">
+                                                        {sk}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        <div className="flex items-center justify-between pt-3 border-t border-black/5 dark:border-white/5">
+                                            <div className="flex items-center gap-4 text-[11px] text-neutral-400">
+                                                <span className="flex items-center gap-1.5">
+                                                    <Icon icon="mdi:account-group-outline" className="text-sm" />
+                                                    {t('discover.project.applicantsCount', { count: (p.applicants || []).length })}
+                                                </span>
+                                                {p.team && (
+                                                    <span className="flex items-center gap-1.5">
+                                                        <Icon icon="mdi:account-multiple-outline" className="text-sm" />
+                                                        {p.team}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {isOwnProfile && (
+                                                <button
+                                                    onClick={() => onNavigate('discover')}
+                                                    className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 hover:text-brand-500 dark:hover:text-brand-400 transition-colors flex items-center gap-1 uppercase tracking-wider"
+                                                >
+                                                    <Icon icon="mdi:open-in-new" className="text-xs" />
+                                                    {t('discover.project.applications')}
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
+                                ))
+                            ) : (
+                                <div className="bg-black/3 dark:bg-white/5 border border-black/10 dark:border-white/10 border-dashed rounded-[40px] py-20 flex flex-col items-center justify-center gap-4 text-neutral-400 dark:text-neutral-500">
+                                    <Icon icon="mdi:folder-off-outline" className="text-5xl opacity-20" />
+                                    <p className="text-sm font-light">{t('profile.noProjectsYet')}</p>
+                                    {isOwnProfile && (
+                                        <button
+                                            onClick={() => onNavigate('new-project')}
+                                            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-500/20 active:scale-95"
+                                        >
+                                            <Icon icon="mdi:plus" className="text-base" />
+                                            {t('discover.createProject')}
+                                        </button>
+                                    )}
                                 </div>
-                            ))
-                        ) : (
-                            <div className="col-span-2 bg-black/3 dark:bg-white/5 border border-black/10 dark:border-white/10 border-dashed rounded-[40px] py-20 flex flex-col items-center justify-center gap-4 text-neutral-400 dark:text-neutral-500">
-                                <Icon icon={tab === 'posts' ? "mdi:image-off-outline" : "mdi:heart-off-outline"} className="text-5xl opacity-20" />
-                                <p className="text-sm font-light">
-                                    {tab === 'posts' ? t('profile.noPostsYet') : t('profile.noLikesYet')}
-                                </p>
-                            </div>
-                        )}
-                    </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 anim-up">
+                            {posts.length > 0 ? (
+                                posts.map((p, i) => (
+                                    <div
+                                        key={p.id}
+                                        onClick={() => setSelectedPost(p)}
+                                        className="aspect-square bg-black/5 dark:bg-white/5 border border-black/8 dark:border-white/5 rounded-[32px] overflow-hidden group relative cursor-pointer shadow-sm dark:shadow-lg hover:border-black/15 dark:hover:border-white/10 transition-all"
+                                    >
+                                        {p.image ? (
+                                            <img src={p.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                        ) : (
+                                            <div className="w-full h-full flex flex-col items-center justify-center bg-brand-500/5 text-brand-400/40 p-6 text-center">
+                                                <Icon icon={p.type === 'code' ? 'mdi:code-braces' : p.type === 'design' ? 'mdi:palette-outline' : 'mdi:format-quote-close'} className="text-4xl mb-3" />
+                                                <p className="text-[10px] font-medium leading-relaxed italic line-clamp-3">"{p.caption}"</p>
+                                            </div>
+                                        )}
+                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6 backdrop-blur-[2px]">
+                                            <div className="flex items-center gap-2 text-white font-bold">
+                                                <Icon icon="mdi:heart" className="text-xl text-rose-500" />
+                                                {p.likes?.length || 0}
+                                            </div>
+                                            <div className="flex items-center gap-2 text-white font-bold">
+                                                <Icon icon="mdi:comment" className="text-xl text-brand-400" />
+                                                {p.comments?.length || 0}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="col-span-2 bg-black/3 dark:bg-white/5 border border-black/10 dark:border-white/10 border-dashed rounded-[40px] py-20 flex flex-col items-center justify-center gap-4 text-neutral-400 dark:text-neutral-500">
+                                    <Icon icon={tab === 'posts' ? "mdi:image-off-outline" : "mdi:heart-off-outline"} className="text-5xl opacity-20" />
+                                    <p className="text-sm font-light">
+                                        {tab === 'posts' ? t('profile.noPostsYet') : t('profile.noLikesYet')}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -777,6 +941,16 @@ export default function Profile({ params, onNavigate }) {
                         </div>
                     </div>
                 </div>
+            )}
+            {projectToDeleteId && (
+                <ConfirmModal
+                    title={t('discover.project.delete')}
+                    message={t('newProject.deleteConfirm')}
+                    confirmText={t('post.confirmDelete')}
+                    cancelText={t('post.cancel')}
+                    onConfirm={confirmDeleteProject}
+                    onCancel={() => setProjectToDeleteId(null)}
+                />
             )}
         </>
     );

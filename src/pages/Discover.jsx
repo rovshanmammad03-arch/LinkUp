@@ -233,6 +233,7 @@ export default function Discover({ onNavigate }) {
                             className="flex items-center gap-2 px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-brand-500/20 active:scale-95 anim-up"
                         >
                             <Icon icon="mdi:plus" className="text-lg" /> {t('discover.createProject')}
+                        </button>
                     )}
                 </div>
             </div>

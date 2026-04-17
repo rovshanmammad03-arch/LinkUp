@@ -354,6 +354,10 @@
     "liked": "Bəyəndiklərim",
     "followersTitle": "İzləyicilər",
     "followingTitle": "İzlədikləri",
-    "loading": "Yüklənir..."
+    "loading": "Yüklənir...",
+    "projects": "Layihələr",
+    "noProjectsYet": "Hələ heç bir layihə yoxdur.",
+    "manageProject": "İdarə et",
+    "editProject": "Redaktə et"
   }
 }
