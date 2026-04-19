@@ -129,7 +129,6 @@ export default function Discover({ onNavigate }) {
         const updated = allProjects.filter(p => p.id !== projectToDeleteId);
         DB.set('projects', updated);
         setProjects(updated);
-        // Layihəyə aid showcase-ləri də sil
         const allShowcases = DB.get('showcases');
         DB.set('showcases', allShowcases.filter(s => s.projectId !== projectToDeleteId));
         setProjectToDeleteId(null);
@@ -140,9 +139,21 @@ export default function Discover({ onNavigate }) {
         const pIdx = allProjects.findIndex(p => p.id === projectId);
         if (pIdx === -1) return;
 
-        allProjects[pIdx].status = allProjects[pIdx].status === 'completed' ? 'active' : 'completed';
+        // active → closed, completed → active (sadə keçidlər)
+        const current = allProjects[pIdx].status;
+        allProjects[pIdx].status = current === 'active' ? 'closed' : 'active';
         DB.set('projects', allProjects);
-        setProjects(allProjects);
+        setProjects([...allProjects]);
+        setOpenOptionsId(null);
+    };
+
+    const handleCompleteProject = (projectId) => {
+        const allProjects = DB.get('projects');
+        const pIdx = allProjects.findIndex(p => p.id === projectId);
+        if (pIdx === -1) return;
+        allProjects[pIdx].status = 'completed';
+        DB.set('projects', allProjects);
+        setProjects([...allProjects]);
         setOpenOptionsId(null);
     };
 
@@ -164,6 +175,8 @@ export default function Discover({ onNavigate }) {
     });
 
     const filteredProjects = projects.filter(p => {
+        // 'closed' layihələr kəşf etdə görünmür (yalnız sahibinə görünür)
+        if (p.status === 'closed' && p.authorId !== currentUser?.id) return false;
         const matchesSearch = p.title.toLowerCase().includes(search.toLowerCase()) || 
                              p.desc.toLowerCase().includes(search.toLowerCase()) ||
                              p.skills?.some(s => s.toLowerCase().includes(search.toLowerCase()));
@@ -406,8 +419,18 @@ export default function Discover({ onNavigate }) {
                                             </div>
                                         </div>
                                     </div>
-                                    <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${p.status === 'completed' ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10' : 'text-brand-600 dark:text-brand-400 bg-brand-400/10'}`}>
-                                        {p.status === 'completed' ? t('discover.project.completed') : t('discover.project.active')}
+                                    <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${
+                                        p.status === 'completed' 
+                                            ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10' 
+                                            : p.status === 'closed'
+                                            ? 'text-amber-600 dark:text-amber-400 bg-amber-500/10'
+                                            : 'text-brand-600 dark:text-brand-400 bg-brand-400/10'
+                                    }`}>
+                                        {p.status === 'completed' 
+                                            ? t('discover.project.completed') 
+                                            : p.status === 'closed'
+                                            ? t('discover.project.closed', 'Bağlı')
+                                            : t('discover.project.active')}
                                     </span>
                                 </div>
                                 
@@ -490,13 +513,37 @@ export default function Discover({ onNavigate }) {
                                                                 <Icon icon="mdi:pencil-outline" className="text-lg" />
                                                                 {t('discover.project.edit', 'Redaktə et')}
                                                             </button>
-                                                            <button 
-                                                                onClick={() => handleToggleStatus(p.id)}
-                                                                className="w-full px-4 py-2.5 flex items-center gap-3 text-xs font-bold text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all text-left"
-                                                            >
-                                                                <Icon icon={p.status === 'completed' ? "mdi:play-circle-outline" : "mdi:check-circle-outline"} className="text-lg" />
-                                                                {p.status === 'completed' ? t('discover.project.makeActive') : t('discover.project.markComplete')}
-                                                            </button>
+                                                            {/* active ↔ closed toggle */}
+                                                            {p.status !== 'completed' && (
+                                                                <button 
+                                                                    onClick={() => handleToggleStatus(p.id)}
+                                                                    className="w-full px-4 py-2.5 flex items-center gap-3 text-xs font-bold text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all text-left"
+                                                                >
+                                                                    <Icon icon={p.status === 'active' ? "mdi:lock-outline" : "mdi:lock-open-outline"} className="text-lg" />
+                                                                    {p.status === 'active'
+                                                                        ? t('discover.project.closeApply', 'Müraciəti Bağla')
+                                                                        : t('discover.project.openApply', 'Müraciəti Aç')}
+                                                                </button>
+                                                            )}
+                                                            {/* closed → completed, ya da completed → active */}
+                                                            {p.status === 'closed' && (
+                                                                <button 
+                                                                    onClick={() => handleCompleteProject(p.id)}
+                                                                    className="w-full px-4 py-2.5 flex items-center gap-3 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-all text-left"
+                                                                >
+                                                                    <Icon icon="mdi:check-circle-outline" className="text-lg" />
+                                                                    {t('discover.project.markComplete')}
+                                                                </button>
+                                                            )}
+                                                            {p.status === 'completed' && (
+                                                                <button 
+                                                                    onClick={() => handleToggleStatus(p.id)}
+                                                                    className="w-full px-4 py-2.5 flex items-center gap-3 text-xs font-bold text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all text-left"
+                                                                >
+                                                                    <Icon icon="mdi:play-circle-outline" className="text-lg" />
+                                                                    {t('discover.project.makeActive')}
+                                                                </button>
+                                                            )}
                                                             <button 
                                                                 onClick={() => handleDeleteProject(p.id)}
                                                                 className="w-full px-4 py-2.5 flex items-center gap-3 text-xs font-bold text-rose-500 hover:bg-rose-500/10 transition-all text-left"
@@ -524,11 +571,11 @@ export default function Discover({ onNavigate }) {
                                     ) : (
                                         <button
                                             onClick={() => handleApply(p.id)}
-                                            disabled={alreadyApplied || p.status === 'completed'}
+                                            disabled={alreadyApplied || p.status === 'completed' || p.status === 'closed'}
                                             className={`flex items-center gap-2 px-6 py-2.5 rounded-2xl text-[11px] font-bold transition-all active:scale-95 uppercase tracking-wider ${
                                                 alreadyApplied
                                                     ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 cursor-default'
-                                                    : p.status === 'completed'
+                                                    : p.status === 'completed' || p.status === 'closed'
                                                     ? 'bg-black/5 dark:bg-white/5 text-neutral-400 cursor-not-allowed'
                                                     : 'bg-brand-500 hover:bg-brand-600 text-white shadow-lg shadow-brand-500/20'
                                             }`}

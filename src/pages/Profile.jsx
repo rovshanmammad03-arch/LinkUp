@@ -1,18 +1,61 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { DB, initials } from '../services/db';
+import { DB, initials, addNotification } from '../services/db';
 import { Icon } from '@iconify/react';
 import { useScrollLock } from '../hooks/useScrollLock';
 import PostCard from '../components/feed/PostCard';
 import ConfirmModal from '../components/common/ConfirmModal';
 import { useTranslation } from 'react-i18next';
-import * as showcaseService from '../services/showcaseService';
-import ShowcaseList from '../components/profile/ShowcaseList';
-import ShowcaseModal from '../components/profile/ShowcaseModal';
 
 const SKILL_LEVEL_KEYS = ['beginner', 'intermediate', 'advanced'];
 const SKILL_LEVELS_AZ = ['Başlanğıc', 'Orta', 'Qabaqcıl'];
 const LINK_TYPES = ['Portfolio', 'GitHub', 'LinkedIn', 'Twitter', 'Kaggle', 'Behance', 'Digər'];
+
+/**
+ * Returns all projects where the user is either the author OR an accepted applicant.
+ * Handles both legacy (string) and new (object) applicant formats.
+ * Deduplicates and sorts by createdAt descending.
+ *
+ * @param {string} userId
+ * @param {Array} allProjects
+ * @returns {Array}
+ */
+export function getParticipantProjects(userId, allProjects) {
+    if (!userId || !Array.isArray(allProjects)) return [];
+
+    const seen = new Set();
+    const result = [];
+
+    for (const project of allProjects) {
+        if (seen.has(project.id)) continue;
+
+        // Check 1: user is the author
+        if (project.authorId === userId) {
+            seen.add(project.id);
+            result.push(project);
+            continue;
+        }
+
+        // Check 2: user is an accepted applicant (object format only)
+        const applicants = project.applicants || [];
+        for (const applicant of applicants) {
+            if (typeof applicant !== 'object' || applicant === null) {
+                // Legacy string format — skip (treat as pending, not accepted)
+                continue;
+            }
+            if (applicant.id === userId && applicant.status === 'accepted') {
+                seen.add(project.id);
+                result.push(project);
+                break;
+            }
+        }
+    }
+
+    // Sort by createdAt descending (newest first)
+    result.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+    return result;
+}
 
 // Maps stored AZ value → translation key
 function translateField(field, t) {
@@ -47,9 +90,6 @@ export default function Profile({ params, onNavigate }) {
     const [selectedPost, setSelectedPost] = useState(null);
     const [userList, setUserList] = useState({ open: false, type: '', data: [] });
     const [targetUser, setTargetUser] = useState(null);
-    const [showcases, setShowcases] = useState([]);
-    const [showcaseModal, setShowcaseModal] = useState(null);
-    const [showcaseToDeleteId, setShowcaseToDeleteId] = useState(null);
 
     // Edit form state
     const [form, setForm] = useState({});
@@ -65,7 +105,7 @@ export default function Profile({ params, onNavigate }) {
     const [isNewSkillLevelOpen, setIsNewSkillLevelOpen] = useState(false);
     const [isNewLinkTypeOpen, setIsNewLinkTypeOpen] = useState(false);
 
-    useScrollLock(editOpen || !!selectedPost || userList.open || !!projectToDeleteId || !!showcaseModal || !!showcaseToDeleteId);
+    useScrollLock(editOpen || !!selectedPost || userList.open || !!projectToDeleteId);
 
     const isOwnProfile = !params?.userId || params.userId === currentUser?.id;
 
@@ -92,12 +132,9 @@ export default function Profile({ params, onNavigate }) {
         
         setPosts(filtered);
 
-        // Load this user's projects
+        // Load this user's projects (authored + accepted participant)
         const allProjects = DB.get('projects');
-        setUserProjects(allProjects.filter(p => p.authorId === targetUser.id));
-
-        // Load all showcases
-        setShowcases(showcaseService.getAll());
+        setUserProjects(getParticipantProjects(targetUser.id, allProjects));
 
         // Stats are based on user's own posts, regardless of active tab view
         setStats({
@@ -223,32 +260,52 @@ export default function Profile({ params, onNavigate }) {
         const allProjects = DB.get('projects');
         const pIdx = allProjects.findIndex(p => p.id === projectId);
         if (pIdx === -1) return;
-        allProjects[pIdx].status = allProjects[pIdx].status === 'completed' ? 'active' : 'completed';
+        const current = allProjects[pIdx].status;
+        allProjects[pIdx].status = current === 'active' ? 'closed' : 'active';
         DB.set('projects', allProjects);
-        setUserProjects(allProjects.filter(p => p.authorId === targetUser.id));
+        setUserProjects(getParticipantProjects(targetUser.id, allProjects));
+    };
+
+    const handleCompleteProject = (projectId) => {
+        const allProjects = DB.get('projects');
+        const pIdx = allProjects.findIndex(p => p.id === projectId);
+        if (pIdx === -1) return;
+        allProjects[pIdx].status = 'completed';
+        DB.set('projects', allProjects);
+        setUserProjects(getParticipantProjects(targetUser.id, allProjects));
     };
 
     const confirmDeleteProject = () => {
         const allProjects = DB.get('projects');
         const updated = allProjects.filter(p => p.id !== projectToDeleteId);
         DB.set('projects', updated);
-        setUserProjects(updated.filter(p => p.authorId === targetUser?.id));
-        // Layihəyə aid showcase-ləri də sil
-        const allShowcases = DB.get('showcases');
-        DB.set('showcases', allShowcases.filter(s => s.projectId !== projectToDeleteId));
-        setShowcases(prev => prev.filter(s => s.projectId !== projectToDeleteId));
+        setUserProjects(getParticipantProjects(targetUser?.id, updated));
+        const orphanShowcases = DB.get('showcases');
+        DB.set('showcases', orphanShowcases.filter(s => s.projectId !== projectToDeleteId));
         setProjectToDeleteId(null);
     };
 
-    const handleAddShowcase = (showcase) => {
-        setShowcases(prev => [...prev, showcase]);
-        setShowcaseModal(null);
-    };
-
-    const handleDeleteShowcase = (id) => {
-        showcaseService.remove(id);
-        setShowcases(prev => prev.filter(s => s.id !== id));
-        setShowcaseToDeleteId(null);
+    const handleApply = (projectId) => {
+        if (!currentUser) return;
+        const allProjects = DB.get('projects');
+        const pIdx = allProjects.findIndex(p => p.id === projectId);
+        if (pIdx === -1) return;
+        if (!allProjects[pIdx].applicants) allProjects[pIdx].applicants = [];
+        const alreadyApplied = allProjects[pIdx].applicants.some(a =>
+            (typeof a === 'object' ? a.id : a) === currentUser.id
+        );
+        if (alreadyApplied) return;
+        allProjects[pIdx].applicants.push({ id: currentUser.id, status: 'pending' });
+        DB.set('projects', allProjects);
+        setUserProjects(getParticipantProjects(targetUser.id, allProjects));
+        addNotification({
+            toUserId: allProjects[pIdx].authorId,
+            fromUserId: currentUser.id,
+            type: 'project_apply',
+            text: `"${allProjects[pIdx].title}" layihənizə müraciət etdi`,
+            route: 'discover',
+            routeParams: {},
+        });
     };
 
     const addSkill = () => {
@@ -521,12 +578,20 @@ export default function Profile({ params, onNavigate }) {
                     {tab === 'projects' ? (
                         <div className="grid grid-cols-1 gap-4 anim-up">
                             {userProjects.length > 0 ? (
-                                userProjects.map((p, i) => (
+                                userProjects.map((p, i) => {
+                                    const isOwner = p.authorId === currentUser?.id;
+                                    const isParticipant = !isOwner && (p.applicants || []).some(a => {
+                                        if (typeof a !== 'object' || a === null) return false;
+                                        return a.id === currentUser?.id && a.status === 'accepted';
+                                    });
+                                    return (
                                     <div
                                         key={p.id}
                                         className={`bg-white dark:bg-[#111]/80 border rounded-[28px] p-6 group transition-all shadow-sm dark:shadow-xl anim-up ${
-                                            p.status === 'completed' && showcases.some(s => s.projectId === p.id)
+                                            p.status === 'completed'
                                                 ? 'border-emerald-500/30 dark:border-emerald-500/20 hover:border-emerald-500/50 dark:hover:border-emerald-500/30'
+                                                : p.status === 'closed'
+                                                ? 'border-amber-500/30 dark:border-amber-500/20 hover:border-amber-500/50 dark:hover:border-amber-500/30'
                                                 : 'border-black/8 dark:border-white/5 hover:border-black/15 dark:hover:border-white/10'
                                         }`}
                                         style={{ animationDelay: `${i * 0.05}s` }}
@@ -547,11 +612,22 @@ export default function Profile({ params, onNavigate }) {
                                                 <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${
                                                     p.status === 'completed'
                                                         ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
+                                                        : p.status === 'closed'
+                                                        ? 'text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20'
                                                         : 'text-brand-600 dark:text-brand-400 bg-brand-400/10 border border-brand-500/20'
                                                 }`}>
-                                                    {p.status === 'completed' ? t('discover.project.completed') : t('discover.project.active')}
+                                                    {p.status === 'completed' 
+                                                        ? t('discover.project.completed') 
+                                                        : p.status === 'closed'
+                                                        ? t('discover.project.closed', 'Bağlı')
+                                                        : t('discover.project.active')}
                                                 </span>
-                                                {isOwnProfile && (
+                                                {isParticipant && (
+                                                    <span className="px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 border border-cyan-500/20">
+                                                        {t('profile.participant') || 'İştirakçı'}
+                                                    </span>
+                                                )}
+                                                {isOwner && (
                                                     <div className="relative">
                                                         <button
                                                             onClick={() => setOpenProjectOptionsId(openProjectOptionsId === p.id ? null : p.id)}
@@ -574,13 +650,38 @@ export default function Profile({ params, onNavigate }) {
                                                                         <Icon icon="mdi:pencil-outline" className="text-lg" />
                                                                         {t('profile.editProject')}
                                                                     </button>
-                                                                    <button
-                                                                        onClick={() => { handleToggleProjectStatus(p.id); setOpenProjectOptionsId(null); }}
-                                                                        className="w-full px-4 py-2.5 flex items-center gap-3 text-xs font-bold text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all text-left"
-                                                                    >
-                                                                        <Icon icon={p.status === 'completed' ? 'mdi:play-circle-outline' : 'mdi:check-circle-outline'} className="text-lg" />
-                                                                        {p.status === 'completed' ? t('discover.project.makeActive') : t('discover.project.markComplete')}
-                                                                    </button>
+                                                                    {/* active ↔ closed toggle */}
+                                                                    {p.status !== 'completed' && (
+                                                                        <button
+                                                                            onClick={() => { handleToggleProjectStatus(p.id); setOpenProjectOptionsId(null); }}
+                                                                            className="w-full px-4 py-2.5 flex items-center gap-3 text-xs font-bold text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all text-left"
+                                                                        >
+                                                                            <Icon icon={p.status === 'active' ? 'mdi:lock-outline' : 'mdi:lock-open-outline'} className="text-lg" />
+                                                                            {p.status === 'active'
+                                                                                ? t('discover.project.closeApply', 'Müraciəti Bağla')
+                                                                                : t('discover.project.openApply', 'Müraciəti Aç')}
+                                                                        </button>
+                                                                    )}
+                                                                    {/* closed → completed */}
+                                                                    {p.status === 'closed' && (
+                                                                        <button
+                                                                            onClick={() => { handleCompleteProject(p.id); setOpenProjectOptionsId(null); }}
+                                                                            className="w-full px-4 py-2.5 flex items-center gap-3 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-all text-left"
+                                                                        >
+                                                                            <Icon icon="mdi:check-circle-outline" className="text-lg" />
+                                                                            {t('discover.project.markComplete')}
+                                                                        </button>
+                                                                    )}
+                                                                    {/* completed → active */}
+                                                                    {p.status === 'completed' && (
+                                                                        <button
+                                                                            onClick={() => { handleToggleProjectStatus(p.id); setOpenProjectOptionsId(null); }}
+                                                                            className="w-full px-4 py-2.5 flex items-center gap-3 text-xs font-bold text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all text-left"
+                                                                        >
+                                                                            <Icon icon="mdi:play-circle-outline" className="text-lg" />
+                                                                            {t('discover.project.makeActive')}
+                                                                        </button>
+                                                                    )}
                                                                     <div className="mx-3 my-1 border-t border-black/5 dark:border-white/5" />
                                                                     <button
                                                                         onClick={() => { setProjectToDeleteId(p.id); setOpenProjectOptionsId(null); }}
@@ -613,7 +714,7 @@ export default function Profile({ params, onNavigate }) {
                                             <div className="flex items-center gap-4 text-[11px] text-neutral-400">
                                                 <span className="flex items-center gap-1.5">
                                                     <Icon icon="mdi:account-group-outline" className="text-sm" />
-                                                    {t('discover.project.applicantsCount', { count: (p.applicants || []).length })}
+                                                    {t('profile.participantsCount', { count: (p.applicants || []).filter(a => typeof a === 'object' && a !== null && a.status === 'accepted').length })}
                                                 </span>
                                                 {p.team && (
                                                     <span className="flex items-center gap-1.5">
@@ -622,7 +723,8 @@ export default function Profile({ params, onNavigate }) {
                                                     </span>
                                                 )}
                                             </div>
-                                            {isOwnProfile && (
+                                            {/* Sahibi: müraciətlər səhifəsinə keç */}
+                                            {isOwner && (
                                                 <button
                                                     onClick={() => onNavigate('discover')}
                                                     className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 hover:text-brand-500 dark:hover:text-brand-400 transition-colors flex items-center gap-1 uppercase tracking-wider"
@@ -631,36 +733,37 @@ export default function Profile({ params, onNavigate }) {
                                                     {t('discover.project.applications')}
                                                 </button>
                                             )}
-                                        </div>
-
-                                        {/* Showcase section — only for completed projects */}
-                                        {p.status === 'completed' && (
-                                            <div className={`mt-4 pt-4 border-t ${showcases.some(s => s.projectId === p.id) ? 'border-emerald-500/20' : 'border-black/5 dark:border-white/5'}`}>
-                                                {showcases.some(s => s.projectId === p.id) && (
-                                                    <div className="flex items-center gap-1.5 mb-3">
-                                                        <Icon icon="mdi:star-circle-outline" className="text-emerald-400 text-sm" />
-                                                        <span className="text-[10px] font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-widest">Showcase</span>
-                                                    </div>
-                                                )}
-                                                <ShowcaseList
-                                                    showcases={showcases.filter(s => s.projectId === p.id)}
-                                                    currentUserId={currentUser?.id}
-                                                    isOwnProfile={isOwnProfile}
-                                                    onDelete={(id) => setShowcaseToDeleteId(id)}
-                                                />
-                                                {isOwnProfile && showcaseService.isParticipant(currentUser?.id, p) && (
+                                            {/* Ziyarətçi: birbaşa müraciət et */}
+                                            {!isOwner && !isParticipant && currentUser && (() => {
+                                                const alreadyApplied = (p.applicants || []).some(a =>
+                                                    (typeof a === 'object' ? a.id : a) === currentUser.id
+                                                );
+                                                const canApply = p.status === 'active';
+                                                return (
                                                     <button
-                                                        onClick={() => setShowcaseModal(p.id)}
-                                                        className="mt-3 flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold transition-all active:scale-95"
+                                                        onClick={() => canApply && !alreadyApplied && handleApply(p.id)}
+                                                        disabled={!canApply || alreadyApplied}
+                                                        className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[10px] font-bold transition-all active:scale-95 uppercase tracking-wider ${
+                                                            alreadyApplied
+                                                                ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 cursor-default'
+                                                                : !canApply
+                                                                ? 'bg-black/5 dark:bg-white/5 text-neutral-400 cursor-not-allowed'
+                                                                : 'bg-brand-500 hover:bg-brand-600 text-white shadow-md shadow-brand-500/20'
+                                                        }`}
                                                     >
-                                                        <Icon icon="mdi:plus-circle-outline" className="text-base" />
-                                                        Showcase Əlavə Et
+                                                        <Icon icon={alreadyApplied ? 'mdi:check-circle-outline' : 'mdi:send-outline'} className="text-sm" />
+                                                        {alreadyApplied
+                                                            ? t('discover.project.applied')
+                                                            : !canApply
+                                                            ? t('discover.project.closed', 'Bağlı')
+                                                            : t('discover.project.apply')}
                                                     </button>
-                                                )}
-                                            </div>
-                                        )}
+                                                );
+                                            })()}
+                                        </div>
                                     </div>
-                                ))
+                                    );
+                                })
                             ) : (
                                 <div className="bg-black/3 dark:bg-white/5 border border-black/10 dark:border-white/10 border-dashed rounded-[40px] py-20 flex flex-col items-center justify-center gap-4 text-neutral-400 dark:text-neutral-500">
                                     <Icon icon="mdi:folder-off-outline" className="text-5xl opacity-20" />
@@ -1050,25 +1153,6 @@ export default function Profile({ params, onNavigate }) {
                     cancelText={t('post.cancel')}
                     onConfirm={confirmDeleteProject}
                     onCancel={() => setProjectToDeleteId(null)}
-                />
-            )}
-
-            {showcaseModal !== null && (
-                <ShowcaseModal
-                    projectId={showcaseModal}
-                    onClose={() => setShowcaseModal(null)}
-                    onSaved={handleAddShowcase}
-                />
-            )}
-
-            {showcaseToDeleteId !== null && (
-                <ConfirmModal
-                    title="Showcase-i sil"
-                    message="Bu showcase elementini silmək istədiyinizə əminsiniz?"
-                    confirmText="Sil"
-                    cancelText="Ləğv et"
-                    onConfirm={() => handleDeleteShowcase(showcaseToDeleteId)}
-                    onCancel={() => setShowcaseToDeleteId(null)}
                 />
             )}
         </>

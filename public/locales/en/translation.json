@@ -136,12 +136,15 @@
     "project": {
       "active": "Active",
       "completed": "Completed",
+      "closed": "Closed",
       "apply": "Apply",
       "applied": "Applied",
       "applications": "Applications",
       "applicantsCount": "{{count}} applicants",
       "makeActive": "Make Active",
       "markComplete": "Mark Complete",
+      "closeApply": "Close Applications",
+      "openApply": "Open Applications",
       "delete": "Delete Project",
       "rolesNeeded": "Roles Needed",
       "rolesPlaceholder": "Designer, Developer, Marketer",
@@ -358,6 +361,8 @@
     "projects": "Projects",
     "noProjectsYet": "No projects yet.",
     "manageProject": "Manage",
-    "editProject": "Edit"
+    "editProject": "Edit",
+    "participant": "Participant",
+    "participantsCount": "{{count}} participants"
   }
 }

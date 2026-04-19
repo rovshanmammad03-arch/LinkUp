@@ -136,12 +136,15 @@
     "project": {
       "active": "Aktiv",
       "completed": "Tamamlandı",
+      "closed": "Bağlı",
       "apply": "Müraciət Et",
       "applied": "Müraciət Edildi",
       "applications": "Müraciətlər",
       "applicantsCount": "{{count}} müraciət",
       "makeActive": "Aktiv Et",
       "markComplete": "Tamamla",
+      "closeApply": "Müraciəti Bağla",
+      "openApply": "Müraciəti Aç",
       "delete": "Layihəni Sil",
       "rolesNeeded": "Axtarılan Rollar",
       "rolesPlaceholder": "Dizayner, Proqramçı, Marketoloq",
@@ -359,6 +362,8 @@
     "projects": "Layihələr",
     "noProjectsYet": "Hələ heç bir layihə yoxdur.",
     "manageProject": "İdarə et",
-    "editProject": "Redaktə et"
+    "editProject": "Redaktə et",
+    "participant": "İştirakçı",
+    "participantsCount": "{{count}} iştirakçı"
   }
 }

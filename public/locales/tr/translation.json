@@ -136,12 +136,15 @@
     "project": {
       "active": "Aktif",
       "completed": "Tamamlandı",
+      "closed": "Kapalı",
       "apply": "Başvur",
       "applied": "Başvuruldu",
       "applications": "Başvurular",
       "applicantsCount": "{{count}} başvuru",
       "makeActive": "Aktif Et",
       "markComplete": "Tamamla",
+      "closeApply": "Başvuruları Kapat",
+      "openApply": "Başvuruları Aç",
       "delete": "Projeyi Sil",
       "rolesNeeded": "Aranan Roller",
       "rolesPlaceholder": "Tasarımcı, Geliştirici, Pazarlamacı",
@@ -358,6 +361,8 @@
     "projects": "Projeler",
     "noProjectsYet": "Henüz proje yok.",
     "manageProject": "Yönet",
-    "editProject": "Düzenle"
+    "editProject": "Düzenle",
+    "participant": "Katılımcı",
+    "participantsCount": "{{count}} katılımcı"
   }
 }

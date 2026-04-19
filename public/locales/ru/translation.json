@@ -136,12 +136,15 @@
     "project": {
       "active": "Активный",
       "completed": "Завершён",
+      "closed": "Закрыт",
       "apply": "Подать заявку",
       "applied": "Заявка подана",
       "applications": "Заявки",
       "applicantsCount": "{{count}} заявок",
       "makeActive": "Сделать активным",
       "markComplete": "Завершить",
+      "closeApply": "Закрыть заявки",
+      "openApply": "Открыть заявки",
       "delete": "Удалить проект",
       "rolesNeeded": "Нужные роли",
       "rolesPlaceholder": "Дизайнер, Разработчик, Маркетолог",
@@ -358,6 +361,8 @@
     "projects": "Проекты",
     "noProjectsYet": "Проектов пока нет.",
     "manageProject": "Управлять",
-    "editProject": "Редактировать"
+    "editProject": "Редактировать",
+    "participant": "Участник",
+    "participantsCount": "{{count}} участников"
   }
 }
