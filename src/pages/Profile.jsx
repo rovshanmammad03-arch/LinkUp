@@ -363,86 +363,130 @@ export default function Profile({ params, onNavigate }) {
 
                 {/* Stats + Content grid */}
                 <div className="grid md:grid-cols-[1fr,2fr] gap-8">
-                    {/* Sidebar */}
+                    {/* Sidebar: single card, clear sections */}
                     <div className="space-y-5">
-                        <div className="glass-card rounded-3xl p-6">
-                            <h3 className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4">{t('profile.about_me')}</h3>
-                            <p className="text-[13px] text-neutral-500 dark:text-neutral-400 leading-relaxed font-light mb-5">
-                                {targetUser?.bio || t('profile.noBio')}
-                            </p>
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-3 text-neutral-500 dark:text-neutral-400">
-                                    <Icon icon="mdi:school-outline" className="text-lg text-brand-400 shrink-0" />
-                                    <span className="text-xs">{targetUser?.university || '—'}</span>
-                                </div>
-                                <div className="flex items-center gap-3 text-neutral-500 dark:text-neutral-400">
-                                    <Icon icon="mdi:briefcase-outline" className="text-lg text-brand-400 shrink-0" />
-                                    <span className="text-xs">{translateLevel(targetUser?.level, t)} · {translateField(targetUser?.field, t)}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Skills */}
-                        {targetUser?.skills?.length > 0 && (
-                            <div className="glass-card rounded-3xl p-6">
-                                <h3 className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4">{t('profile.skills')}</h3>
-                                <div className="flex flex-wrap gap-2">
-                                    {targetUser.skills.map((s, i) => (
-                                        <span key={i} className="text-[11px] px-3 py-1 rounded-full bg-black/5 dark:bg-white/5 border border-black/8 dark:border-white/8 text-neutral-600 dark:text-neutral-300">
-                                            {s.n} <span className="text-neutral-400 dark:text-neutral-600">· {s.l}</span>
+                        <div className="glass-card rounded-3xl overflow-hidden flex flex-col divide-y divide-black/8 dark:divide-white/[0.07] border border-black/[0.06] dark:border-white/[0.08]">
+                            {/* About */}
+                            <div className="px-5 py-5">
+                                <h3 className="text-[11px] font-semibold text-neutral-600 dark:text-neutral-300 uppercase tracking-[0.14em] mb-3">
+                                    {t('profile.about_me')}
+                                </h3>
+                                <p className="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed">
+                                    {targetUser?.bio || t('profile.noBio')}
+                                </p>
+                                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div className="flex items-start gap-3 rounded-2xl bg-black/[0.04] dark:bg-white/[0.05] border border-black/8 dark:border-white/[0.08] px-3.5 py-3 min-h-[3.25rem]">
+                                        <Icon icon="mdi:school-outline" className="text-xl text-brand-400 shrink-0 mt-0.5" />
+                                        <span className="text-xs text-neutral-600 dark:text-neutral-300 leading-snug">
+                                            {targetUser?.university || '—'}
                                         </span>
-                                    ))}
+                                    </div>
+                                    <div className="flex items-start gap-3 rounded-2xl bg-black/[0.04] dark:bg-white/[0.05] border border-black/8 dark:border-white/[0.08] px-3.5 py-3 min-h-[3.25rem]">
+                                        <Icon icon="mdi:briefcase-outline" className="text-xl text-brand-400 shrink-0 mt-0.5" />
+                                        <span className="text-xs text-neutral-600 dark:text-neutral-300 leading-snug">
+                                            {translateLevel(targetUser?.level, t)} · {translateField(targetUser?.field, t)}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                        )}
 
-                        {/* Links */}
-                        {targetUser?.links?.length > 0 && (
-                            <div className="glass-card rounded-3xl p-6">
-                                <h3 className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4">{t('profile.links')}</h3>
-                                <div className="space-y-2">
-                                    {targetUser.links.map((l, i) => (
-                                        <a
-                                            key={i}
-                                            href={`https://${l.v.replace(/^https?:\/\//, '')}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center gap-2 text-xs text-brand-500 dark:text-brand-400 hover:text-brand-600 dark:hover:text-brand-300 transition-colors"
-                                        >
-                                            <Icon icon="mdi:link-variant" className="text-sm" />
-                                            {l.t}: {l.v}
-                                        </a>
-                                    ))}
+                            {/* Skills */}
+                            {targetUser?.skills?.length > 0 && (
+                                <div className="px-5 py-5">
+                                    <h3 className="text-[11px] font-semibold text-neutral-600 dark:text-neutral-300 uppercase tracking-[0.14em] mb-3">
+                                        {t('profile.skills')}
+                                    </h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {targetUser.skills.map((s, i) => (
+                                            <span
+                                                key={i}
+                                                className="text-xs px-3 py-1.5 rounded-xl bg-black/[0.06] dark:bg-white/[0.06] border border-black/10 dark:border-white/10 text-neutral-700 dark:text-neutral-200"
+                                            >
+                                                {s.n}
+                                                <span className="text-neutral-500 dark:text-neutral-500"> · {s.l}</span>
+                                            </span>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        {/* Statistics */}
-                        <div className="glass-card rounded-3xl p-6">
-                            <h3 className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4">{t('profile.statistics')}</h3>
-                            <div className="grid grid-cols-3 gap-2">
-                                <div className="text-center">
-                                    <div className="text-xl font-bold text-neutral-900 dark:text-white">{stats.posts}</div>
-                                    <div className="text-[9px] text-neutral-500 dark:text-neutral-600 font-bold uppercase tracking-widest">Post</div>
+                            {/* Links */}
+                            {targetUser?.links?.length > 0 && (
+                                <div className="px-5 py-5">
+                                    <h3 className="text-[11px] font-semibold text-neutral-600 dark:text-neutral-300 uppercase tracking-[0.14em] mb-3">
+                                        {t('profile.links')}
+                                    </h3>
+                                    <div className="flex flex-col gap-2">
+                                        {targetUser.links.map((l, i) => (
+                                            <a
+                                                key={i}
+                                                href={`https://${l.v.replace(/^https?:\/\//, '')}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="group flex items-center gap-3 rounded-2xl px-3.5 py-2.5 bg-black/[0.04] dark:bg-white/[0.05] border border-black/8 dark:border-white/[0.08] text-xs text-neutral-700 dark:text-neutral-200 hover:border-brand-500/40 hover:bg-brand-500/[0.06] dark:hover:bg-brand-500/10 transition-all"
+                                            >
+                                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-500/15 text-brand-500 dark:text-brand-400">
+                                                    <Icon icon="mdi:link-variant" className="text-lg" />
+                                                </span>
+                                                <span className="min-w-0 flex-1">
+                                                    <span className="block text-[10px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                                                        {l.t}
+                                                    </span>
+                                                    <span className="block truncate text-brand-600 dark:text-brand-400 group-hover:text-brand-500 dark:group-hover:text-brand-300">
+                                                        {l.v.replace(/^https?:\/\//, '')}
+                                                    </span>
+                                                </span>
+                                                <Icon
+                                                    icon="mdi:open-in-new"
+                                                    className="text-neutral-400 group-hover:text-brand-400 shrink-0 text-base"
+                                                />
+                                            </a>
+                                        ))}
+                                    </div>
                                 </div>
-                                <div
-                                    className="text-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded-xl py-1 transition-colors"
+                            )}
+
+                            {/* Stats — minimal row at card footer (no boxes / no “Statistika” title) */}
+                            <div className="flex items-stretch px-1 py-2.5 sm:px-2 bg-black/[0.02] dark:bg-white/[0.02]">
+                                <div className="flex min-h-[2.75rem] flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1 text-center">
+                                    <span className="text-base font-semibold tabular-nums leading-none text-neutral-900 dark:text-white">
+                                        {stats.posts}
+                                    </span>
+                                    <span className="max-w-full truncate text-[10px] leading-tight text-neutral-500 dark:text-neutral-500">
+                                        {t('profile.statPosts')}
+                                    </span>
+                                </div>
+                                <div className="w-px shrink-0 bg-black/10 dark:bg-white/10" aria-hidden />
+                                <button
+                                    type="button"
+                                    className="group flex min-h-[2.75rem] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1 text-center transition-colors hover:bg-black/[0.05] dark:hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500/50"
                                     onClick={() => openUserList('followers')}
                                 >
-                                    <div className="text-xl font-bold text-neutral-900 dark:text-white">{stats.followers}</div>
-                                    <div className="text-[9px] text-neutral-500 dark:text-neutral-600 font-bold uppercase tracking-widest underline decoration-brand-500/30">{t('profile.followers')}</div>
-                                </div>
-                                <div
-                                    className="text-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded-xl py-1 transition-colors"
+                                    <span className="text-base font-semibold tabular-nums leading-none text-neutral-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400">
+                                        {stats.followers}
+                                    </span>
+                                    <span className="max-w-full truncate text-[10px] leading-tight text-neutral-500 underline decoration-transparent underline-offset-2 transition-colors group-hover:text-neutral-600 dark:group-hover:text-neutral-400 group-hover:decoration-brand-500/40">
+                                        {t('profile.followers')}
+                                    </span>
+                                </button>
+                                <div className="w-px shrink-0 bg-black/10 dark:bg-white/10" aria-hidden />
+                                <button
+                                    type="button"
+                                    className="group flex min-h-[2.75rem] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1 text-center transition-colors hover:bg-black/[0.05] dark:hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500/50"
                                     onClick={() => openUserList('following')}
                                 >
-                                    <div className="text-xl font-bold text-neutral-900 dark:text-white">{stats.following}</div>
-                                    <div className="text-[9px] text-neutral-500 dark:text-neutral-600 font-bold uppercase tracking-widest underline decoration-brand-500/30">{t('profile.following')}</div>
-                                </div>
+                                    <span className="text-base font-semibold tabular-nums leading-none text-neutral-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400">
+                                        {stats.following}
+                                    </span>
+                                    <span className="max-w-full truncate text-[10px] leading-tight text-neutral-500 underline decoration-transparent underline-offset-2 transition-colors group-hover:text-neutral-600 dark:group-hover:text-neutral-400 group-hover:decoration-brand-500/40">
+                                        {t('profile.following')}
+                                    </span>
+                                </button>
                             </div>
                         </div>
                     </div>
 
+                    <div className="min-w-0">
                     {/* Tab Navigation */}
                     <div className="flex items-center gap-8 border-b border-black/8 dark:border-white/5 mb-8">
                         <button
@@ -672,6 +716,7 @@ export default function Profile({ params, onNavigate }) {
                             )}
                         </div>
                     )}
+                    </div>
                 </div>
             </div>
 
