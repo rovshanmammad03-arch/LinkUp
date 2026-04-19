@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { Icon } from '@iconify/react';
@@ -20,6 +21,12 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
   const [notifOpen, setNotifOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [notifs, setNotifs] = useState([]);
+
+  const [supportModalOpen, setSupportModalOpen] = useState(false);
+  const [supportSubject, setSupportSubject] = useState('');
+  const [supportMessage, setSupportMessage] = useState('');
+  const [supportSubmitting, setSupportSubmitting] = useState(false);
+  const [supportSuccess, setSupportSuccess] = useState(false);
 
   const currentLang = LANGUAGES.find(l => l.code === i18n.language) || LANGUAGES[0];
 
@@ -265,7 +272,7 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
                       <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${theme === 'dark' ? 'left-0.5' : 'left-[18px]'}`} />
                     </div>
                   </button>
-                  <button className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-left text-sm hover:text-neutral-900 dark:hover:text-white">
+                  <button onClick={() => { setSettingsOpen(false); setSupportModalOpen(true); }} className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-left text-sm hover:text-neutral-900 dark:hover:text-white">
                     <Icon icon="mdi:help-circle-outline" className="text-lg text-brand-400" /> {t('nav.help')}
                   </button>
                   <div className="h-px w-full bg-black/8 dark:bg-white/10 my-1"></div>
@@ -299,6 +306,142 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
           </button>
         </div>
       </div>
+      {/* Support Modal */}
+      {supportModalOpen && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-md anim-fade-in" style={{ margin: 0 }}>
+          <div className="bg-white dark:bg-neutral-900 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl anim-scale-in flex flex-col max-h-[90vh] border border-black/5 dark:border-white/10 relative">
+            
+            {/* Header */}
+            <div className="px-6 py-6 border-b border-black/5 dark:border-white/5 flex items-start justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-1 flex items-center gap-2">
+                  Bizimlə Əlaqə
+                </h3>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                  Sual, şikayət və ya təkliflərinizi komandamıza göndərin.
+                </p>
+              </div>
+              <button 
+                onClick={() => setSupportModalOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-500 transition-colors shrink-0"
+              >
+                <Icon icon="mdi:close" className="text-lg" />
+              </button>
+            </div>
+            
+            {/* Body */}
+            <div className="p-6 overflow-y-auto space-y-5">
+              
+              {supportSuccess && (
+                <div className="p-4 rounded-2xl bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 text-green-700 dark:text-green-400 text-sm flex items-center gap-3 font-medium anim-fade-in">
+                  <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center shrink-0">
+                    <Icon icon="mdi:check-circle" className="text-xl" />
+                  </div>
+                  Mesajınız uğurla göndərildi!
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5 ml-1">Mövzu</label>
+                <input
+                  type="text"
+                  value={supportSubject}
+                  onChange={(e) => setSupportSubject(e.target.value)}
+                  placeholder="Məsələn: Xəta barədə, Şikayət..."
+                  disabled={supportSubmitting || supportSuccess}
+                  className="w-full bg-neutral-50 dark:bg-black/20 border border-neutral-200 dark:border-white/10 focus:border-brand-500 focus:bg-white dark:focus:bg-neutral-900 focus:ring-4 focus:ring-brand-500/10 rounded-2xl px-4 py-3 text-sm text-neutral-900 dark:text-white transition-all outline-none disabled:opacity-50"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5 ml-1">Mesajınız</label>
+                <textarea
+                  value={supportMessage}
+                  onChange={(e) => setSupportMessage(e.target.value)}
+                  placeholder="Problemi detaylı təsvir edin..."
+                  rows={4}
+                  disabled={supportSubmitting || supportSuccess}
+                  className="w-full bg-neutral-50 dark:bg-black/20 border border-neutral-200 dark:border-white/10 focus:border-brand-500 focus:bg-white dark:focus:bg-neutral-900 focus:ring-4 focus:ring-brand-500/10 rounded-2xl px-4 py-3 text-sm text-neutral-900 dark:text-white transition-all outline-none resize-none disabled:opacity-50"
+                ></textarea>
+                <p className="mt-2 ml-1 text-[11px] text-neutral-400 dark:text-neutral-500 flex items-start gap-1">
+                  <Icon icon="mdi:information-outline" className="text-[13px] shrink-0 mt-0.5" />
+                  Sistemə birbaşa fayl və ya şəkil əlavə etmək mümkün deyil. Bunun üçün <a href="mailto:linkup.az.info@gmail.com" className="text-brand-500 hover:underline">linkup.az.info@gmail.com</a> ünvanına birbaşa məktub yaza bilərsiniz.
+                </p>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 pt-2 flex justify-end gap-3">
+              <button
+                onClick={() => setSupportModalOpen(false)}
+                disabled={supportSubmitting}
+                className="px-5 py-2.5 rounded-2xl text-sm font-semibold text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors disabled:opacity-50"
+              >
+                Ləğv et
+              </button>
+              <button
+                onClick={async () => {
+                  setSupportSubmitting(true);
+                  try {
+                    const response = await fetch('https://api.web3forms.com/submit', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                      },
+                      body: JSON.stringify({
+                        access_key: 'a0fc5d9d-6163-4a6a-9a39-847b0134db94',
+                        subject: supportSubject || 'LinkUp Dəstək / Şikayət',
+                        from_name: currentUser?.name || 'LinkUp İstifadəçisi',
+                        email: currentUser?.email,
+                        message: `İstifadəçi: ${currentUser?.name}\nE-poçt: ${currentUser?.email}\n\nMövzu: ${supportSubject || 'Bildirilməyib'}\n\nMesaj:\n${supportMessage}`
+                      })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        setSupportSuccess(true);
+                        setTimeout(() => {
+                           setSupportModalOpen(false);
+                           setSupportSuccess(false);
+                           setSupportSubject('');
+                           setSupportMessage('');
+                        }, 2500);
+                    } else {
+                        alert("Xəta baş verdi. Zəhmət olmasa biraz sonra yenidən cəhd edin.");
+                    }
+                  } catch (e) {
+                      console.error(e);
+                      alert("İnternet bağlantınızı yoxlayın.");
+                  } finally {
+                      setSupportSubmitting(false);
+                  }
+                }}
+                disabled={!supportMessage.trim() || supportSubmitting || supportSuccess}
+                className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-2xl bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold transition-all shadow-lg shadow-brand-500/25 active:scale-95"
+              >
+                {supportSubmitting ? (
+                  <>
+                    <Icon icon="mdi:loading" className="text-lg animate-spin" />
+                    Göndərilir...
+                  </>
+                ) : supportSuccess ? (
+                  <>
+                    <Icon icon="mdi:check" className="text-lg" />
+                    Göndərildi
+                  </>
+                ) : (
+                  <>
+                    Göndər
+                    <Icon icon="mdi:send" className="text-base" />
+                  </>
+                )}
+              </button>
+            </div>
+            
+          </div>
+        </div>,
+        document.body
+      )}
     </nav>
   );
 }
