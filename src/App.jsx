@@ -14,6 +14,7 @@ import NewPostModal from './components/feed/NewPostModal';
 import OnboardingModal from './components/onboarding/OnboardingModal';
 import NewProject from './pages/NewProject';
 import ForgotPassword from './pages/ForgotPassword';
+import Settings from './pages/Settings';
 
 function AppContent() {
     const { currentUser, loading } = useAuth();
@@ -75,6 +76,7 @@ function AppContent() {
             case 'notifications': return <Notifications onNavigate={handleNavigate} />;
             case 'new-project': return <NewProject onNavigate={handleNavigate} params={routeParams} />;
             case 'forgot-password': return <ForgotPassword onNavigate={handleNavigate} />;
+            case 'settings': return <Settings onNavigate={handleNavigate} />;
             case 'new-post': return (
                 <>
                     <Dashboard onNavigate={handleNavigate} />

@@ -5,6 +5,7 @@ import { Icon } from '@iconify/react';
 import { useScrollLock } from '../hooks/useScrollLock';
 import PostCard from '../components/feed/PostCard';
 import ConfirmModal from '../components/common/ConfirmModal';
+import ProjectApplicantsModal from '../components/discover/ProjectApplicantsModal';
 import { useTranslation } from 'react-i18next';
 
 const SKILL_LEVEL_KEYS = ['beginner', 'intermediate', 'advanced'];
@@ -85,6 +86,7 @@ export default function Profile({ params, onNavigate }) {
     const [userProjects, setUserProjects] = useState([]);
     const [openProjectOptionsId, setOpenProjectOptionsId] = useState(null);
     const [projectToDeleteId, setProjectToDeleteId] = useState(null);
+    const [selectedApplicantsProject, setSelectedApplicantsProject] = useState(null);
     const [stats, setStats] = useState({ posts: 0, following: 0, followers: 0 });
     const [editOpen, setEditOpen] = useState(false);
     const [selectedPost, setSelectedPost] = useState(null);
@@ -105,7 +107,7 @@ export default function Profile({ params, onNavigate }) {
     const [isNewSkillLevelOpen, setIsNewSkillLevelOpen] = useState(false);
     const [isNewLinkTypeOpen, setIsNewLinkTypeOpen] = useState(false);
 
-    useScrollLock(editOpen || !!selectedPost || userList.open || !!projectToDeleteId);
+    useScrollLock(editOpen || !!selectedPost || userList.open || !!projectToDeleteId || !!selectedApplicantsProject);
 
     const isOwnProfile = !params?.userId || params.userId === currentUser?.id;
 
@@ -432,14 +434,14 @@ export default function Profile({ params, onNavigate }) {
                                     {targetUser?.bio || t('profile.noBio')}
                                 </p>
                                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div className="flex items-start gap-3 rounded-2xl bg-black/[0.04] dark:bg-white/[0.05] border border-black/8 dark:border-white/[0.08] px-3.5 py-3 min-h-[3.25rem]">
-                                        <Icon icon="mdi:school-outline" className="text-xl text-brand-400 shrink-0 mt-0.5" />
+                                    <div className="flex items-center gap-3 rounded-2xl bg-black/[0.04] dark:bg-white/[0.05] border border-black/8 dark:border-white/[0.08] px-3.5 py-3 min-h-[3.25rem]">
+                                        <Icon icon="mdi:school-outline" className="text-xl text-brand-400 shrink-0" />
                                         <span className="text-xs text-neutral-600 dark:text-neutral-300 leading-snug">
                                             {targetUser?.university || '—'}
                                         </span>
                                     </div>
-                                    <div className="flex items-start gap-3 rounded-2xl bg-black/[0.04] dark:bg-white/[0.05] border border-black/8 dark:border-white/[0.08] px-3.5 py-3 min-h-[3.25rem]">
-                                        <Icon icon="mdi:briefcase-outline" className="text-xl text-brand-400 shrink-0 mt-0.5" />
+                                    <div className="flex items-center gap-3 rounded-2xl bg-black/[0.04] dark:bg-white/[0.05] border border-black/8 dark:border-white/[0.08] px-3.5 py-3 min-h-[3.25rem]">
+                                        <Icon icon="mdi:briefcase-outline" className="text-xl text-brand-400 shrink-0" />
                                         <span className="text-xs text-neutral-600 dark:text-neutral-300 leading-snug">
                                             {translateLevel(targetUser?.level, t)} · {translateField(targetUser?.field, t)}
                                         </span>
@@ -714,7 +716,7 @@ export default function Profile({ params, onNavigate }) {
                                             <div className="flex items-center gap-4 text-[11px] text-neutral-400">
                                                 <span className="flex items-center gap-1.5">
                                                     <Icon icon="mdi:account-group-outline" className="text-sm" />
-                                                    {t('profile.participantsCount', { count: (p.applicants || []).filter(a => typeof a === 'object' && a !== null && a.status === 'accepted').length })}
+                                                    {t('discover.project.applicantsCount', { count: (p.applicants || []).filter(a => typeof a === 'object' && a !== null && a.status === 'accepted').length })}
                                                 </span>
                                                 {p.team && (
                                                     <span className="flex items-center gap-1.5">
@@ -723,10 +725,10 @@ export default function Profile({ params, onNavigate }) {
                                                     </span>
                                                 )}
                                             </div>
-                                            {/* Sahibi: müraciətlər səhifəsinə keç */}
+                                            {/* Sahibi: müraciətlər modalını aç */}
                                             {isOwner && (
                                                 <button
-                                                    onClick={() => onNavigate('discover')}
+                                                    onClick={() => setSelectedApplicantsProject(p)}
                                                     className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 hover:text-brand-500 dark:hover:text-brand-400 transition-colors flex items-center gap-1 uppercase tracking-wider"
                                                 >
                                                     <Icon icon="mdi:open-in-new" className="text-xs" />
@@ -1153,6 +1155,17 @@ export default function Profile({ params, onNavigate }) {
                     cancelText={t('post.cancel')}
                     onConfirm={confirmDeleteProject}
                     onCancel={() => setProjectToDeleteId(null)}
+                />
+            )}
+            {selectedApplicantsProject && (
+                <ProjectApplicantsModal
+                    project={selectedApplicantsProject}
+                    onClose={() => setSelectedApplicantsProject(null)}
+                    onNavigate={onNavigate}
+                    onProjectUpdated={(updatedProject) => {
+                        setUserProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+                        setSelectedApplicantsProject(updatedProject);
+                    }}
                 />
             )}
         </>

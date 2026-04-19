@@ -219,6 +219,11 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
                   <span className="text-xs font-medium text-neutral-600 dark:text-neutral-300">{t('nav.settings')}</span>
                 </div>
                 <div className="p-2 flex flex-col gap-1 text-neutral-600 dark:text-neutral-300">
+                  {/* Settings Page Link */}
+                  <button onClick={() => { setSettingsOpen(false); onNavigate('settings'); }} className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-left text-sm hover:text-neutral-900 dark:hover:text-white">
+                    <Icon icon="mdi:account-cog-outline" className="text-lg text-brand-400" /> {t('settingsPage.title')}
+                  </button>
+                  
                   {/* Language selector */}
                   <div className="relative">
                     <button
