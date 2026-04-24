@@ -16,7 +16,8 @@
     "lightMode": "Açıq Mod",
     "darkMode": "Qaranlıq Mod",
     "help": "Kömək",
-    "logout": "Çıxış"
+    "logout": "Çıxış",
+    "profile": "Profil"
   },
   "landing": {
     "badge": "Azərbaycanın ilk peşə əlaqə platforması",
@@ -79,6 +80,9 @@
     "surname": "Soyad",
     "surnamePlaceholder": "Məmmədov",
     "university": "Universitet",
+    "universityPlaceholder": "Universitetinizin adı",
+    "optional": "könüllü",
+    "fieldPlaceholder": "Proqramlaşdırma, Dizayn...",
     "field": "Sahə",
     "loginBtn": "Daxil Ol",
     "registerBtn": "Hesab Yarat",
@@ -112,7 +116,12 @@
     "finish": "Bitir",
     "all": "Hamı",
     "following": "İzlədiklərim",
-    "allSeen": "— Hamısına baxdın —"
+    "allSeen": "— Hamısına baxdın —",
+    "missingAvatar": "Profil şəkli",
+    "missingBio": "Bio",
+    "missingField": "Sahə",
+    "missingUniversity": "Universitet",
+    "missingSkills": "1 bacarıq"
   },
   "discover": {
     "title": "Kəşf Et",
@@ -162,7 +171,9 @@
       "pending": "Gözlənilir",
       "viewAuthor": "Profilə Bax",
       "noApplicants": "Hələ müraciət yoxdur",
-      "createdAt": "Yaradıldı"
+      "createdAt": "Yaradıldı",
+      "applySuccess": "Müraciətiniz göndərildi!",
+      "alreadyApplied": "Artıq müraciət etmisiniz"
     }
   },
   "messages": {
@@ -204,6 +215,9 @@
     "viewDesign": "Dizayna Bax",
     "viewSource": "Mənbəyə Bax",
     "viewDemo": "Canlı Demo",
+    "changeImage": "Şəkli dəyiş",
+    "removeImage": "Şəkli sil",
+    "addImage": "Şəkil əlavə et",
     "levels": {
       "beginner": "Başlanğıc",
       "intermediate": "Orta",
@@ -401,6 +415,7 @@
     "emailPassword": "Hesab Şifrəniz",
     "changeEmailBtn": "E-poçtu Yenilə",
     "emailSuccess": "E-poçt ünvanı uğurla dəyişdirildi",
-    "emailExists": "Bu e-poçt ünvanı artıq istifadədədir"
+    "emailExists": "Bu e-poçt ünvanı artıq istifadədədir",
+    "continueBtn": "Davam Et"
   }
 }

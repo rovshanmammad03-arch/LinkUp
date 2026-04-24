@@ -72,6 +72,14 @@ export default function PostCard({ post, index, onDelete, onUpdate, onNavigate }
     const [showEditModal, setShowEditModal] = useState(false);
     const [showShareModal, setShowShareModal] = useState(false);
     const [editCaption, setEditCaption] = useState(post.caption || '');
+    const [editImage, setEditImage] = useState(post.image || '');
+    const editFileInputRef = React.useRef(null);
+
+    // post prop dəyişdikdə edit state-lərini yenilə
+    useEffect(() => {
+        setEditCaption(post.caption || '');
+        setEditImage(post.image || '');
+    }, [post.caption, post.image]);
 
     useScrollLock(showComments || showDeleteModal || showEditModal || showShareModal);
 
@@ -80,8 +88,9 @@ export default function PostCard({ post, index, onDelete, onUpdate, onNavigate }
         const pIndex = posts.findIndex(p => p.id === post.id);
         if (pIndex > -1) {
             posts[pIndex].caption = editCaption;
+            posts[pIndex].image = editImage;
             DB.set('posts', posts);
-            if (onUpdate) onUpdate(posts[pIndex]);
+            if (onUpdate) onUpdate({ ...posts[pIndex] });
         }
         setShowEditModal(false);
     };
@@ -171,6 +180,7 @@ export default function PostCard({ post, index, onDelete, onUpdate, onNavigate }
                                         onClick={() => {
                                             setShowDropdown(false);
                                             setEditCaption(post.caption || '');
+                                            setEditImage(post.image || '');
                                             setShowEditModal(true);
                                         }}
                                         className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-semibold text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
@@ -448,7 +458,7 @@ export default function PostCard({ post, index, onDelete, onUpdate, onNavigate }
             {showEditModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowEditModal(false)}></div>
-                    <div className="bg-white dark:bg-neutral-900 border border-black/10 dark:border-white/10 rounded-xl p-5 max-w-lg w-full relative z-10 anim-up flex flex-col shadow-2xl">
+                    <div className="bg-white dark:bg-neutral-900 border border-black/10 dark:border-white/10 rounded-xl p-5 max-w-lg w-full relative z-10 anim-up flex flex-col shadow-2xl max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between mb-4 pb-4 border-b border-black/10 dark:border-white/10">
                             <h3 className="text-lg font-bold text-neutral-900 dark:text-white">{t('post.editTitle')}</h3>
                             <button onClick={() => setShowEditModal(false)} className="text-neutral-400 hover:text-neutral-900 dark:hover:text-white p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
@@ -459,8 +469,57 @@ export default function PostCard({ post, index, onDelete, onUpdate, onNavigate }
                             value={editCaption}
                             onChange={(e) => setEditCaption(e.target.value)}
                             placeholder={t('post.editPlaceholder')}
-                            className="w-full bg-black/5 dark:bg-black/50 border border-black/10 dark:border-white/10 rounded-xl p-4 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:border-brand-500 transition-colors mb-4 resize-none h-32"
+                            className="w-full bg-black/5 dark:bg-black/50 border border-black/10 dark:border-white/10 rounded-xl p-4 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:border-brand-500 transition-colors mb-4 resize-none h-28"
                         ></textarea>
+
+                        {/* Şəkil redaktəsi — yalnız şəkilli postlar üçün */}
+                        {(post.type === 'design' || post.image) && (
+                            <div className="mb-4">
+                                <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">{t('newPost.imageLabel')}</p>
+                                {editImage ? (
+                                    <div className="relative rounded-xl overflow-hidden group border border-black/8 dark:border-white/8">
+                                        <img src={editImage} className="w-full max-h-48 object-cover" alt="Post" />
+                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                                            <button
+                                                onClick={() => editFileInputRef.current?.click()}
+                                                className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg backdrop-blur-sm transition-colors flex items-center gap-1"
+                                            >
+                                                <Icon icon="mdi:swap-horizontal" /> {t('post.changeImage')}
+                                            </button>
+                                            <button
+                                                onClick={() => setEditImage('')}
+                                                className="px-3 py-1.5 bg-red-500/80 hover:bg-red-500 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                                            >
+                                                <Icon icon="mdi:delete-outline" /> {t('post.removeImage')}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => editFileInputRef.current?.click()}
+                                        className="w-full border-2 border-dashed border-black/10 dark:border-white/10 hover:border-brand-500 rounded-xl p-4 text-xs text-neutral-500 hover:text-brand-500 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <Icon icon="mdi:image-plus-outline" className="text-lg" />
+                                        {t('post.addImage')}
+                                    </button>
+                                )}
+                                <input
+                                    ref={editFileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+                                        const reader = new FileReader();
+                                        reader.onload = (ev) => setEditImage(ev.target.result);
+                                        reader.readAsDataURL(file);
+                                        e.target.value = '';
+                                    }}
+                                />
+                            </div>
+                        )}
+
                         <div className="flex justify-end gap-3 w-full">
                             <button 
                                 onClick={() => setShowEditModal(false)}
@@ -471,7 +530,7 @@ export default function PostCard({ post, index, onDelete, onUpdate, onNavigate }
                             <button 
                                 onClick={handleEditPost}
                                 className="px-5 py-2 rounded-xl text-sm font-semibold text-white bg-brand-500 hover:bg-brand-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                disabled={!editCaption.trim() || editCaption === post.caption}
+                                disabled={!editCaption.trim()}
                             >
                                 {t('post.save')}
                             </button>

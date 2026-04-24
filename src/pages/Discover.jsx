@@ -40,6 +40,7 @@ export default function Discover({ onNavigate }) {
     const [selectedApplicantsProject, setSelectedApplicantsProject] = useState(null);
     const [openOptionsId, setOpenOptionsId] = useState(null);
     const [projectToDeleteId, setProjectToDeleteId] = useState(null);
+    const [toast, setToast] = useState(null);
 
     const [levelFilter, setLevelFilter] = useState('all');
     const [fieldFilter, setFieldFilter] = useState('all');
@@ -47,6 +48,11 @@ export default function Discover({ onNavigate }) {
     const [isFieldOpen, setIsFieldOpen] = useState(false);
 
     useScrollLock(!!selectedApplicantsProject || !!projectToDeleteId);
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
 
     useEffect(() => {
         setUsers(DB.get('users').filter(u => u.id !== currentUser?.id));
@@ -105,11 +111,15 @@ export default function Discover({ onNavigate }) {
         const alreadyApplied = allProjects[pIdx].applicants.some(a =>
             (typeof a === 'object' ? a.id : a) === currentUser.id
         );
-        if (alreadyApplied) return;
+        if (alreadyApplied) {
+            showToast(t('discover.project.alreadyApplied'), 'info');
+            return;
+        }
 
         allProjects[pIdx].applicants.push({ id: currentUser.id, status: 'pending' });
         DB.set('projects', allProjects);
-        setProjects(allProjects);
+        setProjects([...allProjects]);
+        showToast(t('discover.project.applySuccess'), 'success');
 
         addNotification({
             toUserId: allProjects[pIdx].authorId,
@@ -131,8 +141,12 @@ export default function Discover({ onNavigate }) {
         const updated = allProjects.filter(p => p.id !== projectToDeleteId);
         DB.set('projects', updated);
         setProjects(updated);
+        // Layihəyə aid showcases-ləri sil
         const allShowcases = DB.get('showcases');
         DB.set('showcases', allShowcases.filter(s => s.projectId !== projectToDeleteId));
+        // Layihəyə aid qrup mesajlarını sil
+        const allMessages = DB.get('messages');
+        DB.set('messages', allMessages.filter(m => m.projectId !== projectToDeleteId));
         setProjectToDeleteId(null);
     };
 
@@ -177,8 +191,14 @@ export default function Discover({ onNavigate }) {
     });
 
     const filteredProjects = projects.filter(p => {
-        // 'closed' layihələr kəşf etdə görünmür (yalnız sahibinə görünür)
-        if (p.status === 'closed' && p.authorId !== currentUser?.id) return false;
+        // 'closed' layihələr kəşf etdə görünmür — yalnız sahibinə və qəbul edilmiş üzvlərə görünür
+        if (p.status === 'closed') {
+            const isOwner = p.authorId === currentUser?.id;
+            const isAcceptedMember = (p.applicants || []).some(a =>
+                typeof a === 'object' && a.id === currentUser?.id && a.status === 'accepted'
+            );
+            if (!isOwner && !isAcceptedMember) return false;
+        }
         const matchesSearch = p.title.toLowerCase().includes(search.toLowerCase()) ||
             p.desc.toLowerCase().includes(search.toLowerCase()) ||
             p.skills?.some(s => s.toLowerCase().includes(search.toLowerCase()));
@@ -215,6 +235,17 @@ export default function Discover({ onNavigate }) {
 
     return (
         <>
+            {/* Toast Bildirişi */}
+            {toast && (
+                <div className={`fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-[200] px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-sm font-semibold anim-up transition-all ${
+                    toast.type === 'success' ? 'bg-emerald-500 text-white' :
+                    toast.type === 'info' ? 'bg-neutral-800 text-white' :
+                    'bg-red-500 text-white'
+                }`}>
+                    <Icon icon={toast.type === 'success' ? 'mdi:check-circle' : toast.type === 'info' ? 'mdi:information' : 'mdi:alert-circle'} className="text-lg shrink-0" />
+                    {toast.message}
+                </div>
+            )}
             <div className="max-w-7xl mx-auto px-6 anim-up">
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-6">
@@ -472,7 +503,7 @@ export default function Discover({ onNavigate }) {
                                         </span>
                                     </div>
 
-                                    <p className="text-[14px] text-neutral-600 dark:text-neutral-400 font-normal leading-relaxed mb-6 line-clamp-3 h-15 pl-4">
+                                    <p className="text-[14px] text-neutral-600 dark:text-neutral-400 font-normal leading-relaxed mb-6 line-clamp-3 min-h-[3.75rem] pl-4">
                                         {p.desc}
                                     </p>
 

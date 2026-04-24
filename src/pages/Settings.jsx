@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Icon } from '@iconify/react';
 import { useAuth } from '../context/AuthContext';
-import { DB } from '../services/db';
+import { DB, hashPassword } from '../services/db';
 
 const LANGUAGES = [
   { code: 'az', label: 'Azərbaycan', flag: '🇦🇿' },
@@ -34,7 +34,7 @@ export default function Settings({ onNavigate }) {
     setEmailError('');
     setEmailSuccess('');
 
-    if (currentUser.password !== emailPassword) {
+    if (currentUser.password !== hashPassword(emailPassword)) {
       setEmailError(t('settingsPage.pwdError'));
       return;
     }
@@ -70,12 +70,12 @@ export default function Settings({ onNavigate }) {
     const users = DB.get('users');
     const user = users.find(u => u.id === currentUser.id);
     
-    if (user.password !== oldPassword) {
+    if (user.password !== hashPassword(oldPassword)) {
       setPwdError(t('settingsPage.pwdError'));
       return;
     }
 
-    user.password = newPassword;
+    user.password = hashPassword(newPassword);
     DB.set('users', users);
     
     setPwdSuccess(t('settingsPage.pwdSuccess'));
@@ -91,7 +91,7 @@ export default function Settings({ onNavigate }) {
   const handleDeleteAccount = (e) => {
     e.preventDefault();
     setDeleteError('');
-    if (currentUser.password !== deletePassword) {
+    if (currentUser.password !== hashPassword(deletePassword)) {
       setDeleteError(t('settingsPage.pwdError'));
       return;
     }
@@ -296,7 +296,7 @@ export default function Settings({ onNavigate }) {
                 onClick={() => setDeleteStep(2)}
                 className="flex-1 px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white font-medium transition-colors"
               >
-                Davam Et
+                {t('settingsPage.continueBtn')}
               </button>
             </div>
           </div>

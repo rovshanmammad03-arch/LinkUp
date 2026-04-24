@@ -5,11 +5,13 @@ import { Icon } from '@iconify/react';
 import { useTranslation } from 'react-i18next';
 
 const NOTIF_ICONS = {
-  like:    { icon: 'mdi:heart',               color: 'text-rose-400 bg-rose-500/10' },
-  comment: { icon: 'mdi:comment-outline',      color: 'text-brand-400 bg-brand-500/10' },
-  follow:  { icon: 'mdi:account-plus-outline', color: 'text-green-400 bg-green-500/10' },
-  reply:   { icon: 'mdi:reply',                color: 'text-purple-400 bg-purple-500/10' },
-  apply:   { icon: 'mdi:briefcase-outline',    color: 'text-amber-400 bg-amber-500/10' },
+  like:          { icon: 'mdi:heart',               color: 'text-rose-400 bg-rose-500/10' },
+  comment:       { icon: 'mdi:comment-outline',      color: 'text-brand-400 bg-brand-500/10' },
+  follow:        { icon: 'mdi:account-plus-outline', color: 'text-green-400 bg-green-500/10' },
+  reply:         { icon: 'mdi:reply',                color: 'text-purple-400 bg-purple-500/10' },
+  apply:         { icon: 'mdi:briefcase-outline',    color: 'text-amber-400 bg-amber-500/10' },
+  project_apply: { icon: 'mdi:briefcase-outline',    color: 'text-amber-400 bg-amber-500/10' },
+  group_add:     { icon: 'mdi:account-multiple-plus-outline', color: 'text-cyan-400 bg-cyan-500/10' },
 };
 
 export default function Notifications({ onNavigate }) {

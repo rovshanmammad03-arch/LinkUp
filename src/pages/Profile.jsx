@@ -283,8 +283,12 @@ export default function Profile({ params, onNavigate }) {
         const updated = allProjects.filter(p => p.id !== projectToDeleteId);
         DB.set('projects', updated);
         setUserProjects(getParticipantProjects(targetUser?.id, updated));
+        // Layihəyə aid showcases-ləri sil
         const orphanShowcases = DB.get('showcases');
         DB.set('showcases', orphanShowcases.filter(s => s.projectId !== projectToDeleteId));
+        // Layihəyə aid qrup mesajlarını sil
+        const allMessages = DB.get('messages');
+        DB.set('messages', allMessages.filter(m => m.projectId !== projectToDeleteId));
         setProjectToDeleteId(null);
     };
 

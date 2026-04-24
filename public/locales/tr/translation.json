@@ -16,7 +16,8 @@
     "lightMode": "Açık Mod",
     "darkMode": "Karanlık Mod",
     "help": "Yardım",
-    "logout": "Çıkış"
+    "logout": "Çıkış",
+    "profile": "Profil"
   },
   "landing": {
     "badge": "Azerbaycan'ın ilk profesyonel bağlantı platformu",
@@ -79,6 +80,9 @@
     "surname": "Soyad",
     "surnamePlaceholder": "Mammadov",
     "university": "Üniversite",
+    "universityPlaceholder": "Üniversitenizin adı",
+    "optional": "isteğe bağlı",
+    "fieldPlaceholder": "Programlama, Tasarım...",
     "field": "Alan",
     "loginBtn": "Giriş Yap",
     "registerBtn": "Hesap Oluştur",
@@ -112,7 +116,12 @@
     "finish": "Bitir",
     "all": "Hepsi",
     "following": "Takip Ettiklerim",
-    "allSeen": "— Hepsini gördün —"
+    "allSeen": "— Hepsini gördün —",
+    "missingAvatar": "Profil fotoğrafı",
+    "missingBio": "Bio",
+    "missingField": "Alan",
+    "missingUniversity": "Üniversite",
+    "missingSkills": "1 beceri"
   },
   "discover": {
     "title": "Keşfet",
@@ -203,6 +212,9 @@
     "viewDesign": "Tasarıma Bak",
     "viewSource": "Kaynağa Bak",
     "viewDemo": "Canlı Demo",
+    "changeImage": "Görseli değiştir",
+    "removeImage": "Görseli sil",
+    "addImage": "Görsel ekle",
     "levels": {
       "beginner": "Başlangıç",
       "intermediate": "Orta",
@@ -400,6 +412,7 @@
     "emailPassword": "Hesap Şifresi",
     "changeEmailBtn": "E-postayı Güncelle",
     "emailSuccess": "E-posta adresi başarıyla güncellendi",
-    "emailExists": "Bu e-posta adresi zaten kullanılıyor"
+    "emailExists": "Bu e-posta adresi zaten kullanılıyor",
+    "continueBtn": "Devam Et"
   }
 }

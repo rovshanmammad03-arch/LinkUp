@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Icon } from '@iconify/react';
-import { DB, uid, GRADIENTS } from '../services/db';
+import { DB, uid, GRADIENTS, hashPassword } from '../services/db';
 import { useTranslation } from 'react-i18next';
 
 export default function Register({ onNavigate, onRegisterDone }) {
@@ -11,8 +11,8 @@ export default function Register({ onNavigate, onRegisterDone }) {
     const [surname, setSurname] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [university, setUniversity] = useState('ADNSU');
-    const [field, setField] = useState('Proqramlaşdırma');
+    const [university, setUniversity] = useState('');
+    const [field, setField] = useState('');
     const [error, setError] = useState('');
 
     const handleSubmit = (e) => {
@@ -26,10 +26,10 @@ export default function Register({ onNavigate, onRegisterDone }) {
         const newUser = {
             id: uid(),
             email,
-            password,
+            password: hashPassword(password),
             name: `${name} ${surname}`,
-            university,
-            field,
+            university: university.trim() || '',
+            field: field.trim() || t('auth.fields.other'),
             level: 'Başlanğıc',
             bio: '',
             skills: [],
@@ -91,19 +91,28 @@ export default function Register({ onNavigate, onRegisterDone }) {
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="text-xs text-neutral-400 mb-1 block">{t('auth.university')}</label>
-                            <select className="input-field bg-[#0d0d0f]" value={university} onChange={(e) => setUniversity(e.target.value)}>
-                                <option>ADNSU</option><option>UNEC</option><option>BMU</option><option>ADA</option><option>BANM</option><option>{t('auth.fields.other')}</option>
-                            </select>
+                            <label className="text-xs text-neutral-400 mb-1 block">
+                                {t('auth.university')}
+                                <span className="ml-1 text-neutral-600">({t('auth.optional')})</span>
+                            </label>
+                            <input
+                                type="text"
+                                className="input-field"
+                                placeholder={t('auth.universityPlaceholder')}
+                                value={university}
+                                onChange={(e) => setUniversity(e.target.value)}
+                            />
                         </div>
                         <div>
                             <label className="text-xs text-neutral-400 mb-1 block">{t('auth.field')}</label>
-                            <select className="input-field bg-[#0d0d0f]" value={field} onChange={(e) => setField(e.target.value)}>
-                                <option>{t('auth.fields.programming')}</option>
-                                <option>{t('auth.fields.design')}</option>
-                                <option>{t('auth.fields.marketing')}</option>
-                                <option>{t('auth.fields.other')}</option>
-                            </select>
+                            <input
+                                type="text"
+                                className="input-field"
+                                placeholder={t('auth.fieldPlaceholder')}
+                                value={field}
+                                onChange={(e) => setField(e.target.value)}
+                                required
+                            />
                         </div>
                     </div>
                     <button type="submit" className="btn-primary w-full py-3 mt-4 text-base flex items-center justify-center gap-2 shadow-xl shadow-brand-500/30">
