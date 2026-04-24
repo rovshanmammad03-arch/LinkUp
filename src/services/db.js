@@ -146,3 +146,58 @@ export function resetPassword(email, newPassword) {
     DB.setOne('reset_token', null);
     return { success: true };
 }
+
+/**
+ * URL-in http:// və ya https:// ilə başlayıb-başlamadığını yoxlayır.
+ * @param {string} url
+ * @returns {boolean}
+ */
+export function isValidUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+    return url.startsWith('http://') || url.startsWith('https://');
+}
+
+/**
+ * Fayl ölçüsünün 2MB limitini aşıb-aşmadığını yoxlayır.
+ * @param {number} sizeInBytes
+ * @returns {boolean}
+ */
+export function isValidFileSize(sizeInBytes) {
+    return typeof sizeInBytes === 'number' && sizeInBytes >= 0 && sizeInBytes <= 2 * 1024 * 1024;
+}
+
+/**
+ * Showcase CRUD service — localStorage əsaslı
+ */
+export const showcaseService = {
+    getAll() {
+        return DB.get('showcases');
+    },
+    getByProject(projectId) {
+        return DB.get('showcases')
+            .filter(s => s.projectId === projectId)
+            .sort((a, b) => b.createdAt - a.createdAt);
+    },
+    add(data) {
+        const showcase = { ...data, id: uid(), createdAt: Date.now() };
+        const all = DB.get('showcases');
+        all.push(showcase);
+        DB.set('showcases', all);
+        return showcase;
+    },
+    remove(showcaseId) {
+        const all = DB.get('showcases').filter(s => s.id !== showcaseId);
+        DB.set('showcases', all);
+        return true;
+    },
+    isParticipant(userId, project) {
+        if (!userId || !project) return false;
+        if (project.authorId === userId) return true;
+        const applicants = project.applicants || [];
+        return applicants.some(a =>
+            typeof a === 'object' && a !== null && a.id === userId && a.status === 'accepted'
+        );
+    },
+    isValidUrl,
+    isValidFileSize,
+};

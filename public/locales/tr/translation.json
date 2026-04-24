@@ -109,6 +109,7 @@
   "dashboard": {
     "profileCompletion": "Profil Tamamlama",
     "complete": "Tamamla",
+    "finish": "Bitir",
     "all": "Hepsi",
     "following": "Takip Ettiklerim",
     "allSeen": "— Hepsini gördün —"
@@ -128,6 +129,11 @@
     "createProject": "Proje Oluştur",
     "profile": "Profil",
     "all": "Hepsi",
+    "noUsersTitle": "Kullanıcı bulunamadı",
+    "noUsersDesc": "Aramanıza uygun kullanıcı bulunamadı. Filtreleri değiştirerek tekrar deneyin.",
+    "noProjectsTitle": "Proje bulunamadı",
+    "noProjectsDesc": "Aramanıza uygun proje bulunamadı. Belki kendin yeni bir proje başlatırsın?",
+    "clearFilters": "Filtreleri Temizle",
     "levels": {
       "beginner": "Başlangıç",
       "intermediate": "Orta",

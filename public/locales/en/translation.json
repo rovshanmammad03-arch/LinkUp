@@ -109,6 +109,7 @@
   "dashboard": {
     "profileCompletion": "Profile Completion",
     "complete": "Complete",
+    "finish": "Finish",
     "all": "Everyone",
     "following": "Following",
     "allSeen": "— You've seen it all —"
@@ -128,6 +129,11 @@
     "createProject": "Create Project",
     "profile": "Profile",
     "all": "All",
+    "noUsersTitle": "No users found",
+    "noUsersDesc": "No users match your search. Try changing the filters.",
+    "noProjectsTitle": "No projects found",
+    "noProjectsDesc": "No projects match your search. Why not create one yourself?",
+    "clearFilters": "Clear Filters",
     "levels": {
       "beginner": "Beginner",
       "intermediate": "Intermediate",

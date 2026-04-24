@@ -60,7 +60,9 @@ export default function Dashboard({ onNavigate }) {
                             ></div>
                         </div>
                     </div>
-                    <button onClick={() => onNavigate('profile')} className="btn-primary btn-sm px-4 py-2 text-[11px] uppercase tracking-wider font-bold">{t('dashboard.complete')}</button>
+                    <button onClick={() => onNavigate('profile')} className="px-5 py-2.5 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:scale-105 transition-transform active:scale-95 shadow-xl">
+                        {pct >= 80 ? t('dashboard.finish') : t('dashboard.complete')}
+                    </button>
                 </div>
             )}
 

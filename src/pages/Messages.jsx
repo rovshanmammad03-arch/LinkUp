@@ -4,6 +4,7 @@ import { DB, getUser, initials, uid, addNotification } from '../services/db';
 import { Icon } from '@iconify/react';
 import { useTranslation } from 'react-i18next';
 import AddMemberModal from '../components/messages/AddMemberModal';
+import EmptyState from '../components/common/EmptyState';
 
 function translateField(field, t) {
     const map = {
@@ -252,13 +253,13 @@ export default function Messages({ params, onNavigate }) {
 
     return (
         <>
-        <div className="max-w-6xl mx-auto h-[calc(100vh-120px)] anim-up">
-            <div className="flex bg-white dark:bg-[#000] border border-black/10 dark:border-white/10 rounded-2xl overflow-hidden h-full shadow-xl dark:shadow-2xl">
+        <div className="max-w-6xl mx-auto h-[calc(100vh-80px)] md:h-[calc(100vh-120px)] anim-up relative">
+            <div className="flex bg-white dark:bg-[#000] md:border border-black/10 dark:border-white/10 md:rounded-2xl overflow-hidden h-full shadow-xl dark:shadow-2xl">
 
                 {/* Sidebar */}
-                <div className="w-80 border-r border-black/8 dark:border-white/10 flex flex-col bg-white dark:bg-[#000] z-10 shrink-0">
+                <div className={`${(selectedUserId || selectedProjectId) ? 'hidden md:flex' : 'flex'} w-full md:w-80 border-r border-black/8 dark:border-white/10 flex-col bg-white dark:bg-[#000] z-10 shrink-0`}>
                     <div className="p-5 border-b border-black/8 dark:border-white/10 flex flex-col gap-4">
-                        <span className="text-xl font-bold text-neutral-900 dark:text-white tracking-tight">{currentUser?.name}</span>
+                        <span className="text-xl font-bold text-neutral-900 dark:text-white tracking-tight">{t('messages.messagesTitle')}</span>
 
                         {/* Tab Switcher */}
                         <div className="flex bg-neutral-100 dark:bg-[#121212] p-1 rounded-xl">
@@ -352,47 +353,56 @@ export default function Messages({ params, onNavigate }) {
 
                 {/* Chat Window */}
                 {(tab === 'personal' && selectedUserConvo) || (tab === 'projects' && selectedProjectConvo) ? (
-                    <div className="flex-1 flex flex-col bg-white dark:bg-[#000] relative">
+                    <div className="flex-1 flex flex-col bg-white dark:bg-[#000] relative z-20">
                         {/* Header */}
-                        <div className="h-16 border-b border-black/8 dark:border-white/10 flex items-center justify-between px-6 bg-white/80 dark:bg-black/80 backdrop-blur-md sticky top-0 z-10">
-                            {tab === 'personal' ? (
-                                <div
-                                    className="flex items-center gap-3 cursor-pointer hover:opacity-75 transition-opacity"
-                                    onClick={() => onNavigate('profile', { userId: selectedUserConvo.user.id })}
+                        <div className="h-16 border-b border-black/8 dark:border-white/10 flex items-center justify-between px-4 md:px-6 bg-white/80 dark:bg-black/80 backdrop-blur-md sticky top-0 z-10">
+                            <div className="flex items-center gap-3">
+                                {/* Back Button for Mobile */}
+                                <button 
+                                    onClick={() => { setSelectedUserId(null); setSelectedProjectId(null); }}
+                                    className="md:hidden w-10 h-10 flex items-center justify-center rounded-xl hover:bg-black/5 dark:hover:bg-white/5 text-neutral-500"
                                 >
-                                    <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${selectedUserConvo.user.grad} flex items-center justify-center text-[10px] font-bold shadow-lg text-neutral-900 dark:text-white`}>
-                                        {selectedUserConvo.user.avatar
-                                            ? <img src={selectedUserConvo.user.avatar} className="w-full h-full object-cover rounded-full" />
-                                            : initials(selectedUserConvo.user.name)}
+                                    <Icon icon="mdi:chevron-left" className="text-2xl" />
+                                </button>
+
+                                {tab === 'personal' ? (
+                                    <div
+                                        className="flex items-center gap-3 cursor-pointer hover:opacity-75 transition-opacity"
+                                        onClick={() => onNavigate('profile', { userId: selectedUserConvo.user.id })}
+                                    >
+                                        <div className={`w-8 h-8 md:w-9 md:h-9 rounded-full bg-gradient-to-br ${selectedUserConvo.user.grad} flex items-center justify-center text-[10px] font-bold shadow-lg text-neutral-900 dark:text-white`}>
+                                            {selectedUserConvo.user.avatar
+                                                ? <img src={selectedUserConvo.user.avatar} className="w-full h-full object-cover rounded-full" />
+                                                : initials(selectedUserConvo.user.name)}
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-bold text-neutral-900 dark:text-white leading-none">{selectedUserConvo.user.name}</h4>
+                                            <p className="text-[10px] text-neutral-500 mt-1 font-medium">{t('messages.active')}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h4 className="text-sm font-bold text-neutral-900 dark:text-white leading-none">{selectedUserConvo.user.name}</h4>
-                                        <p className="text-[10px] text-neutral-500 mt-1 font-medium">{t('messages.active')}</p>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex items-center justify-between w-full">
+                                ) : (
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${selectedProjectConvo.project.grad} flex items-center justify-center shadow-lg text-neutral-900 dark:text-white`}>
+                                        <div className={`w-8 h-8 md:w-9 md:h-9 rounded-full bg-gradient-to-br ${selectedProjectConvo.project.grad} flex items-center justify-center shadow-lg text-neutral-900 dark:text-white`}>
                                             <Icon icon="mdi:rocket-launch-outline" className="text-sm" />
                                         </div>
                                         <div>
                                             <h4 className="text-sm font-bold text-neutral-900 dark:text-white leading-none line-clamp-1">{selectedProjectConvo.project.title}</h4>
                                             <p className="text-[10px] text-neutral-500 mt-1 font-medium flex items-center gap-1">
-                                                <Icon icon="mdi:account-multiple" /> Komanda Qrupu
+                                                <Icon icon="mdi:account-multiple" /> Komanda
                                             </p>
                                         </div>
                                     </div>
+                                )}
+                            </div>
 
-                                    <div className="flex items-center gap-3">
-                                        <button
-                                            onClick={() => setShowManageTeam(true)}
-                                            className="px-3 py-1.5 flex items-center gap-1.5 bg-neutral-100 dark:bg-[rgba(255,255,255,0.05)] hover:bg-neutral-200 dark:hover:bg-[rgba(255,255,255,0.1)] rounded-lg text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-colors"
-                                        >
-                                            <Icon icon="mdi:account-multiple-outline" className="text-sm" /> İştirakçılar
-                                        </button>
-                                    </div>
-                                </div>
+                            {tab === 'projects' && (
+                                <button
+                                    onClick={() => setShowManageTeam(true)}
+                                    className="w-10 h-10 md:w-auto md:px-3 md:py-1.5 flex items-center justify-center md:gap-1.5 bg-neutral-100 dark:bg-white/5 hover:bg-neutral-200 dark:hover:bg-white/10 rounded-xl md:rounded-lg text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-colors"
+                                >
+                                    <Icon icon="mdi:account-multiple-outline" className="text-lg md:text-sm" />
+                                    <span className="hidden md:inline">İştirakçılar</span>
+                                </button>
                             )}
                         </div>
 
@@ -639,16 +649,14 @@ export default function Messages({ params, onNavigate }) {
                     </div>
                 ) : (
                     /* Empty state */
-                    <div className="flex-1 flex flex-col items-center justify-center text-center p-10 bg-neutral-50/50 dark:bg-black/50">
-                        <div className="w-24 h-24 rounded-full bg-white dark:bg-[#111] shadow-xl flex items-center justify-center mb-6 border border-black/5 dark:border-white/5">
-                            <Icon icon={tab === 'projects' ? 'mdi:folder-account-outline' : 'mdi:chat-processing-outline'} className="text-5xl text-neutral-300 dark:text-neutral-700" />
-                        </div>
-                        <h2 className="text-xl font-bold text-neutral-900 dark:text-white mb-2 tracking-tight">
-                            {tab === 'projects' ? 'Layihə Qrupları' : t('messages.emptyTitle')}
-                        </h2>
-                        <p className="text-sm text-neutral-500 max-w-xs leading-relaxed">
-                            {tab === 'projects' ? 'Layihələrinizə müraciət edən və qəbul olunmuş komanda yoldaşlarınızla ortaq qrup çatları burada görünəcək.' : t('messages.emptyDesc')}
-                        </p>
+                    <div className="hidden md:flex flex-1 p-6">
+                        <EmptyState 
+                            icon={tab === 'projects' ? 'mdi:folder-account-outline' : 'mdi:chat-processing-outline'}
+                            title={tab === 'projects' ? 'Layihə Qrupları' : t('messages.emptyTitle')}
+                            description={tab === 'projects' ? 'Layihələrinizə müraciət edən və qəbul olunmuş komanda yoldaşlarınızla ortaq qrup çatları burada görünəcək.' : t('messages.emptyDesc')}
+                            actionLabel={tab === 'personal' ? 'Kəşf Et' : 'Layihə Yarat'}
+                            onAction={() => onNavigate('discover')}
+                        />
                     </div>
                 )}
             </div>

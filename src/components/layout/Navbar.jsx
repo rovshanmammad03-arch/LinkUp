@@ -5,6 +5,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { Icon } from '@iconify/react';
 import { initials } from '../../services/db';
 import { useTranslation } from 'react-i18next';
+import Tooltip from '../common/Tooltip';
 
 const LANGUAGES = [
   { code: 'az', label: 'Azərbaycan', flag: '🇦🇿' },
@@ -161,12 +162,14 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
         <div className="flex items-center gap-2 md:gap-4">
           {/* Notifications */}
           <div className="relative" ref={notifRef}>
-            <button onClick={toggleNotif} className="text-neutral-500 hover:text-neutral-900 dark:hover:text-white p-2 transition-colors relative flex items-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
-              <Icon icon="mdi:bell-outline" className="text-xl" />
-              {notifs.filter(n => !n.read).length > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              )}
-            </button>
+            <Tooltip content={t('nav.notifications')}>
+              <button onClick={toggleNotif} className="text-neutral-500 hover:text-neutral-900 dark:hover:text-white p-2 transition-colors relative flex items-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
+                <Icon icon="mdi:bell-outline" className="text-xl" />
+                {notifs.filter(n => !n.read).length > 0 && (
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                )}
+              </button>
+            </Tooltip>
             {notifOpen && (
               <div className="absolute right-0 top-full mt-2 w-80 max-w-[90vw] bg-white dark:bg-neutral-900 rounded-xl border border-black/10 dark:border-white/10 shadow-xl dark:shadow-2xl overflow-hidden z-[60]">
                 <div className="p-3 border-b border-black/8 dark:border-white/10 flex items-center justify-between">
@@ -217,9 +220,11 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
 
           {/* Settings */}
           <div className="relative" ref={settingsRef}>
-            <button onClick={toggleSettings} className="text-neutral-500 hover:text-neutral-900 dark:hover:text-white p-1 transition-colors relative flex items-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
-              <Icon icon="mdi:cog-outline" className="text-xl" />
-            </button>
+            <Tooltip content={t('nav.settings')}>
+              <button onClick={toggleSettings} className="text-neutral-500 hover:text-neutral-900 dark:hover:text-white p-1 transition-colors relative flex items-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
+                <Icon icon="mdi:cog-outline" className="text-xl" />
+              </button>
+            </Tooltip>
             {settingsOpen && (
               <div className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-neutral-900/95 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 shadow-xl dark:shadow-2xl overflow-hidden z-[60]">
                 <div className="p-3 border-b border-black/5 dark:border-white/5 bg-neutral-50 dark:bg-black/60">

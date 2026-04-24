@@ -5,6 +5,7 @@ import { Icon } from '@iconify/react';
 import { useScrollLock } from '../hooks/useScrollLock';
 import PostCard from '../components/feed/PostCard';
 import ConfirmModal from '../components/common/ConfirmModal';
+import Button from '../components/common/Button';
 import ProjectApplicantsModal from '../components/discover/ProjectApplicantsModal';
 import { useTranslation } from 'react-i18next';
 
@@ -337,9 +338,9 @@ export default function Profile({ params, onNavigate }) {
 
     return (
         <>
-            <div className="max-w-4xl mx-auto px-6 anim-up">
+            <div className="max-w-4xl mx-auto px-4 md:px-6 anim-up">
                 {/* Cover & Avatar */}
-                <div className="relative mb-24">
+                <div className="relative mb-32 md:mb-24">
                     {/* Cover */}
                     <div 
                         className={`relative h-48 md:h-64 w-full rounded-3xl overflow-hidden shadow-2xl border border-white/5 group ${isOwnProfile ? 'cursor-pointer' : ''}`} 
@@ -359,11 +360,11 @@ export default function Profile({ params, onNavigate }) {
                         )}
                     </div>
 
-                    {/* Avatar */}
-                    <div className="absolute -bottom-16 left-8 flex items-end gap-6">
+                    {/* Avatar & Name Stack */}
+                    <div className="absolute -bottom-24 md:-bottom-16 left-4 md:left-8 flex flex-col md:flex-row md:items-end gap-4 md:gap-6 w-[calc(100%-32px)] md:w-auto">
                         <div
                             onClick={handleAvatarUpload}
-                            className={`w-32 h-32 md:w-36 md:h-36 rounded-3xl bg-gradient-to-br ${targetUser?.grad} border-4 border-white dark:border-black flex items-center justify-center text-4xl font-bold shadow-2xl shrink-0 group relative ${isOwnProfile ? 'cursor-pointer overflow-hidden' : ''}`}
+                            className={`w-24 h-24 md:w-36 md:h-36 rounded-3xl bg-gradient-to-br ${targetUser?.grad} border-4 border-white dark:border-black flex items-center justify-center text-3xl md:text-4xl font-bold shadow-2xl shrink-0 group relative ${isOwnProfile ? 'cursor-pointer overflow-hidden' : ''}`}
                         >
                             {targetUser?.avatar ? (
                                 <img src={targetUser.avatar} className="w-full h-full object-cover rounded-2xl" />
@@ -376,48 +377,53 @@ export default function Profile({ params, onNavigate }) {
                                 </div>
                             )}
                         </div>
-                        <div className="mb-2">
+                        <div className="md:mb-2">
                             <div className="inline-flex items-center gap-2 mb-1">
-                                <h1 className="text-2xl md:text-3xl font-bold text-neutral-900 dark:text-white">{targetUser?.name}</h1>
-                                <Icon icon="mdi:check-decagram" className="text-brand-400 text-xl" />
+                                <h1 className="text-xl md:text-3xl font-bold text-neutral-900 dark:text-white truncate max-w-[200px] sm:max-w-none">{targetUser?.name}</h1>
+                                <Icon icon="mdi:check-decagram" className="text-brand-400 text-lg md:text-xl" />
                             </div>
-                            <p className="text-neutral-500 text-sm font-medium">{translateField(targetUser?.field, t)} · {targetUser?.university}</p>
+                            <p className="text-neutral-500 text-[11px] md:text-sm font-medium">{translateField(targetUser?.field, t)} · {targetUser?.university}</p>
                         </div>
                     </div>
 
                     {/* Actions Button */}
-                    <div className="absolute top-4 right-4 flex gap-2">
+                    <div className="absolute top-4 right-4 flex gap-2 z-10">
                         {isOwnProfile ? (
-                            <button
-                                onClick={openEdit}
-                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md border border-black/10 dark:border-white/20 text-neutral-900 dark:text-white hover:bg-white dark:hover:bg-neutral-800 transition-all shadow-xl"
-                            >
+                            <Button onClick={openEdit} variant="secondary" size="sm" className="md:size-md shadow-xl bg-white/10 backdrop-blur-md border-white/20">
                                 <Icon icon="mdi:pencil-outline" className="text-brand-500" />
-                                {t('profile.editProfile')}
-                            </button>
+                                <span className="hidden sm:inline">{t('profile.editProfile')}</span>
+                            </Button>
                         ) : (
                             <>
-                                <button
-                                    onClick={() => onNavigate('messages', { userId: targetUser.id })}
-                                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md border border-black/10 dark:border-white/20 text-neutral-900 dark:text-white hover:bg-white dark:hover:bg-neutral-800 transition-all shadow-xl"
-                                >
+                                <Button onClick={() => onNavigate('messages', { userId: targetUser.id })} variant="secondary" size="sm" className="md:size-md shadow-xl bg-white/10 backdrop-blur-md border-white/20">
                                     <Icon icon="mdi:chat-processing-outline" className="text-brand-500 text-lg" />
-                                    {t('profile.startChat')}
-                                </button>
-                                <button
-                                    onClick={() => handleFollow()}
-                                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-xl ${
-                                        isFollowing
-                                            ? 'bg-neutral-800 text-white border border-white/10 hover:bg-red-600 hover:border-red-500'
-                                            : 'bg-brand-500 text-white hover:bg-brand-400'
-                                    }`}
-                                >
+                                    <span className="hidden sm:inline">{t('profile.startChat')}</span>
+                                </Button>
+                                <Button onClick={() => handleFollow()} variant={isFollowing ? "danger" : "primary"} size="sm" className="md:size-md shadow-xl">
                                     <Icon icon={isFollowing ? "mdi:account-check" : "mdi:account-plus"} className="text-lg" />
-                                    {isFollowing ? t('profile.followingStatus') : t('profile.follow')}
-                                </button>
+                                    <span className="hidden sm:inline">{isFollowing ? t('profile.followingStatus') : t('profile.follow')}</span>
+                                </Button>
                             </>
                         )}
                     </div>
+                </div>
+
+                {/* Stats for Mobile */}
+                <div className="md:hidden glass-card rounded-2xl p-4 mb-8 flex justify-around border border-black/5 dark:border-white/5">
+                    <div className="text-center">
+                        <span className="block text-lg font-bold text-neutral-900 dark:text-white">{stats.posts}</span>
+                        <span className="text-[10px] text-neutral-500 uppercase tracking-widest">{t('profile.statPosts')}</span>
+                    </div>
+                    <div className="w-px bg-black/5 dark:bg-white/5" />
+                    <button onClick={() => openUserList('followers')} className="text-center">
+                        <span className="block text-lg font-bold text-neutral-900 dark:text-white">{stats.followers}</span>
+                        <span className="text-[10px] text-neutral-500 uppercase tracking-widest">{t('profile.followers')}</span>
+                    </button>
+                    <div className="w-px bg-black/5 dark:bg-white/5" />
+                    <button onClick={() => openUserList('following')} className="text-center">
+                        <span className="block text-lg font-bold text-neutral-900 dark:text-white">{stats.following}</span>
+                        <span className="text-[10px] text-neutral-500 uppercase tracking-widest">{t('profile.following')}</span>
+                    </button>
                 </div>
 
                 {/* Stats + Content grid */}
@@ -456,15 +462,21 @@ export default function Profile({ params, onNavigate }) {
                                         {t('profile.skills')}
                                     </h3>
                                     <div className="flex flex-wrap gap-2">
-                                        {targetUser.skills.map((s, i) => (
+                                        {targetUser.skills.map((s, i) => {
+                                            const levelColor = s.l === 'Başlanğıc' || s.l === 'beginner' ? 'text-green-600 dark:text-green-400 bg-green-500/10 border-green-500/20' 
+                                                             : s.l === 'Orta' || s.l === 'intermediate' ? 'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20'
+                                                             : 'text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/20';
+                                            return (
                                             <span
                                                 key={i}
-                                                className="text-xs px-3 py-1.5 rounded-xl bg-black/[0.06] dark:bg-white/[0.06] border border-black/10 dark:border-white/10 text-neutral-700 dark:text-neutral-200"
+                                                className="text-xs px-3 py-1.5 rounded-xl bg-black/[0.06] dark:bg-white/[0.06] border border-black/10 dark:border-white/10 text-neutral-700 dark:text-neutral-200 flex items-center gap-2"
                                             >
-                                                {s.n}
-                                                <span className="text-neutral-500 dark:text-neutral-500"> · {s.l}</span>
+                                                <span className="font-medium">{s.n}</span>
+                                                <span className={`text-[9px] px-1.5 py-0.5 rounded-md border font-bold uppercase tracking-widest ${levelColor}`}>
+                                                    {s.l}
+                                                </span>
                                             </span>
-                                        ))}
+                                        )})}
                                     </div>
                                 </div>
                             )}
@@ -505,8 +517,8 @@ export default function Profile({ params, onNavigate }) {
                                 </div>
                             )}
 
-                            {/* Stats — minimal row at card footer (no boxes / no “Statistika” title) */}
-                            <div className="flex items-stretch px-1 py-2.5 sm:px-2 bg-black/[0.02] dark:bg-white/[0.02]">
+                            {/* Stats — minimal row at card footer (hidden on mobile, replaced by mobile stats card above) */}
+                            <div className="hidden md:flex items-stretch px-1 py-2.5 sm:px-2 bg-black/[0.02] dark:bg-white/[0.02]">
                                 <div className="flex min-h-[2.75rem] flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1 text-center">
                                     <span className="text-base font-semibold tabular-nums leading-none text-neutral-900 dark:text-white">
                                         {stats.posts}
@@ -547,10 +559,10 @@ export default function Profile({ params, onNavigate }) {
 
                     <div className="min-w-0">
                     {/* Tab Navigation */}
-                    <div className="flex items-center gap-8 border-b border-black/8 dark:border-white/5 mb-8">
+                    <div className="flex items-center gap-4 md:gap-8 border-b border-black/8 dark:border-white/5 mb-8 overflow-x-auto no-scrollbar">
                         <button
                             onClick={() => setTab('posts')}
-                            className={`pb-4 text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-2 transition-all relative ${tab === 'posts' ? 'text-neutral-900 dark:text-white' : 'text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'}`}
+                            className={`pb-4 text-[10px] md:text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-2 transition-all relative shrink-0 ${tab === 'posts' ? 'text-neutral-900 dark:text-white' : 'text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'}`}
                         >
                             <Icon icon="mdi:view-grid-outline" className={tab === 'posts' ? 'text-brand-400' : ''} />
                             {t('profile.posts')}
@@ -558,17 +570,16 @@ export default function Profile({ params, onNavigate }) {
                         </button>
                         <button
                             onClick={() => setTab('projects')}
-                            className={`pb-4 text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-2 transition-all relative ${tab === 'projects' ? 'text-neutral-900 dark:text-white' : 'text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'}`}
+                            className={`pb-4 text-[10px] md:text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-2 transition-all relative shrink-0 ${tab === 'projects' ? 'text-neutral-900 dark:text-white' : 'text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'}`}
                         >
                             <Icon icon="mdi:folder-star-outline" className={tab === 'projects' ? 'text-emerald-400' : ''} />
                             {t('profile.projects')}
-
                             {tab === 'projects' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />}
                         </button>
                         {isOwnProfile && (
                             <button
                                 onClick={() => setTab('liked')}
-                                className={`pb-4 text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-2 transition-all relative ${tab === 'liked' ? 'text-neutral-900 dark:text-white' : 'text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'}`}
+                                className={`pb-4 text-[10px] md:text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-2 transition-all relative shrink-0 ${tab === 'liked' ? 'text-neutral-900 dark:text-white' : 'text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'}`}
                             >
                                 <Icon icon="mdi:heart-outline" className={tab === 'liked' ? 'text-rose-500' : ''} />
                                 {t('profile.liked')}

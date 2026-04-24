@@ -150,14 +150,14 @@ export default function PostCard({ post, index, onDelete, onUpdate, onNavigate }
                 <div className="p-4 pb-3 flex items-center justify-between">
                     <button 
                         onClick={() => onNavigate && onNavigate('profile', { userId: post.authorId })} 
-                        className="flex items-center gap-3 hover:opacity-90 transition-opacity cursor-pointer bg-transparent border-0 p-0 text-left"
+                        className="flex items-center gap-3 hover:opacity-80 transition-all group cursor-pointer bg-transparent border-0 p-0 text-left"
                     >
-                        <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${author.grad} flex items-center justify-center text-xs font-semibold overflow-hidden shrink-0`}>
+                        <div className={`w-10 h-10 rounded-2xl bg-gradient-to-br ${author.grad} flex items-center justify-center text-xs font-semibold overflow-hidden shrink-0 shadow-lg group-hover:scale-105 transition-transform`}>
                             {author.avatar ? <img src={author.avatar} className="w-full h-full object-cover" /> : initials(author.name)}
                         </div>
                         <div className="min-w-0 flex flex-col gap-0.5 items-start">
-                            <div className="text-sm font-medium text-neutral-900 dark:text-white truncate leading-tight">{author.name}</div>
-                            <div className="text-[10px] text-neutral-500 font-light leading-tight">{translateField(author.field, t)} · {timeAgo(post.createdAt, t)}</div>
+                            <div className="text-[13px] font-bold text-neutral-900 dark:text-white truncate leading-tight group-hover:text-brand-500 transition-colors">{author.name}</div>
+                            <div className="text-[10px] text-neutral-500 font-medium leading-tight">{translateField(author.field, t)} · {timeAgo(post.createdAt, t)}</div>
                         </div>
                     </button>
                     {post.authorId === currentUser?.id && (
@@ -339,11 +339,20 @@ export default function PostCard({ post, index, onDelete, onUpdate, onNavigate }
                             </div>
                         </div>
                     ) : (
-                        <div className={`w-full h-48 rounded-2xl bg-gradient-to-br ${placeholderGrad} flex flex-col items-center justify-center gap-3 relative overflow-hidden group`}>
-                            <div className="absolute inset-0 bg-black/10 transition-opacity group-hover:opacity-0"></div>
-                            <Icon icon={postIcon} className="text-4xl text-white/40 relative z-10" />
-                            <span className="text-[10px] text-white/30 font-medium uppercase tracking-widest relative z-10">{post.type || t('post.noCaption')}</span>
-                            <div className={`absolute bottom-3 right-3 px-2.5 py-1 rounded-full text-[9px] uppercase font-bold tracking-wider ${postLabelClass} relative z-10`}>
+                        <div className={`w-full h-56 rounded-2xl bg-gradient-to-br ${placeholderGrad} flex flex-col items-center justify-center gap-4 relative overflow-hidden group shadow-inner`}>
+                            <div className="absolute inset-0 bg-black/5 dark:bg-black/20 mix-blend-overlay"></div>
+                            <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
+                            
+                            <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center shadow-2xl relative z-10 border border-white/20 group-hover:scale-110 transition-transform duration-500">
+                                <Icon icon={postIcon} className="text-3xl text-white drop-shadow-lg" />
+                            </div>
+                            
+                            <div className="flex flex-col items-center gap-1 relative z-10">
+                                <span className="text-[10px] text-white/60 font-black uppercase tracking-[0.3em]">{post.type || t('post.noCaption')}</span>
+                                <div className="h-0.5 w-8 bg-white/20 rounded-full"></div>
+                            </div>
+
+                            <div className={`absolute bottom-4 right-4 px-3 py-1.5 rounded-xl text-[9px] uppercase font-black tracking-widest backdrop-blur-xl border ${postLabelClass} bg-white/5`}>
                                 {post.type}
                             </div>
                         </div>
@@ -388,9 +397,12 @@ export default function PostCard({ post, index, onDelete, onUpdate, onNavigate }
                     {commentCount > 0 && (
                         <button 
                             onClick={() => setShowComments(true)}
-                            className="text-[11px] text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors mt-3"
+                            className="w-full mt-4 flex items-center justify-between p-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.03] hover:bg-black/[0.05] dark:hover:bg-white/[0.05] transition-all group"
                         >
-                            {t('post.viewComments', { count: commentCount })}
+                            <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-700 dark:group-hover:text-neutral-200">
+                                {t('post.viewComments', { count: commentCount })}
+                            </span>
+                            <Icon icon="mdi:chevron-right" className="text-neutral-400 group-hover:translate-x-1 transition-transform" />
                         </button>
                     )}
                 </div>
