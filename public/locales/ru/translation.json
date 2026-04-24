@@ -16,7 +16,8 @@
     "lightMode": "Светлый режим",
     "darkMode": "Тёмный режим",
     "help": "Помощь",
-    "logout": "Выйти"
+    "logout": "Выйти",
+    "profile": "Профиль"
   },
   "landing": {
     "badge": "Первая профессиональная платформа Азербайджана",
@@ -79,6 +80,9 @@
     "surname": "Фамилия",
     "surnamePlaceholder": "Мамедов",
     "university": "Университет",
+    "universityPlaceholder": "Название университета",
+    "optional": "необязательно",
+    "fieldPlaceholder": "Программирование, Дизайн...",
     "field": "Сфера",
     "loginBtn": "Войти",
     "registerBtn": "Создать аккаунт",
@@ -112,7 +116,12 @@
     "finish": "Завершить",
     "all": "Все",
     "following": "Подписки",
-    "allSeen": "— Ты всё просмотрел —"
+    "allSeen": "— Ты всё просмотрел —",
+    "missingAvatar": "Фото профиля",
+    "missingBio": "Биография",
+    "missingField": "Сфера",
+    "missingUniversity": "Университет",
+    "missingSkills": "1 навык"
   },
   "discover": {
     "title": "Открыть",
@@ -203,6 +212,9 @@
     "viewDesign": "Открыть дизайн",
     "viewSource": "Открыть источник",
     "viewDemo": "Живое демо",
+    "changeImage": "Изменить фото",
+    "removeImage": "Удалить фото",
+    "addImage": "Добавить фото",
     "levels": {
       "beginner": "Начинающий",
       "intermediate": "Средний",
@@ -400,6 +412,7 @@
     "emailPassword": "Пароль от аккаунта",
     "changeEmailBtn": "Обновить Email",
     "emailSuccess": "Электронная почта успешно обновлена",
-    "emailExists": "Этот адрес электронной почты уже используется"
+    "emailExists": "Этот адрес электронной почты уже используется",
+    "continueBtn": "Продолжить"
   }
 }

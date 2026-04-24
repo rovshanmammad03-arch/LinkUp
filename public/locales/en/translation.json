@@ -16,7 +16,8 @@
     "lightMode": "Light Mode",
     "darkMode": "Dark Mode",
     "help": "Help",
-    "logout": "Log Out"
+    "logout": "Log Out",
+    "profile": "Profile"
   },
   "landing": {
     "badge": "Azerbaijan's first professional networking platform",
@@ -79,6 +80,9 @@
     "surname": "Last Name",
     "surnamePlaceholder": "Mammadov",
     "university": "University",
+    "universityPlaceholder": "Your university name",
+    "optional": "optional",
+    "fieldPlaceholder": "Programming, Design...",
     "field": "Field",
     "loginBtn": "Log In",
     "registerBtn": "Create Account",
@@ -112,7 +116,12 @@
     "finish": "Finish",
     "all": "Everyone",
     "following": "Following",
-    "allSeen": "— You've seen it all —"
+    "allSeen": "— You've seen it all —",
+    "missingAvatar": "Profile photo",
+    "missingBio": "Bio",
+    "missingField": "Field",
+    "missingUniversity": "University",
+    "missingSkills": "1 skill"
   },
   "discover": {
     "title": "Discover",
@@ -203,6 +212,9 @@
     "viewDesign": "View Design",
     "viewSource": "View Source",
     "viewDemo": "Live Demo",
+    "changeImage": "Change image",
+    "removeImage": "Remove image",
+    "addImage": "Add image",
     "levels": {
       "beginner": "Beginner",
       "intermediate": "Intermediate",
@@ -400,6 +412,7 @@
     "emailPassword": "Account Password",
     "changeEmailBtn": "Update Email",
     "emailSuccess": "Email address successfully updated",
-    "emailExists": "This email address is already in use"
+    "emailExists": "This email address is already in use",
+    "continueBtn": "Continue"
   }
 }

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { DB, seedIfEmpty } from '../services/db';
+import { DB, seedIfEmpty, hashPassword } from '../services/db';
 
 const AuthContext = createContext();
 
@@ -22,7 +22,8 @@ export function AuthProvider({ children }) {
     }, []);
 
     const login = (email, password) => {
-        const user = DB.get('users').find(u => u.email === email && u.password === password);
+        const hashedInput = hashPassword(password);
+        const user = DB.get('users').find(u => u.email === email && u.password === hashedInput);
         if (user) {
             DB.setOne('session', { userId: user.id });
             setCurrentUser(user);

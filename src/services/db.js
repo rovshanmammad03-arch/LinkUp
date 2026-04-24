@@ -5,6 +5,22 @@ export const DB = {
     setOne: function(k, v) { localStorage.setItem('lu_' + k, JSON.stringify(v)) }
 };
 
+/**
+ * Şifrəni sadə hash ilə kodlayır (backend olmadığı üçün müvəqqəti həll).
+ * Real backend əlavə edildikdə bcrypt ilə əvəz edilməlidir.
+ * @param {string} password
+ * @returns {string}
+ */
+export function hashPassword(password) {
+    // djb2 hash alqoritmi — açıq mətn saxlamaqdan daha yaxşıdır
+    let hash = 5381;
+    for (let i = 0; i < password.length; i++) {
+        hash = ((hash << 5) + hash) ^ password.charCodeAt(i);
+        hash = hash >>> 0; // 32-bit unsigned
+    }
+    return 'h_' + hash.toString(16) + '_' + btoa(password.length.toString()).replace(/=/g, '');
+}
+
 export function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7) }
 
 export function parseTechnologies(input) {
@@ -48,15 +64,16 @@ export function getUser(id) {
 
 export function seedIfEmpty() {
     if (DB.get('users').length > 0) return;
+    const hp = hashPassword('12345678');
     DB.set('users',[
-        {id:'seed_1',name:'Leyla Məmmədova',email:'leyla@test.com',password:'12345678',university:'ADNSU',field:'Dizayn',level:'Qabaqcıl',bio:'Product Designer at Google. Figma enthusiast.',grad:'from-pink-500 to-rose-500',skills:[{n:'Figma',l:'Qabaqcıl'},{n:'UI/UX',l:'Qabaqcıl'},{n:'Prototyping',l:'Orta'}],links:[{t:'Portfolio',v:'behance.net/leyla'},{t:'LinkedIn',v:'linkedin.com/in/leyla'}],views:120,followers:['seed_0','seed_2'],following:['seed_0']},
-        {id:'seed_0',name:'Ayxan Quliyev',email:'ayxan@test.com',password:'12345678',university:'UNEC',field:'Proqramlaşdırma',level:'Orta',bio:'Full-stack developer student. Love React and Node.js.',grad:'from-brand-500 to-brand-600',skills:[{n:'React',l:'Orta'},{n:'JavaScript',l:'Orta'},{n:'CSS',l:'Qabaqcıl'}],links:[{t:'GitHub',v:'github.com/ayxan'},{t:'Twitter',v:'twitter.com/ayxan'}],views:85,followers:['seed_1'],following:['seed_1','seed_2']},
-        {id:'seed_2',name:'Rəşad Əliyev',email:'reshad@test.com',password:'12345678',university:'BMU',field:'Proqramlaşdırma',level:'Qabaqcıl',bio:'Data Scientist. Python and ML expert.',grad:'from-blue-500 to-indigo-600',skills:[{n:'Python',l:'Qabaqcıl'},{n:'TensorFlow',l:'Orta'},{n:'SQL',l:'Qabaqcıl'}],links:[{t:'Kaggle',v:'kaggle.com/reshad'}],views:210,followers:['seed_0'],following:['seed_1']},
-        {id:'seed_3',name:'Nigar Hüseynova',email:'nigar@test.com',password:'12345678',university:'ADA',field:'Marketinq',level:'Orta',bio:'Digital marketing specialist. SEO and Social Media expert.',grad:'from-orange-400 to-red-500',skills:[{n:'SEO',l:'Orta'},{n:'Google Ads',l:'Qabaqcıl'}],links:[],views:45,followers:[],following:[]},
-        {id:'seed_4',name:'Emin Bağırov',email:'emin@test.com',password:'12345678',university:'ADNSU',field:'Proqramlaşdırma',level:'Başlanğıc',bio:'Junior dev learning the ropes. Java and Spring.',grad:'from-green-500 to-teal-500',skills:[{n:'Java',l:'Başlanğıc'},{n:'Spring',l:'Başlanğıc'}],links:[],views:32,followers:[],following:[]},
-        {id:'seed_5',name:'Səbinə Rəhimova',email:'sabina@test.com',password:'12345678',university:'ADRA',field:'Dizayn',level:'Orta',bio:'Graphic designer. Illustrator and Photoshop geek.',grad:'from-purple-500 to-indigo-500',skills:[{n:'Illustrator',l:'Qabaqcıl'},{n:'Photoshop',l:'Qabaqcıl'}],links:[],views:78,followers:[],following:[]},
-        {id:'seed_6',name:'Murad Vəliyev',email:'murad@test.com',password:'12345678',university:'BANM',field:'Proqramlaşdırma',level:'Qabaqcıl',bio:'Cybersecurity expert and software architect.',grad:'from-neutral-700 to-neutral-900',skills:[{n:'C++',l:'Qabaqcıl'},{n:'Cybersecurity',l:'Qabaqcıl'}],links:[],views:145,followers:[],following:[]},
-        {id:'seed_7',name:'Aydan Məmmədova',email:'aydan@test.com',password:'12345678',university:'ADNSU',field:'Dizayn',level:'Orta',bio:'Interior designer. Focus on minimalist projects.',grad:'from-amber-400 to-orange-500',skills:[{n:'AutoCAD',l:'Orta'},{n:'3ds Max',l:'Orta'}],links:[],views:62,followers:[],following:[]}
+        {id:'seed_1',name:'Leyla Məmmədova',email:'leyla@test.com',password:hp,university:'ADNSU',field:'Dizayn',level:'Qabaqcıl',bio:'Product Designer at Google. Figma enthusiast.',grad:'from-pink-500 to-rose-500',skills:[{n:'Figma',l:'Qabaqcıl'},{n:'UI/UX',l:'Qabaqcıl'},{n:'Prototyping',l:'Orta'}],links:[{t:'Portfolio',v:'behance.net/leyla'},{t:'LinkedIn',v:'linkedin.com/in/leyla'}],views:120,followers:['seed_0','seed_2'],following:['seed_0']},
+        {id:'seed_0',name:'Ayxan Quliyev',email:'ayxan@test.com',password:hp,university:'UNEC',field:'Proqramlaşdırma',level:'Orta',bio:'Full-stack developer student. Love React and Node.js.',grad:'from-brand-500 to-brand-600',skills:[{n:'React',l:'Orta'},{n:'JavaScript',l:'Orta'},{n:'CSS',l:'Qabaqcıl'}],links:[{t:'GitHub',v:'github.com/ayxan'},{t:'Twitter',v:'twitter.com/ayxan'}],views:85,followers:['seed_1'],following:['seed_1','seed_2']},
+        {id:'seed_2',name:'Rəşad Əliyev',email:'reshad@test.com',password:hp,university:'BMU',field:'Proqramlaşdırma',level:'Qabaqcıl',bio:'Data Scientist. Python and ML expert.',grad:'from-blue-500 to-indigo-600',skills:[{n:'Python',l:'Qabaqcıl'},{n:'TensorFlow',l:'Orta'},{n:'SQL',l:'Qabaqcıl'}],links:[{t:'Kaggle',v:'kaggle.com/reshad'}],views:210,followers:['seed_0'],following:['seed_1']},
+        {id:'seed_3',name:'Nigar Hüseynova',email:'nigar@test.com',password:hp,university:'ADA',field:'Marketinq',level:'Orta',bio:'Digital marketing specialist. SEO and Social Media expert.',grad:'from-orange-400 to-red-500',skills:[{n:'SEO',l:'Orta'},{n:'Google Ads',l:'Qabaqcıl'}],links:[],views:45,followers:[],following:[]},
+        {id:'seed_4',name:'Emin Bağırov',email:'emin@test.com',password:hp,university:'ADNSU',field:'Proqramlaşdırma',level:'Başlanğıc',bio:'Junior dev learning the ropes. Java and Spring.',grad:'from-green-500 to-teal-500',skills:[{n:'Java',l:'Başlanğıc'},{n:'Spring',l:'Başlanğıc'}],links:[],views:32,followers:[],following:[]},
+        {id:'seed_5',name:'Səbinə Rəhimova',email:'sabina@test.com',password:hp,university:'ADRA',field:'Dizayn',level:'Orta',bio:'Graphic designer. Illustrator and Photoshop geek.',grad:'from-purple-500 to-indigo-500',skills:[{n:'Illustrator',l:'Qabaqcıl'},{n:'Photoshop',l:'Qabaqcıl'}],links:[],views:78,followers:[],following:[]},
+        {id:'seed_6',name:'Murad Vəliyev',email:'murad@test.com',password:hp,university:'BANM',field:'Proqramlaşdırma',level:'Qabaqcıl',bio:'Cybersecurity expert and software architect.',grad:'from-neutral-700 to-neutral-900',skills:[{n:'C++',l:'Qabaqcıl'},{n:'Cybersecurity',l:'Qabaqcıl'}],links:[],views:145,followers:[],following:[]},
+        {id:'seed_7',name:'Aydan Məmmədova',email:'aydan@test.com',password:hp,university:'ADNSU',field:'Dizayn',level:'Orta',bio:'Interior designer. Focus on minimalist projects.',grad:'from-amber-400 to-orange-500',skills:[{n:'AutoCAD',l:'Orta'},{n:'3ds Max',l:'Orta'}],links:[],views:62,followers:[],following:[]}
     ]);
     DB.set('projects',[
         {id:'p1',title:'E-ticaret Platforması',desc:'MVC arxitekturası ilə tam funksional e-ticaret saytı. İstifadəçi qeydiyyatı, məhsul kataloqu, səbət və ödəniş sistemi.',authorId:'seed_0',skills:['React','Node.js','UI/UX'],team:'3-5 nəfər',status:'active',createdAt:Date.now()-100000,applicants:[],grad:GRADIENTS[0]},
@@ -140,7 +157,7 @@ export function resetPassword(email, newPassword) {
     const userIndex = users.findIndex(function(u) { return u.email === email; });
     if (userIndex === -1) return { success: false, error: 'not_found' };
     const updatedUsers = users.map(function(u) {
-        return u.email === email ? Object.assign({}, u, { password: newPassword }) : u;
+        return u.email === email ? Object.assign({}, u, { password: hashPassword(newPassword) }) : u;
     });
     DB.set('users', updatedUsers);
     DB.setOne('reset_token', null);

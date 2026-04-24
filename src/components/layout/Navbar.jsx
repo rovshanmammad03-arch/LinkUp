@@ -155,7 +155,6 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
           </button>
           <button onClick={() => onNavigate('messages', {}, true)} className={`nav-link relative ${currentRoute === 'messages' ? 'active' : ''}`}>
             <Icon icon="mdi:message-outline" className="mr-1.5 text-lg" /> {t('nav.messages')}
-            <span className="notif-dot hidden"></span>
           </button>
         </div>
 
@@ -212,7 +211,7 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
 
           {/* Profile */}
           <button onClick={() => onNavigate('profile', {}, true)} className="flex items-center gap-2 pl-1 pr-1 py-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-[10px] text-white font-bold overflow-hidden border border-black/10 dark:border-white/10">
+            <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${currentUser.grad || 'from-brand-500 to-purple-500'} flex items-center justify-center text-[10px] text-white font-bold overflow-hidden border border-black/10 dark:border-white/10`}>
               {currentUser.avatar ? <img src={currentUser.avatar} className="w-full h-full object-cover" /> : initials(currentUser.name)}
             </div>
             <span className="text-sm font-medium hidden sm:inline">{currentUser.name.split(' ')[0]}</span>
@@ -273,8 +272,8 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
                       <Icon icon={theme === 'dark' ? 'mdi:weather-sunny' : 'mdi:weather-night'} className="text-lg text-brand-400" />
                       <span>{theme === 'dark' ? t('nav.lightMode') : t('nav.darkMode')}</span>
                     </div>
-                    <div className={`w-9 h-5 rounded-full transition-colors relative ${theme === 'dark' ? 'bg-neutral-300 dark:bg-neutral-700' : 'bg-brand-500'}`}>
-                      <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${theme === 'dark' ? 'left-0.5' : 'left-[18px]'}`} />
+                    <div className={`w-9 h-5 rounded-full transition-colors relative ${theme === 'dark' ? 'bg-brand-500' : 'bg-neutral-300 dark:bg-neutral-700'}`}>
+                      <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${theme === 'dark' ? 'left-[18px]' : 'left-0.5'}`} />
                     </div>
                   </button>
                   <button onClick={() => { setSettingsOpen(false); setSupportModalOpen(true); }} className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-left text-sm hover:text-neutral-900 dark:hover:text-white">
@@ -307,7 +306,7 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
             <Icon icon="mdi:message-outline" className="text-xl" /><span className="text-[10px]">{t('nav.messages')}</span>
           </button>
           <button onClick={() => onNavigate('profile', {}, true)} className={`flex flex-col items-center gap-0.5 p-2 ${currentRoute === 'profile' ? 'text-brand-400' : 'text-neutral-500'}`}>
-            <Icon icon="mdi:account-outline" className="text-xl" /><span className="text-[10px]">{t('profile.posts')}</span>
+            <Icon icon="mdi:account-outline" className="text-xl" /><span className="text-[10px]">{t('nav.profile')}</span>
           </button>
         </div>
       </div>

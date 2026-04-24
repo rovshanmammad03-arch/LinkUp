@@ -16,6 +16,9 @@ import NewProject from './pages/NewProject';
 import ForgotPassword from './pages/ForgotPassword';
 import Settings from './pages/Settings';
 
+// Əsas naviqasiya səhifələri — bunlarda geri düyməsi görünmür
+const MAIN_ROUTES = ['dashboard', 'discover', 'messages', 'notifications', 'landing', 'login', 'register', 'forgot-password'];
+
 function AppContent() {
     const { currentUser, loading } = useAuth();
     const [currentRoute, setCurrentRoute] = useState(() => {
@@ -27,14 +30,29 @@ function AppContent() {
         const saved = localStorage.getItem('routeParams');
         return saved ? JSON.parse(saved) : {};
     });
-    const [history, setHistory] = useState([]);
+    const [prevRoute, setPrevRoute] = useState(null);
+    const [prevParams, setPrevParams] = useState({});
     const [showOnboarding, setShowOnboarding] = useState(false);
+    const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0);
 
     const handleNavigate = (route, params = {}, clearHistory = false) => {
         if (clearHistory) {
-            setHistory([]);
+            setPrevRoute(null);
+            setPrevParams({});
         } else if (route !== currentRoute || JSON.stringify(params) !== JSON.stringify(routeParams)) {
-            setHistory(prev => [...prev, { route: currentRoute, params: routeParams }]);
+            // Yalnız əsas olmayan səhifədən gəlirsə prev saxla
+            if (!MAIN_ROUTES.includes(currentRoute)) {
+                setPrevRoute(currentRoute);
+                setPrevParams(routeParams);
+            } else if (!MAIN_ROUTES.includes(route)) {
+                // Əsas səhifədən alt səhifəyə keçirsə prev saxla
+                setPrevRoute(currentRoute);
+                setPrevParams(routeParams);
+            } else {
+                // Əsas səhifədən əsas səhifəyə keçirsə prev sıfırla
+                setPrevRoute(null);
+                setPrevParams({});
+            }
         }
 
         setCurrentRoute(route);
@@ -44,18 +62,21 @@ function AppContent() {
     };
 
     const handleBack = () => {
-        if (history.length === 0) return;
-        
-        const newHistory = [...history];
-        const last = newHistory.pop();
-        
-        setHistory(newHistory);
-        setCurrentRoute(last.route);
-        setRouteParams(last.params);
-        
-        localStorage.setItem('currentRoute', last.route);
-        localStorage.setItem('routeParams', JSON.stringify(last.params));
+        if (!prevRoute) return;
+        const backRoute = prevRoute;
+        const backParams = prevParams;
+        setPrevRoute(null);
+        setPrevParams({});
+        setCurrentRoute(backRoute);
+        setRouteParams(backParams);
+        localStorage.setItem('currentRoute', backRoute);
+        localStorage.setItem('routeParams', JSON.stringify(backParams));
     };
+
+    // Geri düyməsi yalnız alt səhifələrdə görünsün
+    // Profile xüsusi hal: öz profilindəsə göstərmə, başqasının profilindəsə göstər
+    const isOwnProfile = currentRoute === 'profile' && (!routeParams?.userId || routeParams?.userId === currentUser?.id);
+    const canGoBack = !MAIN_ROUTES.includes(currentRoute) && !!prevRoute && !isOwnProfile;
 
     if (loading) return null;
 
@@ -69,7 +90,7 @@ function AppContent() {
             case 'landing': return <Landing onNavigate={handleNavigate} />;
             case 'login': return <Login onNavigate={handleNavigate} />;
             case 'register': return <Register onNavigate={handleNavigate} onRegisterDone={() => setShowOnboarding(true)} />;
-            case 'dashboard': return <Dashboard onNavigate={handleNavigate} />;
+            case 'dashboard': return <Dashboard key={dashboardRefreshKey} onNavigate={handleNavigate} />;
             case 'discover': return <Discover onNavigate={handleNavigate} />;
             case 'profile': return <Profile onNavigate={handleNavigate} params={routeParams} />;
             case 'messages': return <Messages onNavigate={handleNavigate} params={routeParams} />;
@@ -79,12 +100,12 @@ function AppContent() {
             case 'settings': return <Settings onNavigate={handleNavigate} />;
             case 'new-post': return (
                 <>
-                    <Dashboard onNavigate={handleNavigate} />
+                    <Dashboard key={dashboardRefreshKey} onNavigate={handleNavigate} />
                     <NewPostModal 
                         onClose={() => handleNavigate('dashboard')} 
                         onPostCreated={() => {
+                            setDashboardRefreshKey(prev => prev + 1);
                             handleNavigate('dashboard');
-                            window.location.reload(); 
                         }} 
                     />
                 </>
@@ -98,7 +119,7 @@ function AppContent() {
             <Navbar 
                 onNavigate={handleNavigate} 
                 currentRoute={currentRoute} 
-                canGoBack={history.length > 0} 
+                canGoBack={canGoBack} 
                 onBack={handleBack} 
             />
             <main className="pt-20 pb-24 md:pb-8">
