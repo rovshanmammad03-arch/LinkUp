@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { DB, uid, initials, parseTechnologies } from '../../services/db';
 import { Icon } from '@iconify/react';
 import { useTranslation } from 'react-i18next';
+import Button from '../common/Button';
 
 const POST_TYPES = [
     { value: 'code', icon: 'mdi:code-braces', color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20' },
@@ -288,13 +289,14 @@ export default function NewPostModal({ onClose, onPostCreated }) {
                     <span className="text-sm font-medium">{t('newPost.back')}</span>
                 </button>
                 <span className="text-sm font-semibold text-neutral-900 dark:text-white">{t('newPost.title')}</span>
-                <button
+                <Button
                     onClick={handlePost}
                     disabled={isPublishDisabled()}
-                    className="px-5 py-2 rounded-xl text-sm font-bold text-white bg-brand-500 hover:bg-brand-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
+                    variant="primary"
+                    size="sm"
                 >
                     {t('newPost.publish')}
-                </button>
+                </Button>
             </div>
 
             {/* Body */}
@@ -318,11 +320,44 @@ export default function NewPostModal({ onClose, onPostCreated }) {
                         </div>
                     </div>
 
-                    {/* Image URL */}
+                    {/* Image Upload */}
                     <div className="flex flex-col gap-2">
                         <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{t('newPost.imageLabel')}</label>
-                        <div className="flex items-center gap-3 bg-black/3 dark:bg-white/3 border border-black/8 dark:border-white/8 rounded-2xl px-4 py-3 focus-within:border-black/20 dark:focus-within:border-white/20 transition-colors">
-                            <Icon icon="mdi:image-outline" className="text-neutral-400 dark:text-neutral-500 text-xl shrink-0" />
+                        {!image ? (
+                            <div 
+                                onClick={() => fileInputRef.current?.click()}
+                                className="border-2 border-dashed border-black/10 dark:border-white/10 hover:border-brand-500 dark:hover:border-brand-500 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer transition-colors bg-black/3 dark:bg-white/3 hover:bg-brand-500/5"
+                            >
+                                <div className="w-12 h-12 rounded-full bg-white dark:bg-[#111] shadow-md flex items-center justify-center">
+                                    <Icon icon="mdi:cloud-upload-outline" className="text-2xl text-brand-500" />
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-sm font-semibold text-neutral-900 dark:text-white">Cihazdan şəkil seç</p>
+                                    <p className="text-xs text-neutral-500 mt-1">və ya bura klikləyin</p>
+                                </div>
+                                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                            </div>
+                        ) : (
+                            <div className="rounded-2xl overflow-hidden border border-black/8 dark:border-white/8 relative group bg-black/5 dark:bg-white/5 flex justify-center p-2 min-h-[160px]">
+                                <img src={image} className="max-w-full object-contain max-h-[300px] rounded-xl" onError={e => e.target.style.display='none'} />
+                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                                    <Button onClick={() => fileInputRef.current?.click()} variant="secondary" size="sm">
+                                        <Icon icon="mdi:swap-horizontal" className="text-lg" /> Dəyiş
+                                    </Button>
+                                    <Button onClick={() => setImage('')} variant="danger" size="sm">
+                                        <Icon icon="mdi:delete-outline" className="text-lg" /> Sil
+                                    </Button>
+                                </div>
+                                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                            </div>
+                        )}
+                        <div className="flex items-center gap-3 mt-2">
+                            <div className="h-px bg-black/5 dark:bg-white/5 flex-1"></div>
+                            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">URL İLƏ ƏLAVƏ ET</span>
+                            <div className="h-px bg-black/5 dark:bg-white/5 flex-1"></div>
+                        </div>
+                        <div className="flex items-center gap-3 bg-black/3 dark:bg-white/3 border border-black/8 dark:border-white/8 rounded-2xl px-4 py-3 focus-within:border-black/20 dark:focus-within:border-white/20 transition-colors mt-2">
+                            <Icon icon="mdi:link-variant" className="text-neutral-400 dark:text-neutral-500 text-xl shrink-0" />
                             <input
                                 type="text"
                                 value={image.startsWith('data:') ? '' : image}
@@ -330,25 +365,7 @@ export default function NewPostModal({ onClose, onPostCreated }) {
                                 placeholder={t('newPost.imageUrlPlaceholder')}
                                 className="flex-1 bg-transparent text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none"
                             />
-                            <button
-                                onClick={() => fileInputRef.current?.click()}
-                                className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-all text-xs font-semibold"
-                            >
-                                <Icon icon="mdi:upload-outline" className="text-base" /> {t('newPost.upload')}
-                            </button>
-                            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                         </div>
-                        {image && (
-                            <div className="mt-2 rounded-2xl overflow-hidden border border-black/8 dark:border-white/8 max-h-48 relative group">
-                                <img src={image} className="w-full object-cover max-h-48" onError={e => e.target.style.display='none'} />
-                                <button
-                                    onClick={() => setImage('')}
-                                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                    <Icon icon="mdi:close" className="text-sm" />
-                                </button>
-                            </div>
-                        )}
                     </div>
 
                     {/* Category */}
