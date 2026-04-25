@@ -115,7 +115,7 @@ function AppContent() {
     };
 
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen" style={(!currentUser || currentRoute === 'landing') ? { background: '#050505' } : {}}>
             <Navbar 
                 onNavigate={handleNavigate} 
                 currentRoute={currentRoute} 
