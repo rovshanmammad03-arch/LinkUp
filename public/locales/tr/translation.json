@@ -40,6 +40,28 @@
     "readyDesc": "Sen de alanındaki insanlarla tanış, birlikte projeler kur.",
     "registerNow": "Şimdi Kayıt Ol",
     "footer": "© 2025 LinkUp. Tüm hakları saklıdır.",
+    "testimonialsTitle": "Öğrenciler ne diyor",
+    "testimonials": {
+      "t1": {
+        "name": "Ayten Hasanova",
+        "role": "Bilgisayar Bilimleri, BDU",
+        "quote": "LinkUp sayesinde tasarım projem için günler içinde bir geliştirici buldum. Beceri tabanlı arama inanılmaz derecede doğru."
+      },
+      "t2": {
+        "name": "Rauf Aliyev",
+        "role": "Tasarım, ADA Üniversitesi",
+        "quote": "Startup fikrim için ekip üyesi bulmakta zorlanıyordum. LinkUp beni tam doğru insanlarla buluşturdu."
+      },
+      "t3": {
+        "name": "Nigar Guliyeva",
+        "role": "Pazarlama, UNEC",
+        "quote": "Sonunda Azerbaycanlı öğrenciler için yapılmış bir platform. Burada başka hiçbir yerde bulamadığım gerçek profesyonel bağlantılar kurdum."
+      }
+    },
+    "footerTagline": "Öğrenciler için Azerbaycan'ın profesyonel ağı",
+    "footerLinks": "Bağlantılar",
+    "footerSocial": "Bizi Takip Et",
+    "stepsTitle": "Adım adım nasıl çalışır",
     "features": {
       "skillSearch": "Beceri Tabanlı Arama",
       "skillSearchDesc": "Belirli becerilere göre insanları bul. Filtrelerle sonuçları daralt.",

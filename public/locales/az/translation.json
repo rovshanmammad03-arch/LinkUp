@@ -40,6 +40,28 @@
     "readyDesc": "Sən də öz sahəndə olan insanlarla tanış ol, birlikdə layihələr qur.",
     "registerNow": "İndi Qeydiyyat Ol",
     "footer": "© 2025 LinkUp. Bütün hüquqlar qorunur.",
+    "testimonialsTitle": "Tələbələr nə deyir",
+    "testimonials": {
+      "t1": {
+        "name": "Aytən Həsənova",
+        "role": "Kompüter Elmləri, BDU",
+        "quote": "LinkUp sayəsində dizayn layihəm üçün günlər içində proqramçı tapdım. Bacarıq əsaslı axtarış inanılmaz dərəcədə dəqiqdir."
+      },
+      "t2": {
+        "name": "Rauf Əliyev",
+        "role": "Dizayn, ADA Universiteti",
+        "quote": "Startup ideyam üçün komanda üzvü tapmaqda çətinlik çəkirdim. LinkUp məni tam doğru insanlarla birləşdirdi."
+      },
+      "t3": {
+        "name": "Nigar Quliyeva",
+        "role": "Marketinq, UNEC",
+        "quote": "Nəhayət Azərbaycan tələbələri üçün hazırlanmış bir platforma. Burada başqa heç yerdə tapa bilmədiyim real peşəkar əlaqələr qurdum."
+      }
+    },
+    "footerTagline": "Tələbələr üçün Azərbaycanın peşəkar şəbəkəsi",
+    "footerLinks": "Keçidlər",
+    "footerSocial": "Bizi İzlə",
+    "stepsTitle": "Addım-addım necə işləyir",
     "features": {
       "skillSearch": "Bacarıq Əsaslı Axtarış",
       "skillSearchDesc": "Müəyyən bacarıqlara görə insanları tap. Filtrlərlə nəticələri daralt.",

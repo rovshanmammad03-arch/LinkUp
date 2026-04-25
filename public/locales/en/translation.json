@@ -40,6 +40,28 @@
     "readyDesc": "Meet people in your field and build projects together.",
     "registerNow": "Register Now",
     "footer": "© 2025 LinkUp. All rights reserved.",
+    "testimonialsTitle": "What students say",
+    "testimonials": {
+      "t1": {
+        "name": "Ayten Hasanova",
+        "role": "Computer Science, BDU",
+        "quote": "LinkUp helped me find a developer for my design project within days. The skill-based search is incredibly accurate."
+      },
+      "t2": {
+        "name": "Rauf Aliyev",
+        "role": "Design, ADA University",
+        "quote": "I was struggling to find teammates for my startup idea. LinkUp connected me with exactly the right people."
+      },
+      "t3": {
+        "name": "Nigar Guliyeva",
+        "role": "Marketing, UNEC",
+        "quote": "Finally a platform built for Azerbaijani students. I've made real professional connections here that I couldn't find anywhere else."
+      }
+    },
+    "footerTagline": "Azerbaijan's professional network for students",
+    "footerLinks": "Links",
+    "footerSocial": "Follow Us",
+    "stepsTitle": "How it works, step by step",
     "features": {
       "skillSearch": "Skill-Based Search",
       "skillSearchDesc": "Find people by specific skills. Narrow results with filters.",
