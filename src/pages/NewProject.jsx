@@ -4,6 +4,7 @@ import { DB, uid, GRADIENTS } from '../services/db';
 import { Icon } from '@iconify/react';
 import { useTranslation } from 'react-i18next';
 import Button from '../components/common/Button';
+import { createRoleSlot, validateRoleSlotCategory } from '../services/roleSlotUtils';
 
 export default function NewProject({ onNavigate, params }) {
     const { currentUser } = useAuth();
@@ -19,6 +20,12 @@ export default function NewProject({ onNavigate, params }) {
     const [selectedGrad, setSelectedGrad] = useState(GRADIENTS[0]);
     const [isTypeOpen, setIsTypeOpen] = useState(false);
     const [isStageOpen, setIsStageOpen] = useState(false);
+    const [customType, setCustomType] = useState('');
+    const [customStage, setCustomStage] = useState('');
+    const [roleSlots, setRoleSlots] = useState([]);
+    const [newSlotCategory, setNewSlotCategory] = useState('');
+    const [newSlotCount, setNewSlotCount] = useState(1);
+    const [slotError, setSlotError] = useState('');
 
     const isEditing = !!params?.projectId;
 
@@ -40,6 +47,27 @@ export default function NewProject({ onNavigate, params }) {
             }
         }
     }, [isEditing, params, currentUser, onNavigate]);
+
+    const handleAddSlot = () => {
+        const validation = validateRoleSlotCategory(newSlotCategory);
+        if (!validation.valid) {
+            setSlotError(validation.error);
+            return;
+        }
+        if (roleSlots.length >= 10) {
+            setSlotError('Maksimum 10 yuva əlavə edə bilərsiniz');
+            return;
+        }
+        const newSlot = createRoleSlot(newSlotCategory.trim(), newSlotCount);
+        setRoleSlots(prev => [...prev, newSlot]);
+        setNewSlotCategory('');
+        setNewSlotCount(1);
+        setSlotError('');
+    };
+
+    const handleRemoveSlot = (id) => {
+        setRoleSlots(prev => prev.filter(slot => slot.id !== id));
+    };
 
     const handleCreate = () => {
         if (!title.trim() || !desc.trim()) return;
@@ -76,7 +104,8 @@ export default function NewProject({ onNavigate, params }) {
                 status: 'active',
                 createdAt: Date.now(),
                 applicants: [],
-                grad: selectedGrad
+                grad: selectedGrad,
+                roleSlots: roleSlots
             };
             DB.set('projects', [newProject, ...projects]);
         }
@@ -196,11 +225,11 @@ export default function NewProject({ onNavigate, params }) {
                                         <>
                                             <div className="fixed inset-0 z-20" onClick={() => setIsTypeOpen(false)} />
                                             <div className="absolute top-full left-0 right-0 mt-3 bg-white dark:bg-[#0a0a0a] border border-black/8 dark:border-white/10 rounded-[28px] shadow-2xl py-3 z-30 anim-up overflow-hidden">
-                                                {['Startap', 'Açıq Mənbə', 'Şəxsi Portfel', 'Tədqiqat / Təhsil', 'Biznes'].map((opt) => (
+                                                {['Startap', 'Açıq Mənbə', 'Şəxsi Portfel', 'Tədqiqat / Təhsil', 'Biznes', 'Digər'].map((opt) => (
                                                     <button
                                                         key={opt}
                                                         type="button"
-                                                        onClick={() => { setProjectType(opt); setIsTypeOpen(false); }}
+                                                        onClick={() => { setProjectType(opt); setCustomType(''); setIsTypeOpen(false); }}
                                                         className={`w-full text-left px-6 py-3.5 text-sm transition-colors ${projectType === opt ? 'bg-brand-500/10 text-brand-500 font-bold' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-white/5'}`}
                                                     >
                                                         {opt}
@@ -208,6 +237,16 @@ export default function NewProject({ onNavigate, params }) {
                                                 ))}
                                             </div>
                                         </>
+                                    )}
+                                    {projectType === 'Digər' && (
+                                        <input
+                                            type="text"
+                                            value={customType}
+                                            onChange={(e) => { setCustomType(e.target.value); setProjectType(e.target.value || 'Digər'); }}
+                                            placeholder="Layihə növünü yazın..."
+                                            autoFocus
+                                            className="mt-2 w-full bg-black/5 dark:bg-white/5 border border-brand-500/40 rounded-2xl px-5 py-3.5 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-brand-500/70 transition-all"
+                                        />
                                     )}
                                 </div>
                             </div>
@@ -227,11 +266,11 @@ export default function NewProject({ onNavigate, params }) {
                                         <>
                                             <div className="fixed inset-0 z-20" onClick={() => setIsStageOpen(false)} />
                                             <div className="absolute top-full left-0 right-0 mt-3 bg-white dark:bg-[#0a0a0a] border border-black/8 dark:border-white/10 rounded-[28px] shadow-2xl py-3 z-30 anim-up overflow-hidden">
-                                                {['Yalnız İdeya', 'Planlaşdırma / Dizayn', 'Aktiv Hazırlıq', 'MVP Hazırdır', 'Test / Bazar'].map((opt) => (
+                                                {['Yalnız İdeya', 'Planlaşdırma / Dizayn', 'Aktiv Hazırlıq', 'MVP Hazırdır', 'Test / Bazar', 'Digər'].map((opt) => (
                                                     <button
                                                         key={opt}
                                                         type="button"
-                                                        onClick={() => { setStage(opt); setIsStageOpen(false); }}
+                                                        onClick={() => { setStage(opt); setCustomStage(''); setIsStageOpen(false); }}
                                                         className={`w-full text-left px-6 py-3.5 text-sm transition-colors ${stage === opt ? 'bg-brand-500/10 text-brand-500 font-bold' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-white/5'}`}
                                                     >
                                                         {opt}
@@ -240,26 +279,112 @@ export default function NewProject({ onNavigate, params }) {
                                             </div>
                                         </>
                                     )}
+                                    {stage === 'Digər' && (
+                                        <input
+                                            type="text"
+                                            value={customStage}
+                                            onChange={(e) => { setCustomStage(e.target.value); setStage(e.target.value || 'Digər'); }}
+                                            placeholder="Mərhələni yazın..."
+                                            autoFocus
+                                            className="mt-2 w-full bg-black/5 dark:bg-white/5 border border-brand-500/40 rounded-2xl px-5 py-3.5 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-brand-500/70 transition-all"
+                                        />
+                                    )}
                                 </div>
                             </div>
                         </div>
 
+                        {/* Rol Yuvaları Bölməsi */}
                         <div>
-                            <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-3 block">{t('newProject.skillsLabel')}</label>
-                            <div className="relative group">
-                                <Icon icon="mdi:tag-outline" className="absolute left-6 top-1/2 -translate-y-1/2 text-neutral-400 text-lg group-focus-within:text-brand-500 transition-colors" />
-                                <input
-                                    type="text"
-                                    value={skills}
-                                    onChange={(e) => setSkills(e.target.value)}
-                                    placeholder={t('newProject.skillsPlaceholder')}
-                                    className="w-full bg-black/5 dark:bg-white/5 border border-black/8 dark:border-white/5 rounded-3xl pl-14 pr-6 py-5 text-sm text-neutral-900 dark:text-white focus:outline-none focus:border-brand-500/50 focus:bg-white dark:focus:bg-black transition-all"
-                                />
+                            <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-3 block">
+                                Lazım olan bacarıqlar
+                            </label>
+
+                            {/* Yeni yuva əlavə etmə forması */}
+                            <div className="flex gap-3 mb-3">
+                                <div className="relative flex-1 group">
+                                    <Icon icon="mdi:account-hard-hat-outline" className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 text-lg group-focus-within:text-brand-500 transition-colors" />
+                                    <input
+                                        type="text"
+                                        value={newSlotCategory}
+                                        onChange={(e) => { setNewSlotCategory(e.target.value); setSlotError(''); }}
+                                        placeholder="Bacarıq adı (məs. Frontend Developer)"
+                                        className="w-full bg-black/5 dark:bg-white/5 border border-black/8 dark:border-white/5 rounded-2xl pl-12 pr-4 py-4 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:border-brand-500/50 focus:bg-white dark:focus:bg-black transition-all"
+                                    />
+                                </div>
+                                <select
+                                    value={newSlotCount}
+                                    onChange={(e) => setNewSlotCount(Number(e.target.value))}
+                                    className="bg-black/5 dark:bg-white/5 border border-black/8 dark:border-white/5 rounded-2xl px-4 py-4 text-sm text-neutral-900 dark:text-white focus:outline-none focus:border-brand-500/50 focus:bg-white dark:focus:bg-black transition-all w-28 cursor-pointer"
+                                    title="Neçə nəfər lazımdır"
+                                >
+                                    {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                                        <option key={n} value={n}>{n} nəfər</option>
+                                    ))}
+                                </select>
+                                <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={handleAddSlot}
+                                    disabled={roleSlots.length >= 10}
+                                    className="!px-5 !rounded-2xl shrink-0"
+                                >
+                                    <Icon icon="mdi:plus" className="text-lg" />
+                                    Əlavə et
+                                </Button>
                             </div>
-                            <p className="text-[10px] text-neutral-400 mt-2.5 ml-1 font-medium tracking-wide">
-                                <Icon icon="mdi:information-outline" className="inline mr-1" />
-                                {t('newProject.skillsHint')}
-                            </p>
+
+                            {/* Xəta mesajı */}
+                            {slotError && (
+                                <p className="text-xs text-rose-500 font-medium mb-3 ml-1 flex items-center gap-1">
+                                    <Icon icon="mdi:alert-circle-outline" className="text-sm" />
+                                    {slotError}
+                                </p>
+                            )}
+
+                            {/* 10 limit xəbərdarlığı */}
+                            {roleSlots.length >= 10 && (
+                                <p className="text-xs text-amber-500 font-medium mb-3 ml-1 flex items-center gap-1">
+                                    <Icon icon="mdi:information-outline" className="text-sm" />
+                                    Maksimum 10 yuva əlavə edə bilərsiniz
+                                </p>
+                            )}
+
+                            {/* Mövcud yuvalar siyahısı */}
+                            {roleSlots.length > 0 && (
+                                <div className="flex flex-col gap-2 mt-2">
+                                    {roleSlots.map(slot => (
+                                        <div
+                                            key={slot.id}
+                                            className="flex items-center justify-between bg-black/[0.03] dark:bg-white/[0.04] border border-black/8 dark:border-white/8 rounded-2xl px-5 py-3"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-xl bg-brand-500/10 flex items-center justify-center">
+                                                    <Icon icon="mdi:account-outline" className="text-brand-500 text-base" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-semibold text-neutral-900 dark:text-white">{slot.category}</p>
+                                                    <p className="text-[11px] text-neutral-400 font-medium">{slot.count} nəfər</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveSlot(slot.id)}
+                                                className="w-7 h-7 rounded-full bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white flex items-center justify-center transition-all duration-200"
+                                                aria-label="Yuvası sil"
+                                            >
+                                                <Icon icon="mdi:close" className="text-sm" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {roleSlots.length === 0 && (
+                                <p className="text-[11px] text-neutral-400 mt-1 ml-1 font-medium tracking-wide">
+                                    <Icon icon="mdi:information-outline" className="inline mr-1" />
+                                    Layihəniz üçün lazım olan bacarıq kateqoriyalarını əlavə edin (könüllü)
+                                </p>
+                            )}
                         </div>
                     </div>
                 )}

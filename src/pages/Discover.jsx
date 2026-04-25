@@ -8,6 +8,7 @@ import Button from '../components/common/Button';
 import { useScrollLock } from '../hooks/useScrollLock';
 import { useTranslation } from 'react-i18next';
 import EmptyState from '../components/common/EmptyState';
+import { getOpenSlots, allSlotsClosed, normalizeRoleSlots } from '../services/roleSlotUtils';
 
 function translateField(field, t) {
     const map = {
@@ -46,8 +47,9 @@ export default function Discover({ onNavigate }) {
     const [fieldFilter, setFieldFilter] = useState('all');
     const [isLevelOpen, setIsLevelOpen] = useState(false);
     const [isFieldOpen, setIsFieldOpen] = useState(false);
+    const [applySlotModal, setApplySlotModal] = useState(null); // { projectId, openSlots }
 
-    useScrollLock(!!selectedApplicantsProject || !!projectToDeleteId);
+    useScrollLock(!!selectedApplicantsProject || !!projectToDeleteId || !!applySlotModal);
 
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
@@ -116,9 +118,43 @@ export default function Discover({ onNavigate }) {
             return;
         }
 
+        const roleSlots = normalizeRoleSlots(allProjects[pIdx]);
+
+        // If project has role slots, open slot selection modal
+        if (roleSlots.length > 0) {
+            const openSlots = getOpenSlots(roleSlots);
+            setApplySlotModal({ projectId, openSlots });
+            return;
+        }
+
+        // No role slots — old behaviour: apply directly
         allProjects[pIdx].applicants.push({ id: currentUser.id, status: 'pending' });
         DB.set('projects', allProjects);
         setProjects([...allProjects]);
+        showToast(t('discover.project.applySuccess'), 'success');
+
+        addNotification({
+            toUserId: allProjects[pIdx].authorId,
+            fromUserId: currentUser.id,
+            type: 'project_apply',
+            text: `"${allProjects[pIdx].title}" layihənizə müraciət etdi`,
+            route: 'discover',
+            routeParams: {},
+        });
+    };
+
+    const handleApplyWithSlot = (projectId, slotId) => {
+        if (!currentUser) return;
+        const allProjects = DB.get('projects');
+        const pIdx = allProjects.findIndex(p => p.id === projectId);
+        if (pIdx === -1) return;
+
+        if (!allProjects[pIdx].applicants) allProjects[pIdx].applicants = [];
+
+        allProjects[pIdx].applicants.push({ id: currentUser.id, status: 'pending', roleSlot: slotId });
+        DB.set('projects', allProjects);
+        setProjects([...allProjects]);
+        setApplySlotModal(null);
         showToast(t('discover.project.applySuccess'), 'success');
 
         addNotification({
@@ -535,6 +571,35 @@ export default function Discover({ onNavigate }) {
                                         ))}
                                     </div>
 
+                                    {/* Role Slots */}
+                                    {(() => {
+                                        const roleSlots = normalizeRoleSlots(p);
+                                        if (roleSlots.length === 0) return null;
+                                        return (
+                                            <div className="mb-6 pl-4">
+                                                <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
+                                                    <Icon icon="mdi:account-multiple-outline" className="text-sm" />
+                                                    Rol Yuvaları
+                                                </p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {roleSlots.map(slot => (
+                                                        <div key={slot.id} className="flex items-center gap-1.5 px-3 py-1.5 bg-black/[0.03] dark:bg-white/[0.03] border border-black/5 dark:border-white/5 rounded-xl">
+                                                            <span className="text-[11px] font-semibold text-neutral-600 dark:text-neutral-300">{slot.category}</span>
+                                                            <span className="text-[10px] text-neutral-400 font-medium" title={`${slot.filledCount} yer tutulub, cəmi ${slot.count} yer`}>
+                                                                {slot.filledCount}/{slot.count} nəfər
+                                                            </span>
+                                                            {slot.status === 'open' ? (
+                                                                <span className="px-1.5 py-0.5 bg-emerald-500/10 text-emerald-500 rounded-md text-[9px] font-bold uppercase tracking-wide">Açıq</span>
+                                                            ) : (
+                                                                <span className="px-1.5 py-0.5 bg-red-500/10 text-red-500 rounded-md text-[9px] font-bold uppercase tracking-wide">Dolu</span>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+
                                     <div className="flex items-center justify-between mt-auto pt-6 border-t border-black/8 dark:border-white/10 pl-4">
                                         <div className="flex items-center gap-4 text-[11px] font-bold text-neutral-400 uppercase tracking-widest">
                                             <span className="flex items-center gap-1.5">
@@ -587,13 +652,17 @@ export default function Discover({ onNavigate }) {
                                             ) : (
                                                 <Button
                                                     onClick={() => handleApply(p.id)}
-                                                    disabled={alreadyApplied || p.status === 'completed' || p.status === 'closed'}
+                                                    disabled={alreadyApplied || p.status === 'completed' || p.status === 'closed' || allSlotsClosed(normalizeRoleSlots(p))}
                                                     variant={alreadyApplied ? "secondary" : "primary"}
                                                     size="sm"
                                                     className="!px-6 shadow-brand-500/20"
                                                 >
                                                     <Icon icon={alreadyApplied ? "mdi:check-circle-outline" : "mdi:rocket-launch-outline"} className="text-base" />
-                                                    {alreadyApplied ? t('discover.project.applied') : t('discover.project.apply')}
+                                                    {alreadyApplied
+                                                        ? t('discover.project.applied')
+                                                        : allSlotsClosed(normalizeRoleSlots(p))
+                                                            ? 'Bütün yerlər doludur'
+                                                            : t('discover.project.apply')}
                                                 </Button>
                                             )}
                                         </div>
@@ -637,6 +706,62 @@ export default function Discover({ onNavigate }) {
                     onConfirm={confirmDelete}
                     onCancel={() => setProjectToDeleteId(null)}
                 />
+            )}
+
+            {/* Rol Seçim Modalı */}
+            {applySlotModal && (
+                <>
+                    <div className="fixed inset-0 z-[150] bg-black/60 backdrop-blur-sm" onClick={() => setApplySlotModal(null)} />
+                    <div className="fixed inset-0 z-[160] flex items-center justify-center p-4">
+                        <div className="bg-white dark:bg-[#0a0a0a] border border-black/8 dark:border-white/10 rounded-[32px] shadow-2xl w-full max-w-md p-8 anim-up">
+                            <div className="flex items-center justify-between mb-6">
+                                <div>
+                                    <h2 className="text-xl font-bold text-neutral-900 dark:text-white">Rol Seçin</h2>
+                                    <p className="text-sm text-neutral-500 mt-1">Müraciət etmək istədiyiniz rolu seçin</p>
+                                </div>
+                                <button
+                                    onClick={() => setApplySlotModal(null)}
+                                    className="w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors text-neutral-400"
+                                >
+                                    <Icon icon="mdi:close" className="text-xl" />
+                                </button>
+                            </div>
+
+                            {applySlotModal.openSlots.length === 0 ? (
+                                <div className="text-center py-8">
+                                    <Icon icon="mdi:lock-outline" className="text-4xl text-neutral-300 dark:text-neutral-600 mb-3 mx-auto" />
+                                    <p className="text-sm font-semibold text-neutral-500">Bütün yerlər doludur</p>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col gap-3">
+                                    {applySlotModal.openSlots.map(slot => (
+                                        <button
+                                            key={slot.id}
+                                            onClick={() => handleApplyWithSlot(applySlotModal.projectId, slot.id)}
+                                            className="flex items-center justify-between px-5 py-4 bg-black/[0.03] dark:bg-white/[0.03] border border-black/8 dark:border-white/8 rounded-2xl hover:border-brand-500/40 hover:bg-brand-500/5 transition-all group text-left"
+                                        >
+                                            <div>
+                                                <p className="text-sm font-bold text-neutral-800 dark:text-white group-hover:text-brand-500 transition-colors">{slot.category}</p>
+                                                <p className="text-[11px] text-neutral-400 mt-0.5">{slot.filledCount}/{slot.count} yer dolu</p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="px-2 py-1 bg-emerald-500/10 text-emerald-500 rounded-lg text-[10px] font-bold uppercase tracking-wide">Açıq</span>
+                                                <Icon icon="mdi:arrow-right" className="text-neutral-300 group-hover:text-brand-500 transition-colors" />
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
+                            <button
+                                onClick={() => setApplySlotModal(null)}
+                                className="w-full mt-4 py-3 rounded-2xl text-sm font-semibold text-neutral-500 hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors"
+                            >
+                                Ləğv et
+                            </button>
+                        </div>
+                    </div>
+                </>
             )}
         </>
     );
