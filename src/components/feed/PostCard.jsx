@@ -121,7 +121,8 @@ export default function PostCard({ post, index, onDelete, onUpdate, onNavigate }
                 fromUserId: currentUser.id,
                 type: 'like',
                 text: 'paylaşımını bəyəndi',
-                route: 'dashboard',
+                route: 'profile',
+                routeParams: { userId: currentUser.id },
             });
         } else {
             p.likes.splice(idx, 1);

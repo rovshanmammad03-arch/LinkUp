@@ -32,9 +32,44 @@ export default function Messages({ params, onNavigate }) {
     const scrollRef = useRef();
     const imageInputRef = useRef();
 
-    const refreshConvos = () => {
+    const markMessagesRead = (userId, projectId) => {
         const msgs = DB.get('messages');
-        const userConvos = msgs.filter(m => !m.projectId && (m.from === currentUser?.id || m.to === currentUser?.id));
+        const updated = msgs.map(m => {
+            if (projectId) {
+                // Qrup mesajları: başqaları tərəfindən göndərilən oxunmamış mesajlar
+                if (m.projectId === projectId && m.from !== currentUser?.id && !m.read) {
+                    return { ...m, read: true };
+                }
+            } else if (userId) {
+                // Şəxsi mesajlar: həmin istifadəçidən gələn oxunmamış mesajlar
+                if (!m.projectId && m.from === userId && m.to === currentUser?.id && !m.read) {
+                    return { ...m, read: true };
+                }
+            }
+            return m;
+        });
+        DB.set('messages', updated);
+        // Trigger storage event for same-tab updates
+        window.dispatchEvent(new Event('storage'));
+    };
+
+    const refreshConvos = () => {
+        // Migration: köhnə mesajlara read sahəsi əlavə et
+        const msgs = DB.get('messages');
+        let needsUpdate = false;
+        const migratedMsgs = msgs.map(m => {
+            if (m.read === undefined) {
+                needsUpdate = true;
+                // Köhnə mesajları oxunmuş say
+                return { ...m, read: true };
+            }
+            return m;
+        });
+        if (needsUpdate) {
+            DB.set('messages', migratedMsgs);
+        }
+
+        const userConvos = migratedMsgs.filter(m => !m.projectId && (m.from === currentUser?.id || m.to === currentUser?.id));
 
         const uniqueUsers = new Set();
         userConvos.forEach(m => {
@@ -43,13 +78,15 @@ export default function Messages({ params, onNavigate }) {
 
         const convos = Array.from(uniqueUsers).map(userId => {
             const user = getUser(userId);
-            const lastMsg = userConvos.filter(m => m.from === userId || m.to === userId).sort((a, b) => b.ts - a.ts)[0];
-            return { user, lastMsg };
+            const userMsgs = userConvos.filter(m => m.from === userId || m.to === userId);
+            const lastMsg = userMsgs.sort((a, b) => b.ts - a.ts)[0];
+            const unreadCount = userMsgs.filter(m => m.from === userId && m.to === currentUser?.id && !m.read).length;
+            return { user, lastMsg, unreadCount };
         }).filter(c => c.user);
 
         if (params?.userId && !uniqueUsers.has(params.userId)) {
             const user = getUser(params.userId);
-            if (user) convos.unshift({ user, lastMsg: null });
+            if (user) convos.unshift({ user, lastMsg: null, unreadCount: 0 });
         }
         setConversations(convos.sort((a, b) => (b.lastMsg?.ts || 0) - (a.lastMsg?.ts || 0)));
 
@@ -65,8 +102,10 @@ export default function Messages({ params, onNavigate }) {
         );
 
         const pConvos = myProjects.map(p => {
-            const lastMsg = msgs.filter(m => m.projectId === p.id).sort((a, b) => b.ts - a.ts)[0];
-            return { project: p, lastMsg };
+            const projectMsgs = migratedMsgs.filter(m => m.projectId === p.id);
+            const lastMsg = projectMsgs.sort((a, b) => b.ts - a.ts)[0];
+            const unreadCount = projectMsgs.filter(m => m.from !== currentUser?.id && m.from !== 'system' && !m.read).length;
+            return { project: p, lastMsg, unreadCount };
         }).sort((a, b) => (b.lastMsg?.ts || a.project.createdAt) - (a.lastMsg?.ts || b.project.createdAt));
 
         setProjectConversations(pConvos);
@@ -99,7 +138,8 @@ export default function Messages({ params, onNavigate }) {
             id: 'm_' + uid(),
             from: currentUser.id,
             text: msgText.trim(),
-            ts: Date.now()
+            ts: Date.now(),
+            read: false,
         };
 
         if (tab === 'personal') {
@@ -126,7 +166,8 @@ export default function Messages({ params, onNavigate }) {
                 from: currentUser.id,
                 text: '',
                 image: ev.target.result,
-                ts: Date.now()
+                ts: Date.now(),
+                read: false,
             };
             if (tab === 'personal') payload.to = selectedUserId;
             else payload.projectId = selectedProjectId;
@@ -308,9 +349,11 @@ export default function Messages({ params, onNavigate }) {
                                             if (isProject) {
                                                 setSelectedProjectId(id);
                                                 setSelectedUserId(null);
+                                                markMessagesRead(null, id);
                                             } else {
                                                 setSelectedUserId(id);
                                                 setSelectedProjectId(null);
+                                                markMessagesRead(id, null);
                                             }
                                         }}
                                         className={`px-5 py-3 flex items-center gap-4 cursor-pointer transition-colors ${isSelected
@@ -339,7 +382,11 @@ export default function Messages({ params, onNavigate }) {
                                                 {lastMsgSender}{lastMsgText}
                                             </p>
                                         </div>
-                                        {!lastMsgObj && !isProject && <div className="w-2 h-2 bg-brand-500 rounded-full shrink-0"></div>}
+                                        {item.unreadCount > 0 ? (
+                                            <span className="min-w-[20px] h-5 px-1.5 bg-brand-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shrink-0">
+                                                {item.unreadCount}
+                                            </span>
+                                        ) : (!lastMsgObj && !isProject && <div className="w-2 h-2 bg-brand-500 rounded-full shrink-0"></div>)}
                                     </div>
                                 )
                             })

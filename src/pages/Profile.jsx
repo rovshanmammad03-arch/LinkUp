@@ -344,7 +344,7 @@ export default function Profile({ params, onNavigate }) {
         <>
             <div className="max-w-4xl mx-auto px-4 md:px-6 anim-up">
                 {/* Cover & Avatar */}
-                <div className="relative mb-32 md:mb-24">
+                <div className="relative mb-4 md:mb-6">
                     {/* Cover */}
                     <div 
                         className={`relative h-48 md:h-64 w-full rounded-3xl overflow-hidden shadow-2xl border border-white/5 group ${isOwnProfile ? 'cursor-pointer' : ''}`} 
@@ -364,11 +364,11 @@ export default function Profile({ params, onNavigate }) {
                         )}
                     </div>
 
-                    {/* Avatar & Name Stack */}
-                    <div className="absolute -bottom-24 md:-bottom-16 left-4 md:left-8 flex flex-col md:flex-row md:items-end gap-4 md:gap-6 w-[calc(100%-32px)] md:w-auto">
+                    {/* Avatar — overlaps cover bottom */}
+                    <div className="absolute -bottom-12 md:-bottom-14 left-4 md:left-8">
                         <div
                             onClick={handleAvatarUpload}
-                            className={`w-24 h-24 md:w-36 md:h-36 rounded-3xl bg-gradient-to-br ${targetUser?.grad} border-4 border-white dark:border-black flex items-center justify-center text-3xl md:text-4xl font-bold shadow-2xl shrink-0 group relative ${isOwnProfile ? 'cursor-pointer overflow-hidden' : ''}`}
+                            className={`w-24 h-24 md:w-28 md:h-28 rounded-3xl bg-gradient-to-br ${targetUser?.grad} border-4 border-white dark:border-neutral-950 flex items-center justify-center text-3xl md:text-4xl font-bold shadow-2xl shrink-0 group relative ${isOwnProfile ? 'cursor-pointer overflow-hidden' : ''}`}
                         >
                             {targetUser?.avatar ? (
                                 <img src={targetUser.avatar} className="w-full h-full object-cover rounded-2xl" />
@@ -381,29 +381,31 @@ export default function Profile({ params, onNavigate }) {
                                 </div>
                             )}
                         </div>
-                        <div className="md:mb-2">
-                            <div className="inline-flex items-center gap-2 mb-1">
-                                <h1 className="text-xl md:text-3xl font-bold text-neutral-900 dark:text-white truncate max-w-[200px] sm:max-w-none">{targetUser?.name}</h1>
-                                <Icon icon="mdi:check-decagram" className="text-brand-400 text-lg md:text-xl" />
-                            </div>
-                            <p className="text-neutral-500 text-[11px] md:text-sm font-medium">{translateField(targetUser?.field, t)} · {targetUser?.university}</p>
-                        </div>
                     </div>
+                </div>
 
-                    {/* Actions Button */}
-                    <div className="absolute top-4 right-4 flex gap-2 z-10">
+                {/* Name row + Actions — below cover, never overlapping */}
+                <div className="flex items-end justify-between pl-32 md:pl-40 pr-2 mb-6 min-h-[3.5rem]">
+                    <div>
+                        <div className="inline-flex items-center gap-2 mb-0.5">
+                            <h1 className="text-xl md:text-2xl font-bold text-neutral-900 dark:text-white truncate max-w-[180px] sm:max-w-none">{targetUser?.name}</h1>
+                            <Icon icon="mdi:check-decagram" className="text-brand-400 text-lg md:text-xl shrink-0" />
+                        </div>
+                        <p className="text-neutral-500 text-[11px] md:text-sm font-medium">{translateField(targetUser?.field, t)} · {targetUser?.university}</p>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
                         {isOwnProfile ? (
-                            <Button onClick={openEdit} variant="secondary" size="sm" className="md:size-md shadow-xl bg-white/10 backdrop-blur-md border-white/20">
+                            <Button onClick={openEdit} variant="secondary" size="sm" className="md:size-md">
                                 <Icon icon="mdi:pencil-outline" className="text-brand-500" />
                                 <span className="hidden sm:inline">{t('profile.editProfile')}</span>
                             </Button>
                         ) : (
                             <>
-                                <Button onClick={() => onNavigate('messages', { userId: targetUser.id })} variant="secondary" size="sm" className="md:size-md shadow-xl bg-white/10 backdrop-blur-md border-white/20">
+                                <Button onClick={() => onNavigate('messages', { userId: targetUser.id })} variant="secondary" size="sm" className="md:size-md">
                                     <Icon icon="mdi:chat-processing-outline" className="text-brand-500 text-lg" />
                                     <span className="hidden sm:inline">{t('profile.startChat')}</span>
                                 </Button>
-                                <Button onClick={() => handleFollow()} variant={isFollowing ? "danger" : "primary"} size="sm" className="md:size-md shadow-xl">
+                                <Button onClick={() => handleFollow()} variant={isFollowing ? "danger" : "primary"} size="sm" className="md:size-md">
                                     <Icon icon={isFollowing ? "mdi:account-check" : "mdi:account-plus"} className="text-lg" />
                                     <span className="hidden sm:inline">{isFollowing ? t('profile.followingStatus') : t('profile.follow')}</span>
                                 </Button>
@@ -413,7 +415,7 @@ export default function Profile({ params, onNavigate }) {
                 </div>
 
                 {/* Stats for Mobile */}
-                <div className="md:hidden glass-card rounded-2xl p-4 mb-8 flex justify-around border border-black/5 dark:border-white/5">
+                <div className="md:hidden glass-card rounded-2xl p-4 mb-6 flex justify-around border border-black/5 dark:border-white/5">
                     <div className="text-center">
                         <span className="block text-lg font-bold text-neutral-900 dark:text-white">{stats.posts}</span>
                         <span className="text-[10px] text-neutral-500 uppercase tracking-widest">{t('profile.statPosts')}</span>

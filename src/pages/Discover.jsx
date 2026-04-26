@@ -417,17 +417,17 @@ export default function Discover({ onNavigate }) {
 
                                 return (
                                     <div key={u.id} className="bg-white dark:bg-[#0a0a0a]/60 backdrop-blur-xl border border-black/8 dark:border-white/10 rounded-[36px] p-7 anim-up flex flex-col group hover:border-brand-500/30 transition-all duration-500 shadow-sm hover:shadow-2xl dark:hover:shadow-brand-500/5" style={{ animationDelay: `${i * 0.05}s` }}>
-                                        <div className="flex items-start justify-between mb-6">
-                                            <div className="flex items-center gap-4">
+                                        <div className="flex items-start justify-between mb-6 gap-3">
+                                            <div className="flex items-center gap-4 min-w-0 flex-1">
                                                 <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${u.grad} flex items-center justify-center text-xl font-bold shrink-0 shadow-lg shadow-black/10 ring-4 ring-white dark:ring-white/5`}>
                                                     {u.avatar ? <img src={u.avatar} className="w-full h-full object-cover rounded-full" /> : initials(u.name)}
                                                 </div>
-                                                <div className="min-w-0">
+                                                <div className="min-w-0 flex-1">
                                                     <h3 className="text-lg font-bold text-neutral-900 dark:text-white group-hover:text-brand-500 transition-colors leading-tight truncate">{u.name}</h3>
-                                                    <p className="text-[11px] text-neutral-500 font-semibold uppercase tracking-wider mt-1">{u.university}</p>
+                                                    <p className="text-[11px] text-neutral-500 font-semibold uppercase tracking-wider mt-1 truncate">{u.university}</p>
                                                 </div>
                                             </div>
-                                            <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${getLevelBadge(u.level)}`}>
+                                            <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest shrink-0 ${getLevelBadge(u.level)}`}>
                                                 {translateLevel(u.level, t)}
                                             </span>
                                         </div>
@@ -612,7 +612,7 @@ export default function Discover({ onNavigate }) {
                                             </span>
                                         </div>
 
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 relative">
                                             {isOwner ? (
                                                 <>
                                                     <Button
