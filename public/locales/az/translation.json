@@ -408,6 +408,31 @@
     "participant": "İştirakçı",
     "participantsCount": "{{count}} iştirakçı"
   },
+  "verification": {
+    "pageTitle": "E-poçtunuzu Doğrulayın",
+    "pageDesc": "6 rəqəmli kod göndərildi:",
+    "codeLabel": "Doğrulama Kodu",
+    "codePlaceholder": "6 rəqəmli kodu daxil edin",
+    "verifyBtn": "E-poçtu Doğrula",
+    "verifying": "Doğrulanır...",
+    "resendBtn": "Kodu Yenidən Göndər",
+    "resendCooldown": "{{seconds}} saniyə sonra göndər",
+    "codeSent": "Yeni kod göndərildi!",
+    "timeRemaining": "Kodun müddəti: {{time}}",
+    "expired": "Kodun müddəti bitib",
+    "attemptsRemaining": "{{count}} cəhd qalıb",
+    "errors": {
+      "wrongCode": "Kod yanlışdır. {{count}} cəhd qalıb.",
+      "expired": "Bu kodun müddəti bitib. Yeni kod tələb edin.",
+      "tooManyAttempts": "Çox sayda yanlış cəhd. Yeni kod tələb edin.",
+      "cooldownActive": "Yeni kod tələb etmədən əvvəl {{seconds}} saniyə gözləyin.",
+      "sendFailed": "Doğrulama e-poçtu göndərilmədi. Yenidən cəhd edin.",
+      "invalidCode": "Zəhmət olmasa düzgün 6 rəqəmli kod daxil edin."
+    },
+    "notVerified": "Zəhmət olmasa əvvəlcə e-poçtunuzu doğrulayın.",
+    "resendLink": "Doğrulama kodunu yenidən göndər",
+    "goToVerify": "Doğrulama səhifəsinə keç"
+  },
   "settingsPage": {
     "title": "Tənzimləmələr",
     "account": "Hesab",

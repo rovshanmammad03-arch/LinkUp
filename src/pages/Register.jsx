@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
 import { Icon } from '@iconify/react';
-import { DB, uid, GRADIENTS, hashPassword } from '../services/db';
+import { GRADIENTS } from '../services/db';
+import { createPendingUser } from '../services/db';
+import { isValidEmail, generateAndStoreCode } from '../services/verification';
+import { sendVerificationEmail } from '../services/emailService';
 import { useTranslation } from 'react-i18next';
 
-export default function Register({ onNavigate, onRegisterDone }) {
-    const { setCurrentUser } = useAuth();
+export default function Register({ onNavigate, onRegisterDone, onPendingVerification }) {
     const { t } = useTranslation();
     const [name, setName] = useState('');
     const [surname, setSurname] = useState('');
@@ -14,20 +15,31 @@ export default function Register({ onNavigate, onRegisterDone }) {
     const [university, setUniversity] = useState('');
     const [field, setField] = useState('');
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const users = DB.get('users');
-        if (users.find(u => u.email === email)) {
-            setError(t('auth.emailExists'));
+        setError('');
+
+        // Task 8.2 — email format validation
+        if (!isValidEmail(email)) {
+            setError(t('verification.errors.invalidCode').replace('6-digit code', 'email') || 'Please enter a valid email address.');
+            // Use a more specific message
+            setError('Please enter a valid email address (e.g. user@domain.com).');
             return;
         }
 
-        const newUser = {
-            id: uid(),
+        if (password.length < 8) {
+            setError(t('forgotPassword.errors.passwordTooShort'));
+            return;
+        }
+
+        setLoading(true);
+
+        const userData = {
             email,
-            password: hashPassword(password),
-            name: `${name} ${surname}`,
+            password,
+            name: `${name} ${surname}`.trim(),
             university: university.trim() || '',
             field: field.trim() || t('auth.fields.other'),
             level: 'Başlanğıc',
@@ -40,17 +52,47 @@ export default function Register({ onNavigate, onRegisterDone }) {
             followers: [],
             following: [],
             grad: GRADIENTS[Math.floor(Math.random() * GRADIENTS.length)],
-            createdAt: Date.now()
         };
 
-        users.push(newUser);
-        DB.set('users', users);
-        DB.setOne('session', { userId: newUser.id });
-        setCurrentUser(newUser);
-        if (onRegisterDone) {
-            onRegisterDone();
+        // Task 8.3 — createPendingUser handles expired pending accounts internally
+        const result = createPendingUser(userData);
+
+        if (!result.success) {
+            if (result.error === 'email_exists') {
+                setError(t('auth.emailExists'));
+            } else if (result.error === 'pending_user_exists') {
+                // Account pending verification — redirect to verify page
+                if (onPendingVerification) {
+                    onPendingVerification(email);
+                } else {
+                    onNavigate('verify-email', { email });
+                }
+            } else {
+                setError('Registration failed. Please try again.');
+            }
+            setLoading(false);
+            return;
+        }
+
+        // Generate and store verification code
+        const { code } = generateAndStoreCode(email);
+
+        // Simulate sending verification email
+        const emailResult = await sendVerificationEmail(email, code);
+
+        if (!emailResult.success) {
+            setError(t('verification.errors.sendFailed'));
+            setLoading(false);
+            return;
+        }
+
+        setLoading(false);
+
+        // Redirect to verification page (no session created yet)
+        if (onPendingVerification) {
+            onPendingVerification(email);
         } else {
-            onNavigate('dashboard');
+            onNavigate('verify-email', { email });
         }
     };
 
@@ -83,7 +125,14 @@ export default function Register({ onNavigate, onRegisterDone }) {
                     </div>
                     <div>
                         <label className="text-xs text-neutral-400 mb-1 block">{t('auth.email')}</label>
-                        <input type="email" className="input-field" placeholder={t('auth.emailPlaceholder')} value={email} onChange={(e) => setEmail(e.target.value)} required />
+                        <input
+                            type="text"
+                            className="input-field"
+                            placeholder={t('auth.emailPlaceholder')}
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
                     </div>
                     <div>
                         <label className="text-xs text-neutral-400 mb-1 block">{t('auth.password')}</label>
@@ -115,11 +164,19 @@ export default function Register({ onNavigate, onRegisterDone }) {
                             />
                         </div>
                     </div>
-                    <button type="submit" className="btn-primary w-full py-3 mt-4 text-base flex items-center justify-center gap-2 shadow-xl shadow-brand-500/30">
-                        {t('auth.registerBtn')} <Icon icon="mdi:chevron-right" />
+                    <button
+                        type="submit"
+                        className="btn-primary w-full py-3 mt-4 text-base flex items-center justify-center gap-2 shadow-xl shadow-brand-500/30 disabled:opacity-50"
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <><Icon icon="mdi:loading" className="animate-spin" /> Sending code...</>
+                        ) : (
+                            <>{t('auth.registerBtn')} <Icon icon="mdi:chevron-right" /></>
+                        )}
                     </button>
                 </form>
-                
+
                 <div className="mt-8 pt-6 border-t border-white/5 text-center">
                     <p className="text-sm text-neutral-500">
                         {t('auth.hasAccount')}{' '}
@@ -129,7 +186,7 @@ export default function Register({ onNavigate, onRegisterDone }) {
                     </p>
                 </div>
             </div>
-            
+
             <button onClick={() => onNavigate('landing')} className="mt-8 text-neutral-500 hover:text-neutral-300 transition-colors text-sm flex items-center justify-center gap-2 mx-auto">
                 <Icon icon="mdi:chevron-left" /> {t('auth.backHome')}
             </button>
