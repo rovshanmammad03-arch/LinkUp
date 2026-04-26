@@ -189,3 +189,291 @@ describe('parseTechnologies — post metadata integration', () => {
   });
 
 });
+
+// ─── User Verification Functions ──────────────────────────────────────────────
+
+import { createPendingUser, activateUser, cleanupExpiredPendingUsers } from '../services/db.js';
+
+describe('User Verification Functions', () => {
+
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  describe('createPendingUser', () => {
+    
+    it('creates a pending user with verified=false and createdAt timestamp', () => {
+      const userData = {
+        name: 'Test User',
+        email: 'test@example.com',
+        password: 'password123',
+        university: 'Test University',
+        field: 'Computer Science'
+      };
+
+      const result = createPendingUser(userData);
+
+      expect(result.success).toBe(true);
+      expect(result.user).toBeDefined();
+      expect(result.user.verified).toBe(false);
+      expect(result.user.createdAt).toBeDefined();
+      expect(typeof result.user.createdAt).toBe('number');
+      expect(result.user.email).toBe(userData.email);
+      expect(result.user.name).toBe(userData.name);
+      expect(result.user.id).toBeDefined();
+    });
+
+    it('does not create a session for pending user', () => {
+      const userData = {
+        name: 'Test User',
+        email: 'test@example.com',
+        password: 'password123',
+        university: 'Test University',
+        field: 'Computer Science'
+      };
+
+      createPendingUser(userData);
+      const session = DB.getOne('session');
+
+      expect(session).toBeNull();
+    });
+
+    it('returns error if email already exists with verified account', () => {
+      const userData = {
+        name: 'Test User',
+        email: 'test@example.com',
+        password: 'password123',
+        university: 'Test University',
+        field: 'Computer Science'
+      };
+
+      // Create verified user first
+      DB.set('users', [{
+        id: 'user1',
+        email: 'test@example.com',
+        verified: true,
+        createdAt: Date.now()
+      }]);
+
+      const result = createPendingUser(userData);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('email_exists');
+    });
+
+    it('deletes expired pending user and allows re-registration', () => {
+      const userData = {
+        name: 'Test User',
+        email: 'test@example.com',
+        password: 'password123',
+        university: 'Test University',
+        field: 'Computer Science'
+      };
+
+      // Create expired pending user (>24 hours old)
+      const twentyFiveHoursAgo = Date.now() - (25 * 60 * 60 * 1000);
+      DB.set('users', [{
+        id: 'user1',
+        email: 'test@example.com',
+        verified: false,
+        createdAt: twentyFiveHoursAgo
+      }]);
+
+      const result = createPendingUser(userData);
+
+      expect(result.success).toBe(true);
+      expect(result.user).toBeDefined();
+      expect(result.user.verified).toBe(false);
+      
+      // Check old user was removed
+      const users = DB.get('users');
+      expect(users.length).toBe(1);
+      expect(users[0].id).not.toBe('user1');
+    });
+
+    it('returns error if pending user exists and not expired', () => {
+      const userData = {
+        name: 'Test User',
+        email: 'test@example.com',
+        password: 'password123',
+        university: 'Test University',
+        field: 'Computer Science'
+      };
+
+      // Create recent pending user
+      DB.set('users', [{
+        id: 'user1',
+        email: 'test@example.com',
+        verified: false,
+        createdAt: Date.now() - (1 * 60 * 60 * 1000) // 1 hour ago
+      }]);
+
+      const result = createPendingUser(userData);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('pending_user_exists');
+    });
+
+  });
+
+  describe('activateUser', () => {
+    
+    it('sets verified=true and creates session', () => {
+      const email = 'test@example.com';
+      
+      // Create pending user
+      DB.set('users', [{
+        id: 'user1',
+        email: email,
+        name: 'Test User',
+        verified: false,
+        createdAt: Date.now()
+      }]);
+
+      const result = activateUser(email);
+
+      expect(result.success).toBe(true);
+      expect(result.user).toBeDefined();
+      expect(result.user.verified).toBe(true);
+      
+      // Check session was created
+      const session = DB.getOne('session');
+      expect(session).toBeDefined();
+      expect(session.userId).toBe('user1');
+    });
+
+    it('deletes verification data from localStorage', () => {
+      const email = 'test@example.com';
+      
+      // Create pending user and verification data
+      DB.set('users', [{
+        id: 'user1',
+        email: email,
+        verified: false,
+        createdAt: Date.now()
+      }]);
+      
+      localStorage.setItem('lu_verification_' + email, JSON.stringify({
+        code: '123456',
+        expiresAt: Date.now() + 900000
+      }));
+
+      activateUser(email);
+
+      // Check verification data was deleted
+      const verificationData = localStorage.getItem('lu_verification_' + email);
+      expect(verificationData).toBeNull();
+    });
+
+    it('returns error if user not found', () => {
+      const result = activateUser('nonexistent@example.com');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('user_not_found');
+    });
+
+  });
+
+  describe('cleanupExpiredPendingUsers', () => {
+    
+    it('removes pending users older than 24 hours', () => {
+      const twentyFiveHoursAgo = Date.now() - (25 * 60 * 60 * 1000);
+      const oneHourAgo = Date.now() - (1 * 60 * 60 * 1000);
+      
+      DB.set('users', [
+        {
+          id: 'user1',
+          email: 'expired@example.com',
+          verified: false,
+          createdAt: twentyFiveHoursAgo
+        },
+        {
+          id: 'user2',
+          email: 'recent@example.com',
+          verified: false,
+          createdAt: oneHourAgo
+        },
+        {
+          id: 'user3',
+          email: 'verified@example.com',
+          verified: true,
+          createdAt: twentyFiveHoursAgo
+        }
+      ]);
+
+      const result = cleanupExpiredPendingUsers();
+
+      expect(result.success).toBe(true);
+      expect(result.deletedCount).toBe(1);
+      
+      const users = DB.get('users');
+      expect(users.length).toBe(2);
+      expect(users.find(u => u.id === 'user1')).toBeUndefined();
+      expect(users.find(u => u.id === 'user2')).toBeDefined();
+      expect(users.find(u => u.id === 'user3')).toBeDefined();
+    });
+
+    it('returns deletedCount=0 if no expired users', () => {
+      DB.set('users', [
+        {
+          id: 'user1',
+          email: 'recent@example.com',
+          verified: false,
+          createdAt: Date.now() - (1 * 60 * 60 * 1000)
+        }
+      ]);
+
+      const result = cleanupExpiredPendingUsers();
+
+      expect(result.success).toBe(true);
+      expect(result.deletedCount).toBe(0);
+      
+      const users = DB.get('users');
+      expect(users.length).toBe(1);
+    });
+
+    it('cleans up verification data for expired users', () => {
+      const twentyFiveHoursAgo = Date.now() - (25 * 60 * 60 * 1000);
+      const email = 'expired@example.com';
+      
+      DB.set('users', [{
+        id: 'user1',
+        email: email,
+        verified: false,
+        createdAt: twentyFiveHoursAgo
+      }]);
+      
+      localStorage.setItem('lu_verification_' + email, JSON.stringify({
+        code: '123456',
+        expiresAt: Date.now() + 900000
+      }));
+
+      cleanupExpiredPendingUsers();
+
+      // Check verification data was deleted
+      const verificationData = localStorage.getItem('lu_verification_' + email);
+      expect(verificationData).toBeNull();
+    });
+
+    it('preserves verified users regardless of age', () => {
+      const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+      
+      DB.set('users', [{
+        id: 'user1',
+        email: 'old-verified@example.com',
+        verified: true,
+        createdAt: thirtyDaysAgo
+      }]);
+
+      const result = cleanupExpiredPendingUsers();
+
+      expect(result.deletedCount).toBe(0);
+      
+      const users = DB.get('users');
+      expect(users.length).toBe(1);
+      expect(users[0].id).toBe('user1');
+    });
+
+  });
+
+});

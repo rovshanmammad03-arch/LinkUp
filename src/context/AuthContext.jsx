@@ -25,6 +25,10 @@ export function AuthProvider({ children }) {
         const hashedInput = hashPassword(password);
         const user = DB.get('users').find(u => u.email === email && u.password === hashedInput);
         if (user) {
+            // Prevent login for unverified accounts (Requirements 5.5, 8.1)
+            if (user.verified === false) {
+                return { success: false, needsVerification: true, email: user.email, message: 'Please verify your email address first.' };
+            }
             DB.setOne('session', { userId: user.id });
             setCurrentUser(user);
             return { success: true, user };

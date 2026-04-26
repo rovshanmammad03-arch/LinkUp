@@ -5,6 +5,7 @@ import Navbar from './components/layout/Navbar';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import VerifyEmail from './pages/VerifyEmail';
 import Dashboard from './pages/Dashboard';
 import Discover from './pages/Discover';
 import Profile from './pages/Profile';
@@ -17,7 +18,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import Settings from './pages/Settings';
 
 // Əsas naviqasiya səhifələri — bunlarda geri düyməsi görünmür
-const MAIN_ROUTES = ['dashboard', 'discover', 'messages', 'notifications', 'landing', 'login', 'register', 'forgot-password'];
+const MAIN_ROUTES = ['dashboard', 'discover', 'messages', 'notifications', 'landing', 'login', 'register', 'forgot-password', 'verify-email'];
 
 function AppContent() {
     const { currentUser, loading } = useAuth();
@@ -82,14 +83,30 @@ function AppContent() {
 
     // Route logic
     const renderPage = () => {
-        if (!currentUser && currentRoute !== 'login' && currentRoute !== 'register' && currentRoute !== 'forgot-password') {
+        if (!currentUser && currentRoute !== 'login' && currentRoute !== 'register' && currentRoute !== 'forgot-password' && currentRoute !== 'verify-email') {
             return <Landing onNavigate={handleNavigate} />;
         }
 
         switch (currentRoute) {
             case 'landing': return <Landing onNavigate={handleNavigate} />;
             case 'login': return <Login onNavigate={handleNavigate} />;
-            case 'register': return <Register onNavigate={handleNavigate} onRegisterDone={() => setShowOnboarding(true)} />;
+            case 'register': return (
+                <Register
+                    onNavigate={handleNavigate}
+                    onRegisterDone={() => setShowOnboarding(true)}
+                    onPendingVerification={(email) => handleNavigate('verify-email', { email })}
+                />
+            );
+            case 'verify-email': return (
+                <VerifyEmail
+                    email={routeParams?.email || ''}
+                    onVerified={() => {
+                        setShowOnboarding(true);
+                        handleNavigate('dashboard');
+                    }}
+                    onNavigate={handleNavigate}
+                />
+            );
             case 'dashboard': return <Dashboard key={dashboardRefreshKey} onNavigate={handleNavigate} />;
             case 'discover': return <Discover onNavigate={handleNavigate} />;
             case 'profile': return <Profile onNavigate={handleNavigate} params={routeParams} />;
