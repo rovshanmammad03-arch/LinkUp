@@ -97,7 +97,7 @@ export default function Register({ onNavigate, onRegisterDone, onPendingVerifica
     };
 
     return (
-        <div className="max-w-md mx-auto px-6 py-12 anim-up">
+        <div className="max-w-md mx-auto px-4 sm:px-6 py-8 sm:py-12 anim-up">
             <div className="text-center mb-8">
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-500 to-purple-500 flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-brand-500/20">
                     <Icon icon="mdi:link-variant" className="text-white text-3xl" />
@@ -106,14 +106,14 @@ export default function Register({ onNavigate, onRegisterDone, onPendingVerifica
                 <p className="text-neutral-400 text-sm">{t('auth.joinPlatformDesc')}</p>
             </div>
 
-            <div className="glass-card rounded-2xl p-8 border border-white/10 shadow-2xl">
+            <div className="glass-card rounded-2xl p-6 sm:p-8 border border-white/10 shadow-2xl">
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {error && (
                         <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-lg flex items-center gap-2">
                             <Icon icon="mdi:alert-circle-outline" /> {error}
                         </div>
                     )}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div>
                             <label className="text-xs text-neutral-400 mb-1 block">{t('auth.name')}</label>
                             <input type="text" className="input-field" placeholder={t('auth.namePlaceholder')} value={name} onChange={(e) => setName(e.target.value)} required />
@@ -138,7 +138,7 @@ export default function Register({ onNavigate, onRegisterDone, onPendingVerifica
                         <label className="text-xs text-neutral-400 mb-1 block">{t('auth.password')}</label>
                         <input type="password" className="input-field" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div>
                             <label className="text-xs text-neutral-400 mb-1 block">
                                 {t('auth.university')}

@@ -45,7 +45,7 @@ export default function Login({ onNavigate }) {
     };
 
     return (
-        <div className="max-w-md mx-auto px-6 py-12 anim-up">
+        <div className="max-w-md mx-auto px-4 sm:px-6 py-8 sm:py-12 anim-up">
             <div className="text-center mb-8">
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-500 to-purple-500 flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-brand-500/20">
                     <Icon icon="mdi:link-variant" className="text-white text-3xl" />
@@ -54,7 +54,7 @@ export default function Login({ onNavigate }) {
                 <p className="text-neutral-400 text-sm">{t('auth.welcomeBackDesc')}</p>
             </div>
 
-            <div className="glass-card rounded-2xl p-8 border border-white/10 shadow-2xl">
+            <div className="glass-card rounded-2xl p-6 sm:p-8 border border-white/10 shadow-2xl">
                 {/* Unverified account banner */}
                 {needsVerification ? (
                     <div className="space-y-4">

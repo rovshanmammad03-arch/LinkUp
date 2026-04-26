@@ -86,8 +86,8 @@ function HeroSection({ onNavigate, scrollToSection }) {
       <div className="animate-pulse-slow absolute rounded-full blur-[100px] pointer-events-none w-80 h-80 bg-indigo-500/10 top-10 -left-20" />
       <div className="animate-pulse-slow absolute rounded-full blur-[120px] pointer-events-none w-96 h-96 bg-purple-500/8 bottom-0 -right-20" style={{ animationDelay: '3s' }} />
 
-      <div className="max-w-6xl mx-auto px-6 relative z-10">
-        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
+        <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
           {/* Left: text + CTAs */}
           <div className="flex-1 text-center lg:text-left">
             {/* Badge */}
@@ -100,7 +100,7 @@ function HeroSection({ onNavigate, scrollToSection }) {
 
             {/* Headline */}
             <div data-animate data-animate-delay="1">
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-[1.1] mb-5">
+              <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-[1.2] sm:leading-[1.1] mb-5">
                 <span className="text-white">{t('landing.heroTitle1')}</span>
                 <br />
                 <span className="gradient-text">{t('landing.heroTitle2')}</span>
@@ -115,19 +115,19 @@ function HeroSection({ onNavigate, scrollToSection }) {
             </div>
 
             {/* CTA buttons */}
-            <div data-animate data-animate-delay="3" className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+            <div data-animate data-animate-delay="3" className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 w-full">
               <button
                 onClick={() => onNavigate('register')}
-                className="btn-secondary rounded-full flex items-center gap-2 px-8 py-3.5 text-sm font-semibold"
+                className="btn-secondary rounded-full flex justify-center items-center gap-2 px-6 sm:px-8 py-3.5 text-sm font-semibold w-full sm:w-auto"
               >
-                <Icon icon="mdi:account-plus-outline" className="text-lg" />
+                <Icon icon="mdi:account-plus-outline" className="text-lg shrink-0" />
                 {t('landing.freeRegister')}
               </button>
               <button
                 onClick={() => scrollToSection('features')}
-                className="btn-outline rounded-full flex items-center gap-2 px-8 py-3.5 text-sm font-semibold bg-white/[0.02]"
+                className="btn-outline rounded-full flex justify-center items-center gap-2 px-6 sm:px-8 py-3.5 text-sm font-semibold bg-white/[0.02] w-full sm:w-auto"
               >
-                <Icon icon="mdi:compass-outline" className="text-lg" />
+                <Icon icon="mdi:compass-outline" className="text-lg shrink-0" />
                 {t('landing.exploreBtn')}
               </button>
             </div>
@@ -181,8 +181,8 @@ function StatsBar() {
 
   return (
     <div className="border-y border-white/5 py-8">
-      <div className="max-w-6xl mx-auto px-6">
-        <div data-animate className="grid grid-cols-3 gap-4 max-w-2xl mx-auto">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <div data-animate className="flex flex-wrap items-center justify-center gap-8 sm:gap-16 max-w-2xl mx-auto">
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-bold gradient-text-animated mb-1">2.4K+</div>
             <div className="text-xs md:text-sm text-neutral-500">{t('landing.users')}</div>
@@ -229,8 +229,8 @@ function FeaturesSection() {
   const { t } = useTranslation();
 
   return (
-    <section id="features" className="py-24 relative">
-      <div className="max-w-6xl mx-auto px-6 relative z-10">
+    <section id="features" className="py-20 sm:py-24 relative">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
         <div className="text-center mb-16">
           <span className="badge mb-4 inline-flex gap-2 border border-brand-500/30 text-brand-400 bg-brand-500/10 rounded-full px-4 py-1.5 text-xs font-medium">
             <Icon icon="mdi:star-four-points-outline" />
@@ -317,8 +317,8 @@ function HowItWorksSection() {
   ];
 
   return (
-    <section id="how" className="py-24 relative">
-      <div className="max-w-6xl mx-auto px-6 relative z-10">
+    <section id="how" className="py-20 sm:py-24 relative">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
         <div className="text-center mb-16">
           <span className="badge mb-4 inline-flex gap-2 border border-brand-500/30 text-brand-400 bg-brand-500/10 rounded-full px-4 py-1.5 text-xs font-medium">
             <Icon icon="mdi:lightning-bolt-outline" />
@@ -364,7 +364,7 @@ function HowItWorksSection() {
 // ─── TestimonialCard ──────────────────────────────────────────────────────────
 function TestimonialCard({ name, role, quote, avatarGradient, initials, rating }) {
   return (
-    <div className="glass-card rounded-2xl p-6 bg-[#080808] border-white/[0.08] flex flex-col gap-4 snap-start min-w-[280px] lg:min-w-0">
+    <div className="glass-card rounded-2xl p-6 bg-[#080808] border-white/[0.08] flex flex-col gap-4">
       {/* Avatar + name */}
       <div className="flex items-center gap-3">
         <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avatarGradient} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
@@ -395,23 +395,16 @@ function TestimonialsSection() {
   const testimonials = buildTestimonials(t);
 
   return (
-    <section id="testimonials" className="py-24 relative">
-      <div className="max-w-6xl mx-auto px-6 relative z-10">
+    <section id="testimonials" className="py-20 sm:py-24 relative">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-white">
             {t('landing.testimonialsTitle')}
           </h2>
         </div>
 
-        {/* Desktop grid */}
-        <div data-animate className="hidden lg:grid lg:grid-cols-3 gap-6">
-          {testimonials.map((item, i) => (
-            <TestimonialCard key={i} {...item} />
-          ))}
-        </div>
-
-        {/* Mobile horizontal scroll */}
-        <div data-animate className="flex lg:hidden overflow-x-auto snap-x snap-mandatory gap-4 pb-4">
+        {/* Responsive grid for all screen sizes */}
+        <div data-animate className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {testimonials.map((item, i) => (
             <TestimonialCard key={i} {...item} />
           ))}
@@ -426,9 +419,9 @@ function CTASection({ onNavigate }) {
   const { t } = useTranslation();
 
   return (
-    <section className="py-20 relative">
-      <div className="max-w-4xl mx-auto px-6 relative z-10">
-        <div data-animate className="rounded-[2rem] p-12 text-center relative overflow-hidden bg-[#0A0A0A] border border-white/5 shadow-2xl">
+    <section className="py-16 sm:py-20 relative">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 relative z-10">
+        <div data-animate className="rounded-[2rem] p-6 sm:p-12 text-center relative overflow-hidden bg-[#0A0A0A] border border-white/5 shadow-2xl">
           {/* Centered radial glow */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-brand-500/10 rounded-full blur-[60px] pointer-events-none" />
 
@@ -437,7 +430,7 @@ function CTASection({ onNavigate }) {
           <div className="animate-float absolute top-16 right-16 w-1.5 h-1.5 rounded-full bg-purple-500/40" style={{ animationDelay: '1.5s' }} />
           <div className="animate-float absolute bottom-10 left-1/3 w-2 h-2 rounded-full bg-cyan-500/30" style={{ animationDelay: '3s' }} />
 
-          <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 tracking-tight relative z-10">
+          <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-white mb-4 tracking-tight relative z-10">
             {t('landing.readyJoin')} <span className="gradient-text">{t('landing.readyJoinHighlight')}</span>
           </h2>
           <p className="text-neutral-400 mb-8 max-w-md mx-auto relative z-10 font-light text-sm">
@@ -445,9 +438,9 @@ function CTASection({ onNavigate }) {
           </p>
           <button
             onClick={() => onNavigate('register')}
-            className="btn-primary relative z-10 flex items-center justify-center gap-2 mx-auto px-8 py-3.5 rounded-full text-base font-semibold border-none cursor-pointer"
+            className="btn-primary relative z-10 flex items-center justify-center gap-2 mx-auto px-6 sm:px-8 py-3.5 rounded-full text-sm sm:text-base font-semibold border-none cursor-pointer w-full sm:w-auto"
           >
-            <Icon icon="mdi:account-plus" />
+            <Icon icon="mdi:account-plus" className="shrink-0" />
             {t('landing.registerNow')}
           </button>
         </div>
@@ -462,9 +455,9 @@ function Footer({ onNavigate, scrollToSection }) {
 
   return (
     <footer className="border-t border-white/5 py-12 relative z-10">
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Three-column desktop layout */}
-        <div className="grid lg:grid-cols-3 gap-8 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-10">
           {/* Left: logo + tagline */}
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2">

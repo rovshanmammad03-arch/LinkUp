@@ -165,7 +165,7 @@ export default function NewProject({ onNavigate, params }) {
             </div>
 
             {/* Form Card */}
-            <div className="bg-white dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 rounded-[40px] p-8 md:p-10 shadow-sm dark:shadow-2xl flex flex-col min-h-[400px]">
+            <div className="bg-white dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 rounded-[32px] md:rounded-[40px] p-5 sm:p-8 md:p-10 shadow-sm dark:shadow-2xl flex flex-col min-h-[400px]">
                 
                 {step === 1 && (
                     <div className="space-y-8 anim-up">
@@ -211,7 +211,7 @@ export default function NewProject({ onNavigate, params }) {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-3 block">{t('newProject.typeLabel', 'Layihə Növü')}</label>
-                                <div className="relative z-30">
+                                <div className={`relative ${isTypeOpen ? 'z-50' : 'z-30'}`}>
                                     <button
                                         type="button"
                                         onClick={() => { setIsTypeOpen(!isTypeOpen); setIsStageOpen(false); }}
@@ -252,7 +252,7 @@ export default function NewProject({ onNavigate, params }) {
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-3 block">{t('newProject.stageLabel', 'Mərhələ')}</label>
-                                <div className="relative z-30">
+                                <div className={`relative ${isStageOpen ? 'z-50' : 'z-20'}`}>
                                     <button
                                         type="button"
                                         onClick={() => { setIsStageOpen(!isStageOpen); setIsTypeOpen(false); }}
@@ -300,37 +300,39 @@ export default function NewProject({ onNavigate, params }) {
                             </label>
 
                             {/* Yeni yuva əlavə etmə forması */}
-                            <div className="flex gap-3 mb-3">
-                                <div className="relative flex-1 group">
+                            <div className="flex flex-col sm:flex-row gap-3 mb-3">
+                                <div className="relative w-full sm:flex-1 group">
                                     <Icon icon="mdi:account-hard-hat-outline" className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 text-lg group-focus-within:text-brand-500 transition-colors" />
                                     <input
                                         type="text"
                                         value={newSlotCategory}
                                         onChange={(e) => { setNewSlotCategory(e.target.value); setSlotError(''); }}
                                         placeholder="Bacarıq adı (məs. Frontend Developer)"
-                                        className="w-full bg-black/5 dark:bg-white/5 border border-black/8 dark:border-white/5 rounded-2xl pl-12 pr-4 py-4 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:border-brand-500/50 focus:bg-white dark:focus:bg-black transition-all"
+                                        className="w-full bg-black/5 dark:bg-white/5 border border-black/8 dark:border-white/5 rounded-2xl pl-12 pr-4 py-4 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:border-brand-500/50 focus:bg-white dark:focus:bg-black transition-all min-w-0"
                                     />
                                 </div>
-                                <select
-                                    value={newSlotCount}
-                                    onChange={(e) => setNewSlotCount(Number(e.target.value))}
-                                    className="bg-black/5 dark:bg-white/5 border border-black/8 dark:border-white/5 rounded-2xl px-4 py-4 text-sm text-neutral-900 dark:text-white focus:outline-none focus:border-brand-500/50 focus:bg-white dark:focus:bg-black transition-all w-28 cursor-pointer"
-                                    title="Neçə nəfər lazımdır"
-                                >
-                                    {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                                        <option key={n} value={n}>{n} nəfər</option>
-                                    ))}
-                                </select>
-                                <Button
-                                    variant="primary"
-                                    size="sm"
-                                    onClick={handleAddSlot}
-                                    disabled={roleSlots.length >= 10}
-                                    className="!px-5 !rounded-2xl shrink-0"
-                                >
-                                    <Icon icon="mdi:plus" className="text-lg" />
-                                    Əlavə et
-                                </Button>
+                                <div className="flex gap-3 w-full sm:w-auto">
+                                    <select
+                                        value={newSlotCount}
+                                        onChange={(e) => setNewSlotCount(Number(e.target.value))}
+                                        className="flex-1 sm:w-28 bg-black/5 dark:bg-white/5 border border-black/8 dark:border-white/5 rounded-2xl px-4 py-4 text-sm text-neutral-900 dark:text-white focus:outline-none focus:border-brand-500/50 focus:bg-white dark:focus:bg-black transition-all cursor-pointer min-w-0"
+                                        title="Neçə nəfər lazımdır"
+                                    >
+                                        {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                                            <option key={n} value={n}>{n} nəfər</option>
+                                        ))}
+                                    </select>
+                                    <Button
+                                        variant="primary"
+                                        size="sm"
+                                        onClick={handleAddSlot}
+                                        disabled={roleSlots.length >= 10}
+                                        className="!px-5 !rounded-2xl shrink-0 flex-1 sm:flex-none justify-center"
+                                    >
+                                        <Icon icon="mdi:plus" className="text-lg" />
+                                        Əlavə et
+                                    </Button>
+                                </div>
                             </div>
 
                             {/* Xəta mesajı */}
@@ -462,38 +464,38 @@ export default function NewProject({ onNavigate, params }) {
                 )}
 
                 {/* Navigation Buttons */}
-                <div className="flex justify-between items-center mt-auto pt-10 border-t border-black/8 dark:border-white/5">
+                <div className="flex justify-between items-center mt-auto pt-10 border-t border-black/8 dark:border-white/5 gap-2">
                     {step > 1 ? (
-                        <Button variant="secondary" onClick={prevStep} size="md" className="!px-8">
-                            <Icon icon="mdi:chevron-left" className="text-lg" />
-                            Geri
+                        <Button variant="secondary" onClick={prevStep} size="md" className="flex-1 sm:flex-none !px-2 sm:!px-8 justify-center min-w-0">
+                            <Icon icon="mdi:chevron-left" className="text-lg shrink-0" />
+                            <span className="truncate">Geri</span>
                         </Button>
                     ) : (
-                        <div />
+                        <div className="flex-1 sm:flex-none" />
                     )}
 
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 flex-[2] sm:flex-none min-w-0">
                         {step < 3 ? (
                             <Button 
                                 variant="primary" 
                                 onClick={nextStep} 
                                 size="md" 
-                                className="!px-10 shadow-brand-500/20"
+                                className="w-full sm:w-auto !px-2 sm:!px-10 shadow-brand-500/20 justify-center min-w-0"
                                 disabled={step === 1 && (!title.trim() || !desc.trim())}
                             >
-                                Növbəti
-                                <Icon icon="mdi:chevron-right" className="text-lg" />
+                                <span className="truncate">Növbəti</span>
+                                <Icon icon="mdi:chevron-right" className="text-lg shrink-0" />
                             </Button>
                         ) : (
                             <Button 
                                 variant="primary" 
                                 onClick={handleCreate} 
                                 size="md" 
-                                className="!px-12 shadow-brand-500/30"
+                                className="w-full sm:w-auto !px-2 sm:!px-12 shadow-brand-500/30 justify-center min-w-0"
                                 disabled={!title.trim() || !desc.trim()}
                             >
-                                <Icon icon={isEditing ? "mdi:content-save-outline" : "mdi:rocket-launch-outline"} className="text-lg" />
-                                {isEditing ? t('newProject.save', 'Yadda saxla') : t('newProject.create')}
+                                <Icon icon={isEditing ? "mdi:content-save-outline" : "mdi:rocket-launch-outline"} className="text-lg shrink-0" />
+                                <span className="truncate">{isEditing ? t('newProject.save', 'Yadda saxla') : t('newProject.create', 'Layihəni Yarat')}</span>
                             </Button>
                         )}
                     </div>
