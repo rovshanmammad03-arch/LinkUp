@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { Icon } from '@iconify/react';
-import { initials } from '../../services/db';
+import { initials, DB } from '../../services/db';
 import { useTranslation } from 'react-i18next';
 import Tooltip from '../common/Tooltip';
 
@@ -22,6 +22,7 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
   const [notifOpen, setNotifOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [notifs, setNotifs] = useState([]);
+  const [unreadMsgCount, setUnreadMsgCount] = useState(0);
 
   const [supportModalOpen, setSupportModalOpen] = useState(false);
   const [supportSubject, setSupportSubject] = useState('');
@@ -39,6 +40,53 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
     const all = (() => { try { return JSON.parse(localStorage.getItem('lu_notifications')) || []; } catch(e) { return []; } })();
     setNotifs(all.filter(n => n.toUserId === currentUser.id));
   }, [currentUser, notifOpen, currentRoute]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    
+    const updateUnreadCount = () => {
+      const msgs = DB.get('messages');
+      // Şəxsi: mənə gələn oxunmamış mesajlar — fərqli göndərənlərin sayı
+      const unreadPersonal = new Set(
+        msgs.filter(m => !m.projectId && m.to === currentUser.id && !m.read).map(m => m.from)
+      ).size;
+      // Qrup: iştirak etdiyim layihələrdə oxunmamış mesajlar olan layihə sayı
+      const allProjects = DB.get('projects');
+      const myProjectIds = new Set(
+        allProjects.filter(p =>
+          p.authorId === currentUser.id ||
+          (p.applicants || []).some(a => {
+            const id = typeof a === 'object' ? a.id : a;
+            const status = typeof a === 'object' ? a.status : 'pending';
+            return id === currentUser.id && status === 'accepted';
+          })
+        ).map(p => p.id)
+      );
+      const unreadProjects = new Set(
+        msgs.filter(m => m.projectId && myProjectIds.has(m.projectId) && m.from !== currentUser.id && m.from !== 'system' && !m.read).map(m => m.projectId)
+      ).size;
+      setUnreadMsgCount(unreadPersonal + unreadProjects);
+    };
+
+    updateUnreadCount();
+
+    // localStorage dəyişəndə yenilə
+    const handleStorageChange = (e) => {
+      if (e.key === 'lu_messages' || !e.key) {
+        updateUnreadCount();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Hər 2 saniyədə bir yoxla (eyni tab-da dəyişikliklər üçün)
+    const interval = setInterval(updateUnreadCount, 2000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [currentUser]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -155,6 +203,11 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
           </button>
           <button onClick={() => onNavigate('messages', {}, true)} className={`nav-link relative ${currentRoute === 'messages' ? 'active' : ''}`}>
             <Icon icon="mdi:message-outline" className="mr-1.5 text-lg" /> {t('nav.messages')}
+            {unreadMsgCount > 0 && (
+              <span className="ml-1.5 min-w-[18px] h-[18px] px-1 bg-brand-500 text-white text-[10px] font-bold rounded-full inline-flex items-center justify-center">
+                {unreadMsgCount}
+              </span>
+            )}
           </button>
         </div>
 
@@ -302,8 +355,16 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
           <button onClick={() => onNavigate('new-post', {}, true)} className="flex flex-col items-center gap-0.5 p-2 text-neutral-500">
             <Icon icon="mdi:plus-circle-outline" className="text-xl" /><span className="text-[10px]">{t('nav.share')}</span>
           </button>
-          <button onClick={() => onNavigate('messages', {}, true)} className={`flex flex-col items-center gap-0.5 p-2 ${currentRoute === 'messages' ? 'text-brand-400' : 'text-neutral-500'}`}>
-            <Icon icon="mdi:message-outline" className="text-xl" /><span className="text-[10px]">{t('nav.messages')}</span>
+          <button onClick={() => onNavigate('messages', {}, true)} className={`flex flex-col items-center gap-0.5 p-2 relative ${currentRoute === 'messages' ? 'text-brand-400' : 'text-neutral-500'}`}>
+            <div className="relative">
+              <Icon icon="mdi:message-outline" className="text-xl" />
+              {unreadMsgCount > 0 && (
+                <span className="absolute -top-1 -right-1.5 min-w-[14px] h-[14px] px-0.5 bg-brand-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center">
+                  {unreadMsgCount}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px]">{t('nav.messages')}</span>
           </button>
           <button onClick={() => onNavigate('profile', {}, true)} className={`flex flex-col items-center gap-0.5 p-2 ${currentRoute === 'profile' ? 'text-brand-400' : 'text-neutral-500'}`}>
             <Icon icon="mdi:account-outline" className="text-xl" /><span className="text-[10px]">{t('nav.profile')}</span>

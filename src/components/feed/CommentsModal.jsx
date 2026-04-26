@@ -61,7 +61,8 @@ export default function CommentsModal({ postId, onClose, onCommentAdded }) {
             fromUserId: currentUser.id,
             type: replyingTo ? 'reply' : 'comment',
             text: replyingTo ? 'şərhinə cavab verdi' : 'paylaşımına şərh yazdı',
-            route: 'dashboard',
+            route: 'profile',
+            routeParams: { userId: currentUser.id },
         });
     };
 
