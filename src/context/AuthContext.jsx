@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { DB, seedIfEmpty, hashPassword } from '../services/db';
+import { supabase } from '../services/supabaseClient';
 
 const AuthContext = createContext();
 
@@ -7,48 +7,68 @@ export function AuthProvider({ children }) {
     const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    const mapUser = (user) => {
+        if (!user) return null;
+        return {
+            ...user,
+            ...user.user_metadata,
+        };
+    };
+
     useEffect(() => {
-        seedIfEmpty();
-        const session = DB.getOne('session');
-        if (session) {
-            const user = DB.get('users').find(u => u.id === session.userId);
-            if (user) {
-                setCurrentUser(user);
-            } else {
-                DB.setOne('session', null);
-            }
-        }
-        setLoading(false);
+        // Get initial session
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setCurrentUser(mapUser(session?.user));
+            setLoading(false);
+        });
+
+        // Listen for auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setCurrentUser(mapUser(session?.user));
+            setLoading(false);
+        });
+
+        return () => subscription.unsubscribe();
     }, []);
 
-    const login = (email, password) => {
-        const hashedInput = hashPassword(password);
-        const user = DB.get('users').find(u => u.email === email && u.password === hashedInput);
-        if (user) {
-            // Prevent login for unverified accounts (Requirements 5.5, 8.1)
-            if (user.verified === false) {
-                return { success: false, needsVerification: true, email: user.email, message: 'Please verify your email address first.' };
-            }
-            DB.setOne('session', { userId: user.id });
-            setCurrentUser(user);
-            return { success: true, user };
+    const login = async (email, password) => {
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
+
+        if (error) {
+            return { success: false, message: error.message };
         }
-        return { success: false, message: 'E-poçt və ya şifrə yanlışdır!' };
+        return { success: true, user: mapUser(data.user) };
     };
 
-    const logout = () => {
-        DB.setOne('session', null);
-        setCurrentUser(null);
+    const register = async (email, password, additionalData) => {
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: additionalData
+            }
+        });
+
+        if (error) {
+            return { success: false, message: error.message };
+        }
+        return { success: true, user: mapUser(data.user) };
     };
 
-    const refreshUser = () => {
-        if (!currentUser) return;
-        const user = DB.get('users').find(u => u.id === currentUser.id);
-        if (user) setCurrentUser(user);
+    const logout = async () => {
+        await supabase.auth.signOut();
+    };
+
+    const refreshUser = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        setCurrentUser(mapUser(user));
     };
 
     return (
-        <AuthContext.Provider value={{ currentUser, setCurrentUser, login, logout, refreshUser, loading }}>
+        <AuthContext.Provider value={{ currentUser, setCurrentUser, login, register, logout, refreshUser, loading }}>
             {!loading && children}
         </AuthContext.Provider>
     );
