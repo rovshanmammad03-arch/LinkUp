@@ -4,6 +4,7 @@ import { DB, uid, initials, parseTechnologies } from '../../services/db';
 import { Icon } from '@iconify/react';
 import { useTranslation } from 'react-i18next';
 import Button from '../common/Button';
+import CustomSelect from '../common/CustomSelect';
 
 const POST_TYPES = [
     { value: 'code', icon: 'mdi:code-braces', color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20' },
@@ -22,15 +23,12 @@ function CodeTypeForm({ metadata, onChange }) {
             <div className="flex flex-col gap-2">
                 <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{t('newPost.codeLanguageLabel')}</label>
                 <div className="bg-black/3 dark:bg-white/3 border border-black/8 dark:border-white/8 rounded-2xl px-4 py-3 focus-within:border-black/20 dark:focus-within:border-white/20 transition-colors">
-                    <select
+                    <CustomSelect
                         value={metadata.language ?? 'JavaScript'}
-                        onChange={e => onChange({ ...metadata, language: e.target.value })}
+                        onChange={val => onChange({ ...metadata, language: val })}
+                        options={CODE_LANGUAGES}
                         className="w-full bg-transparent text-sm text-neutral-900 dark:text-white focus:outline-none"
-                    >
-                        {CODE_LANGUAGES.map(lang => (
-                            <option key={lang} value={lang}>{lang}</option>
-                        ))}
-                    </select>
+                    />
                 </div>
             </div>
             <div className="flex flex-col gap-2">
