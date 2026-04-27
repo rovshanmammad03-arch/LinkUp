@@ -334,7 +334,12 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
                     <Icon icon="mdi:help-circle-outline" className="text-lg text-brand-400" /> {t('nav.help')}
                   </button>
                   <div className="h-px w-full bg-black/8 dark:bg-white/10 my-1"></div>
-                  <button onClick={logout} className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-red-500/10 transition-colors text-left text-sm text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300">
+                  <button onClick={() => {
+                    setSettingsOpen(false);
+                    onNavigate('landing', {}, true);
+                    // Kiçik gecikmə ilə çıxış veririk ki, routing state yenilənə bilsin
+                    setTimeout(() => logout(), 50);
+                  }} className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-red-500/10 transition-colors text-left text-sm text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300">
                     <Icon icon="mdi:logout" className="text-lg" /> {t('nav.logout')}
                   </button>
                 </div>
