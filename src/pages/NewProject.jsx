@@ -4,6 +4,7 @@ import { DB, uid, GRADIENTS } from '../services/db';
 import { Icon } from '@iconify/react';
 import { useTranslation } from 'react-i18next';
 import Button from '../components/common/Button';
+import CustomSelect from '../components/common/CustomSelect';
 import { createRoleSlot, validateRoleSlotCategory } from '../services/roleSlotUtils';
 
 export default function NewProject({ onNavigate, params }) {
@@ -312,16 +313,13 @@ export default function NewProject({ onNavigate, params }) {
                                     />
                                 </div>
                                 <div className="flex gap-3 w-full sm:w-auto">
-                                    <select
+                                    <CustomSelect
                                         value={newSlotCount}
-                                        onChange={(e) => setNewSlotCount(Number(e.target.value))}
-                                        className="flex-1 sm:w-28 bg-black/5 dark:bg-white/5 border border-black/8 dark:border-white/5 rounded-2xl px-4 py-4 text-sm text-neutral-900 dark:text-white focus:outline-none focus:border-brand-500/50 focus:bg-white dark:focus:bg-black transition-all cursor-pointer min-w-0"
-                                        title="Neçə nəfər lazımdır"
-                                    >
-                                        {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                                            <option key={n} value={n}>{n} nəfər</option>
-                                        ))}
-                                    </select>
+                                        onChange={(val) => setNewSlotCount(Number(val))}
+                                        options={[1,2,3,4,5,6,7,8,9,10].map(n => ({ label: `${n} nəfər`, value: n }))}
+                                        className="w-full bg-transparent text-sm text-neutral-900 dark:text-white focus:outline-none"
+                                        containerClassName="flex-1 sm:w-28 bg-black/5 dark:bg-white/5 border border-black/8 dark:border-white/5 rounded-2xl px-4 py-4 focus-within:border-brand-500/50 focus-within:bg-white dark:focus-within:bg-black transition-all cursor-pointer min-w-0"
+                                    />
                                     <Button
                                         variant="primary"
                                         size="sm"
