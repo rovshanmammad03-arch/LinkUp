@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Icon } from '@iconify/react';
-import { GRADIENTS } from '../services/db';
-import { createPendingUser } from '../services/db';
-import { isValidEmail, generateAndStoreCode } from '../services/verification';
-import { sendVerificationEmail } from '../services/emailService';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../context/AuthContext';
+import { isValidEmail } from '../services/verification';
 
-export default function Register({ onNavigate, onRegisterDone, onPendingVerification }) {
+export default function Register({ onNavigate }) {
     const { t } = useTranslation();
+    const { register } = useAuth();
+    
     const [name, setName] = useState('');
     const [surname, setSurname] = useState('');
     const [email, setEmail] = useState('');
@@ -21,79 +21,37 @@ export default function Register({ onNavigate, onRegisterDone, onPendingVerifica
         e.preventDefault();
         setError('');
 
-        // Task 8.2 — email format validation
         if (!isValidEmail(email)) {
-            setError(t('verification.errors.invalidCode').replace('6-digit code', 'email') || 'Please enter a valid email address.');
-            // Use a more specific message
             setError('Please enter a valid email address (e.g. user@domain.com).');
             return;
         }
 
-        if (password.length < 8) {
-            setError(t('forgotPassword.errors.passwordTooShort'));
+        if (password.length < 6) {
+            setError(t('forgotPassword.errors.passwordTooShort') || 'Şifrə minimum 6 simvol olmalıdır');
             return;
         }
 
         setLoading(true);
 
-        const userData = {
-            email,
-            password,
+        const additionalData = {
             name: `${name} ${surname}`.trim(),
             university: university.trim() || '',
             field: field.trim() || t('auth.fields.other'),
-            level: 'Başlanğıc',
-            bio: '',
-            skills: [],
-            links: [],
-            avatar: '',
-            views: 0,
-            onboardingDone: false,
-            followers: [],
-            following: [],
-            grad: GRADIENTS[Math.floor(Math.random() * GRADIENTS.length)],
+            level: 'Başlanğıc'
         };
 
-        // Task 8.3 — createPendingUser handles expired pending accounts internally
-        const result = createPendingUser(userData);
+        const result = await register(email, password, additionalData);
 
         if (!result.success) {
-            if (result.error === 'email_exists') {
-                setError(t('auth.emailExists'));
-            } else if (result.error === 'pending_user_exists') {
-                // Account pending verification — redirect to verify page
-                if (onPendingVerification) {
-                    onPendingVerification(email);
-                } else {
-                    onNavigate('verify-email', { email });
-                }
-            } else {
-                setError('Registration failed. Please try again.');
-            }
-            setLoading(false);
-            return;
-        }
-
-        // Generate and store verification code
-        const { code } = generateAndStoreCode(email);
-
-        // Simulate sending verification email
-        const emailResult = await sendVerificationEmail(email, code);
-
-        if (!emailResult.success) {
-            setError(t('verification.errors.sendFailed'));
+            setError(result.message);
             setLoading(false);
             return;
         }
 
         setLoading(false);
-
-        // Redirect to verification page (no session created yet)
-        if (onPendingVerification) {
-            onPendingVerification(email);
-        } else {
-            onNavigate('verify-email', { email });
-        }
+        // Alert users to check their email if email confirmation is enabled in Supabase
+        alert("Qeydiyyat uğurludur! (Əgər Supabase-də email təsdiqi aktivdirsə, email qutunuzu yoxlayın)");
+        onNavigate('login');
     };
 
     return (
@@ -170,7 +128,7 @@ export default function Register({ onNavigate, onRegisterDone, onPendingVerifica
                         disabled={loading}
                     >
                         {loading ? (
-                            <><Icon icon="mdi:loading" className="animate-spin" /> Sending code...</>
+                            <><Icon icon="mdi:loading" className="animate-spin" /> Qeydiyyatdan keçilir...</>
                         ) : (
                             <>{t('auth.registerBtn')} <Icon icon="mdi:chevron-right" /></>
                         )}
