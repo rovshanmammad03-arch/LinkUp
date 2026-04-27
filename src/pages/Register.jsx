@@ -49,9 +49,7 @@ export default function Register({ onNavigate }) {
         }
 
         setLoading(false);
-        // Alert users to check their email if email confirmation is enabled in Supabase
-        alert("Qeydiyyat uğurludur! (Əgər Supabase-də email təsdiqi aktivdirsə, email qutunuzu yoxlayın)");
-        onNavigate('login');
+        onNavigate('verify-email', { email });
     };
 
     return (
