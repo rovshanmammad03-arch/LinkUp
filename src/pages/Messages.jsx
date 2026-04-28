@@ -20,9 +20,10 @@ function translateField(field, t) {
 export default function Messages({ params, onNavigate }) {
     const { currentUser } = useAuth();
     const { t } = useTranslation();
-    const [tab, setTab] = useState(params?.projectId ? 'projects' : 'personal'); // 'personal' or 'projects'
+    const [tab, setTab] = useState(params?.projectId ? 'projects' : 'personal');
     const [conversations, setConversations] = useState([]);
     const [projectConversations, setProjectConversations] = useState([]);
+    const [chatMsgs, setChatMsgs] = useState([]);
     const [selectedUserId, setSelectedUserId] = useState(params?.userId || null);
     const [selectedProjectId, setSelectedProjectId] = useState(params?.projectId || null);
     const [msgText, setMsgText] = useState('');
@@ -71,7 +72,43 @@ export default function Messages({ params, onNavigate }) {
         window.dispatchEvent(new Event('storage'));
     };
 
-    const refreshConvos = useCallback(async () => {
+    const loadChatMsgs = useCallback(async (userId, projectId) => {
+        try {
+            let query = supabase.from('messages').select('*').order('ts', { ascending: true });
+            if (projectId) {
+                query = query.eq('project_id', projectId);
+            } else if (userId) {
+                query = query.or(
+                    `and(from_user.eq.${currentUser.id},to_user.eq.${userId}),and(from_user.eq.${userId},to_user.eq.${currentUser.id})`
+                );
+            }
+            const { data, error } = await query;
+            if (!error && data) {
+                setChatMsgs(data.map(m => ({
+                    id: m.id,
+                    from: m.from_user,
+                    to: m.to_user,
+                    projectId: m.project_id,
+                    text: m.text || '',
+                    image: m.image || '',
+                    postId: m.post_id,
+                    read: m.read,
+                    ts: m.ts,
+                })));
+            }
+        } catch (err) {
+            console.error('loadChatMsgs error:', err);
+            // Fallback: localStorage
+            const msgs = DB.get('messages').filter(m => {
+                if (projectId) return m.projectId === projectId;
+                return !m.projectId && (
+                    (m.from === currentUser.id && m.to === userId) ||
+                    (m.from === userId && m.to === currentUser.id)
+                );
+            }).sort((a, b) => a.ts - b.ts);
+            setChatMsgs(msgs);
+        }
+    }, [currentUser?.id]);
         if (!currentUser?.id) return;
 
         // Supabase-dən mesajları çək
@@ -149,6 +186,17 @@ export default function Messages({ params, onNavigate }) {
 
     useEffect(() => { refreshConvos(); }, [refreshConvos]);
 
+    // Aktiv söhbətin mesajlarını yüklə
+    useEffect(() => {
+        if (tab === 'personal' && selectedUserId) {
+            loadChatMsgs(selectedUserId, null);
+        } else if (tab === 'projects' && selectedProjectId) {
+            loadChatMsgs(null, selectedProjectId);
+        } else {
+            setChatMsgs([]);
+        }
+    }, [selectedUserId, selectedProjectId, tab, loadChatMsgs]);
+
     // Supabase real-time subscription
     useEffect(() => {
         if (!currentUser?.id) return;
@@ -161,30 +209,49 @@ export default function Messages({ params, onNavigate }) {
                 table: 'messages',
             }, (payload) => {
                 const m = payload.new;
+                const newMsg = {
+                    id: m.id,
+                    from: m.from_user,
+                    to: m.to_user,
+                    projectId: m.project_id,
+                    text: m.text || '',
+                    image: m.image || '',
+                    postId: m.post_id,
+                    read: m.read,
+                    ts: m.ts,
+                };
+
                 const isForMe = m.to_user === currentUser.id || m.project_id || m.from_user === currentUser.id;
                 if (!isForMe) return;
+
+                // Aktiv söhbətə aiddirsə birbaşa əlavə et (sürətli)
+                const isActivePersonal = !m.project_id &&
+                    ((m.from_user === currentUser.id && m.to_user === selectedUserId) ||
+                     (m.from_user === selectedUserId && m.to_user === currentUser.id));
+                const isActiveProject = m.project_id && m.project_id === selectedProjectId;
+
+                if (isActivePersonal || isActiveProject) {
+                    setChatMsgs(prev => {
+                        // Dublikat yoxla (optimistic update-dən)
+                        if (prev.find(p => p.id === newMsg.id)) return prev;
+                        return [...prev, newMsg];
+                    });
+                }
+
+                // Sidebar-ı da yenilə (unread count üçün)
                 refreshConvos();
             })
             .subscribe();
 
         return () => supabase.removeChannel(channel);
-    }, [currentUser?.id, refreshConvos]);
+    }, [currentUser?.id, selectedUserId, selectedProjectId, refreshConvos]);
 
     useEffect(() => {
         if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }, [selectedUserId, selectedProjectId, tab, conversations, projectConversations]);
+    }, [chatMsgs]);
 
     const selectedUserConvo = conversations.find(c => c.user.id === selectedUserId);
     const selectedProjectConvo = projectConversations.find(c => c.project.id === selectedProjectId);
-
-    const chatMsgs = DB.get('messages').filter(m => {
-        if (tab === 'personal') {
-            return !m.projectId && ((m.from === currentUser?.id && m.to === selectedUserId) ||
-                (m.from === selectedUserId && m.to === currentUser?.id));
-        } else {
-            return m.projectId === selectedProjectId;
-        }
-    }).sort((a, b) => a.ts - b.ts);
 
     const handleSend = async () => {
         if (!msgText.trim()) return;
@@ -192,11 +259,12 @@ export default function Messages({ params, onNavigate }) {
         if (tab === 'projects' && !selectedProjectId) return;
 
         const msgId = 'm_' + uid();
-        const payload = {
+        const now = Date.now();
+        const newMsg = {
             id: msgId,
             from: currentUser.id,
             text: msgText.trim(),
-            ts: Date.now(),
+            ts: now,
             read: false,
         };
 
@@ -204,28 +272,33 @@ export default function Messages({ params, onNavigate }) {
             id: msgId,
             from_user: currentUser.id,
             text: msgText.trim(),
-            ts: Date.now(),
+            ts: now,
             read: false,
         };
 
         if (tab === 'personal') {
-            payload.to = selectedUserId;
+            newMsg.to = selectedUserId;
             supabasePayload.to_user = selectedUserId;
         } else {
-            payload.projectId = selectedProjectId;
+            newMsg.projectId = selectedProjectId;
             supabasePayload.project_id = selectedProjectId;
         }
+
+        // Optimistic update — dərhal göstər
+        setChatMsgs(prev => [...prev, newMsg]);
+        setMsgText('');
 
         // Supabase-ə yaz
         try {
             await supabase.from('messages').insert([supabasePayload]);
         } catch (err) {
             console.error('Supabase message send error:', err);
+            // Xəta olarsa mesajı geri al
+            setChatMsgs(prev => prev.filter(m => m.id !== msgId));
         }
 
-        // localStorage-a da yaz (optimistic update)
-        DB.set('messages', [...DB.get('messages'), payload]);
-        setMsgText('');
+        // localStorage-a da yaz
+        DB.set('messages', [...DB.get('messages'), newMsg]);
         refreshConvos();
     };
 
