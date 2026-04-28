@@ -94,7 +94,7 @@ export function AuthProvider({ children }) {
             console.error('LocalStorage update error:', err);
         }
 
-        return { success: true, user: mappedUser };
+        return { success: true, user: mappedUser, session: data.session };
     };
 
     const logout = async () => {

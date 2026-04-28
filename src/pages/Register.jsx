@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { isValidEmail } from '../services/verification';
 
-export default function Register({ onNavigate }) {
+export default function Register({ onNavigate, onRegisterDone, onPendingVerification }) {
     const { t } = useTranslation();
     const { register } = useAuth();
     
@@ -49,7 +49,15 @@ export default function Register({ onNavigate }) {
         }
 
         setLoading(false);
-        onNavigate('verify-email', { email });
+        // Supabase-dən asılı olaraq əgər email təsdiqi ləğv edilibsə və ya avtomatik giriş olubsa (session varsa), qeydiyyat bitib
+        if (result.session) {
+            if (onRegisterDone) onRegisterDone();
+            else onNavigate('dashboard');
+        } else {
+            // Email təsdiqi gözlənilir
+            if (onPendingVerification) onPendingVerification(email);
+            else onNavigate('verify-email', { email });
+        }
     };
 
     return (
