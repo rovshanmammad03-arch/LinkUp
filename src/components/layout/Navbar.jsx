@@ -119,11 +119,11 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
     setLangOpen(false);
   };
 
-  if (!currentUser) {
+  if (!currentUser || currentRoute === 'landing') {
     return (
       <nav className="glass-nav fixed top-0 left-0 right-0 z-50 h-16">
-        <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
-          <div onClick={() => onNavigate('landing')} className="flex items-center gap-2 cursor-pointer">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-full flex items-center justify-between">
+          <div onClick={() => onNavigate('landing')} className="flex items-center gap-1.5 sm:gap-2 cursor-pointer">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-purple-500 flex items-center justify-center">
               <Icon icon="mdi:link-variant" className="text-white text-lg" />
             </div>
@@ -133,12 +133,12 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
             <button onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })} className="nav-link">{t('nav.features')}</button>
             <button onClick={() => document.getElementById('how')?.scrollIntoView({ behavior: 'smooth' })} className="nav-link">{t('nav.howItWorks')}</button>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3">
             {/* Language picker for landing */}
             <div className="relative">
               <button
                 onClick={() => setLangOpen(!langOpen)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/5 transition-colors text-sm"
+                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/5 transition-colors text-sm"
               >
                 <span>{currentLang.flag}</span>
                 <span className="hidden sm:inline text-xs font-semibold">{currentLang.code.toUpperCase()}</span>
@@ -163,8 +163,8 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
                 </>
               )}
             </div>
-            <button onClick={() => onNavigate('login')} className="btn-outline btn-sm hidden sm:inline-flex">{t('nav.login')}</button>
-            <button onClick={() => onNavigate('register')} className="btn-primary btn-sm">{t('nav.register')}</button>
+            <button onClick={() => onNavigate('login')} className="btn-outline btn-sm !px-3 sm:!px-4">{t('nav.login')}</button>
+            <button onClick={() => onNavigate('register')} className="btn-primary btn-sm !px-3 sm:!px-4">{t('nav.register')}</button>
           </div>
         </div>
       </nav>
@@ -172,9 +172,10 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
   }
 
   return (
-    <nav className="glass-nav fixed top-0 left-0 right-0 z-50 h-16">
-      <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
-        <div className="flex items-center gap-3 h-full">
+    <>
+      <nav className="glass-nav fixed top-0 left-0 right-0 z-50 h-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-full flex items-center justify-between">
+        <div className="flex items-center gap-2 sm:gap-3 h-full">
           {canGoBack && (
             <button
               onClick={onBack}
@@ -211,7 +212,7 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
           </button>
         </div>
 
-        <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex items-center gap-1 sm:gap-2 md:gap-4">
           {/* Notifications */}
           <div className="relative" ref={notifRef}>
             <Tooltip content={t('nav.notifications')}>
@@ -223,7 +224,7 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
               </button>
             </Tooltip>
             {notifOpen && (
-              <div className="absolute right-0 top-full mt-2 w-80 max-w-[90vw] bg-white dark:bg-neutral-900 rounded-xl border border-black/10 dark:border-white/10 shadow-xl dark:shadow-2xl overflow-hidden z-[60]">
+              <div className="fixed top-14 left-4 right-4 sm:absolute sm:top-full sm:left-auto sm:right-0 mt-2 sm:mt-2 sm:w-80 max-w-[400px] sm:max-w-none mx-auto bg-white dark:bg-neutral-900 rounded-xl border border-black/10 dark:border-white/10 shadow-xl dark:shadow-2xl overflow-hidden z-[60]">
                 <div className="p-3 border-b border-black/8 dark:border-white/10 flex items-center justify-between">
                   <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">{t('nav.notifications')}</span>
                   <button
@@ -333,7 +334,11 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
                     <Icon icon="mdi:help-circle-outline" className="text-lg text-brand-400" /> {t('nav.help')}
                   </button>
                   <div className="h-px w-full bg-black/8 dark:bg-white/10 my-1"></div>
-                  <button onClick={logout} className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-red-500/10 transition-colors text-left text-sm text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300">
+                  <button onClick={() => {
+                    setSettingsOpen(false);
+                    logout();
+                    onNavigate('landing', {}, true);
+                  }} className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-red-500/10 transition-colors text-left text-sm text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300">
                     <Icon icon="mdi:logout" className="text-lg" /> {t('nav.logout')}
                   </button>
                 </div>
@@ -341,10 +346,11 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
             )}
           </div>
         </div>
-      </div>
+        </div>
+      </nav>
 
       {/* Mobile Bottom Nav */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-nav border-t border-white/10 border-b-0">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-nav border-t border-black/10 dark:border-white/10 border-b-0 pb-safe">
         <div className="flex items-center justify-around py-2">
           <button onClick={() => onNavigate('dashboard', {}, true)} className={`flex flex-col items-center gap-0.5 p-2 ${currentRoute === 'dashboard' ? 'text-brand-400' : 'text-neutral-500'}`}>
             <Icon icon="mdi:view-dashboard" className="text-xl" /><span className="text-[10px]">{t('nav.dashboard')}</span>
@@ -507,6 +513,6 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
         </div>,
         document.body
       )}
-    </nav>
+    </>
   );
 }

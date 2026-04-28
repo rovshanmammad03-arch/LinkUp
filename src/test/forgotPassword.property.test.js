@@ -16,7 +16,7 @@ const localStorageMock = {
 vi.stubGlobal('localStorage', localStorageMock);
 
 // ─── Imports (after mock is set up) ──────────────────────────────────────────
-import { DB, generateResetToken, verifyToken, resetPassword } from '../services/db';
+import { DB, generateResetToken, verifyToken, resetPassword, hashPassword } from '../services/db';
 
 // ─── Mock heavy UI dependencies ───────────────────────────────────────────────
 vi.mock('@iconify/react', () => ({
@@ -222,7 +222,7 @@ describe('Forgot Password — Property-Based Tests', () => {
                     const users = DB.get('users');
                     const user = users.find(u => u.email === email);
                     expect(user).toBeDefined();
-                    expect(user.password).toBe(newPassword);
+                    expect(user.password).toBe(hashPassword(newPassword));
 
                     // Condition 2: lu_reset_token is null
                     const tokenRecord = DB.getOne('reset_token');

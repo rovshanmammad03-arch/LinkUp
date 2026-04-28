@@ -282,9 +282,9 @@ export default function Discover({ onNavigate }) {
                     {toast.message}
                 </div>
             )}
-            <div className="max-w-7xl mx-auto px-6 anim-up">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 anim-up">
                 {/* Header Section */}
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-6">
                     <div>
                         <h1 className="text-4xl font-bold text-neutral-900 dark:text-white mb-2 tracking-tight">{t('discover.title')}</h1>
                         <p className="text-neutral-500 text-base font-light">
@@ -292,7 +292,7 @@ export default function Discover({ onNavigate }) {
                         </p>
                     </div>
 
-                    <div className="flex flex-col items-end gap-6">
+                    <div className="flex flex-col sm:items-end gap-6 w-full sm:w-auto">
                         <div className="relative flex p-1 bg-black/5 dark:bg-white/5 rounded-xl border border-black/5 dark:border-white/5 shadow-inner">
                             <div
                                 className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-[#1a1a1a] rounded-lg shadow-xl border border-black/5 dark:border-white/5 transition-transform duration-300 ease-in-out"
@@ -338,12 +338,12 @@ export default function Discover({ onNavigate }) {
                                 className="w-full bg-white dark:bg-[#0a0a0a] border border-black/8 dark:border-white/10 rounded-2xl pl-14 pr-6 py-4.5 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:border-brand-500/50 focus:bg-neutral-50 dark:focus:bg-black transition-all shadow-sm"
                             />
                         </div>
-                        <div className="flex gap-4">
+                        <div className="flex flex-col sm:flex-row gap-4">
                             {/* Level Filter Dropdown */}
                             <div className="relative">
                                 <button
                                     onClick={() => setIsLevelOpen(!isLevelOpen)}
-                                    className={`h-14 px-6 flex items-center gap-3 bg-white dark:bg-[#0a0a0a] border border-black/8 dark:border-white/10 rounded-2xl min-w-[180px] justify-between transition-all ${isLevelOpen ? 'border-brand-500/50 ring-4 ring-brand-500/10' : 'hover:border-black/15 dark:hover:border-white/20'}`}
+                                    className={`h-14 px-4 sm:px-6 flex items-center gap-3 bg-white dark:bg-[#0a0a0a] border border-black/8 dark:border-white/10 rounded-2xl min-w-[140px] sm:min-w-[180px] justify-between transition-all w-full ${isLevelOpen ? 'border-brand-500/50 ring-4 ring-brand-500/10' : 'hover:border-black/15 dark:hover:border-white/20'}`}
                                 >
                                     <div className="flex items-center gap-2 overflow-hidden">
                                         <Icon icon="mdi:signal-variant" className="text-neutral-400 shrink-0" />
@@ -376,7 +376,7 @@ export default function Discover({ onNavigate }) {
                             <div className="relative">
                                 <button
                                     onClick={() => setIsFieldOpen(!isFieldOpen)}
-                                    className={`h-14 px-6 flex items-center gap-3 bg-white dark:bg-[#0a0a0a] border border-black/8 dark:border-white/10 rounded-2xl min-w-[180px] justify-between transition-all ${isFieldOpen ? 'border-brand-500/50 ring-4 ring-brand-500/10' : 'hover:border-black/15 dark:hover:border-white/20'}`}
+                                    className={`h-14 px-4 sm:px-6 flex items-center gap-3 bg-white dark:bg-[#0a0a0a] border border-black/8 dark:border-white/10 rounded-2xl min-w-[140px] sm:min-w-[180px] justify-between transition-all w-full ${isFieldOpen ? 'border-brand-500/50 ring-4 ring-brand-500/10' : 'hover:border-black/15 dark:hover:border-white/20'}`}
                                 >
                                     <div className="flex items-center gap-2 overflow-hidden">
                                         <Icon icon="mdi:briefcase-outline" className="text-neutral-400 shrink-0" />
@@ -416,7 +416,7 @@ export default function Discover({ onNavigate }) {
                                 const isFollowing = currentUser?.following?.includes(u.id);
 
                                 return (
-                                    <div key={u.id} className="bg-white dark:bg-[#0a0a0a]/60 backdrop-blur-xl border border-black/8 dark:border-white/10 rounded-[36px] p-7 anim-up flex flex-col group hover:border-brand-500/30 transition-all duration-500 shadow-sm hover:shadow-2xl dark:hover:shadow-brand-500/5" style={{ animationDelay: `${i * 0.05}s` }}>
+                                    <div key={u.id} className="bg-white dark:bg-[#0a0a0a]/60 backdrop-blur-xl border border-black/8 dark:border-white/10 rounded-[36px] p-5 sm:p-7 anim-up flex flex-col group hover:border-brand-500/30 transition-all duration-500 shadow-sm hover:shadow-2xl dark:hover:shadow-brand-500/5" style={{ animationDelay: `${i * 0.05}s` }}>
                                         <div className="flex items-start justify-between mb-6 gap-3">
                                             <div className="flex items-center gap-4 min-w-0 flex-1">
                                                 <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${u.grad} flex items-center justify-center text-xl font-bold shrink-0 shadow-lg shadow-black/10 ring-4 ring-white dark:ring-white/5`}>
@@ -498,12 +498,12 @@ export default function Discover({ onNavigate }) {
                             const isOwner = p.authorId === currentUser?.id;
 
                             return (
-                                <div key={p.id} className="bg-white dark:bg-[#0a0a0a]/40 backdrop-blur-xl border border-black/8 dark:border-white/10 rounded-[40px] p-8 group hover:border-brand-500/30 transition-all duration-500 shadow-sm hover:shadow-2xl anim-up flex flex-col relative overflow-hidden" style={{ animationDelay: `${i * 0.05}s` }}>
+                                <div key={p.id} className="bg-white dark:bg-[#0a0a0a]/40 backdrop-blur-xl border border-black/8 dark:border-white/10 rounded-[40px] p-6 sm:p-8 group hover:border-brand-500/30 transition-all duration-500 shadow-sm hover:shadow-2xl anim-up flex flex-col relative overflow-hidden" style={{ animationDelay: `${i * 0.05}s` }}>
                                     {/* Gradient Accent */}
                                     <div className={`absolute top-0 left-0 w-2 h-full bg-gradient-to-b ${p.grad} opacity-70`} />
 
                                     <div className="flex items-start justify-between mb-6 pl-4">
-                                        <div className="flex items-center gap-5">
+                                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-5">
                                             <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${p.grad} flex items-center justify-center shrink-0 shadow-lg shadow-black/10`}>
                                                 <Icon icon="mdi:folder-star-outline" className="text-white text-3xl" />
                                             </div>
@@ -600,7 +600,7 @@ export default function Discover({ onNavigate }) {
                                         );
                                     })()}
 
-                                    <div className="flex items-center justify-between mt-auto pt-6 border-t border-black/8 dark:border-white/10 pl-4">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-auto pt-6 border-t border-black/8 dark:border-white/10 pl-4">
                                         <div className="flex items-center gap-4 text-[11px] font-bold text-neutral-400 uppercase tracking-widest">
                                             <span className="flex items-center gap-1.5">
                                                 <Icon icon="mdi:account-group-outline" className="text-base" />

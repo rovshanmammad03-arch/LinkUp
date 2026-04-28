@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { DB, seedIfEmpty, hashPassword } from '../services/db';
+import { supabase } from '../services/supabaseClient';
 
 const AuthContext = createContext();
 
@@ -7,44 +7,124 @@ export function AuthProvider({ children }) {
     const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    const mapUser = (user) => {
+        if (!user) return null;
+        return {
+            ...user,
+            ...user.user_metadata,
+        };
+    };
+
     useEffect(() => {
-        seedIfEmpty();
-        const session = DB.getOne('session');
-        if (session) {
-            const user = DB.get('users').find(u => u.id === session.userId);
-            if (user) {
-                setCurrentUser(user);
-            } else {
-                DB.setOne('session', null);
-            }
-        }
-        setLoading(false);
+        // Get initial session
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setCurrentUser(mapUser(session?.user));
+            setLoading(false);
+        });
+
+        // Listen for auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setCurrentUser(mapUser(session?.user));
+            setLoading(false);
+        });
+
+        return () => subscription.unsubscribe();
     }, []);
 
-    const login = (email, password) => {
-        const hashedInput = hashPassword(password);
-        const user = DB.get('users').find(u => u.email === email && u.password === hashedInput);
-        if (user) {
-            DB.setOne('session', { userId: user.id });
-            setCurrentUser(user);
-            return { success: true, user };
+    const login = async (email, password) => {
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
+
+        if (error) {
+            return { success: false, message: error.message };
         }
-        return { success: false, message: 'E-poçt və ya şifrə yanlışdır!' };
+        return { success: true, user: mapUser(data.user) };
     };
 
-    const logout = () => {
-        DB.setOne('session', null);
+    const register = async (email, password, additionalData) => {
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: additionalData
+            }
+        });
+
+        if (error) {
+            return { success: false, message: error.message };
+        }
+        
+        const mappedUser = mapUser(data.user);
+
+        // Əgər session varsa (email təsdiqi tələb olunmursa), currentUser-i dərhal set et
+        if (data.session) {
+            setCurrentUser(mappedUser);
+        }
+        
+        const newUserProfile = {
+            id: mappedUser.id,
+            email: mappedUser.email,
+            name: mappedUser.name || 'İstifadəçi',
+            university: mappedUser.university || '',
+            field: mappedUser.field || '',
+            level: mappedUser.level || 'Başlanğıc',
+            bio: '',
+            grad: 'from-brand-500 to-purple-500',
+            skills: [],
+            links: [],
+            views: 0,
+            followers: [],
+            following: [],
+            verified: false,
+            createdAt: Date.now()
+        };
+
+        // Supabase profiles cədvəlinə əlavə edirik (qlobal olması üçün)
+        try {
+            await supabase.from('profiles').insert([newUserProfile]);
+        } catch (err) {
+            console.error('Supabase profile insert error:', err);
+        }
+
+        // Yerli testlər üçün də localStorage-a əlavə edirik
+        try {
+            const users = JSON.parse(localStorage.getItem('lu_users')) || [];
+            if (!users.find(u => u.id === mappedUser.id)) {
+                users.push(newUserProfile);
+                localStorage.setItem('lu_users', JSON.stringify(users));
+            }
+        } catch (err) {
+            console.error('LocalStorage update error:', err);
+        }
+
+        // Qeydiyyat dərhal uğurlu olubsa (email təsdiqi tələb olunmursa), vəziyyəti dərhal yeniləyirik
+        if (data.session) {
+            setCurrentUser(mappedUser);
+        }
+
+        return { success: true, user: mappedUser, session: data.session };
+    };
+
+    const logout = async () => {
         setCurrentUser(null);
+        localStorage.removeItem('currentRoute');
+        localStorage.removeItem('routeParams');
+        try {
+            await supabase.auth.signOut();
+        } catch (error) {
+            console.error("Logout error:", error);
+        }
     };
 
-    const refreshUser = () => {
-        if (!currentUser) return;
-        const user = DB.get('users').find(u => u.id === currentUser.id);
-        if (user) setCurrentUser(user);
+    const refreshUser = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        setCurrentUser(mapUser(user));
     };
 
     return (
-        <AuthContext.Provider value={{ currentUser, setCurrentUser, login, logout, refreshUser, loading }}>
+        <AuthContext.Provider value={{ currentUser, setCurrentUser, login, register, logout, refreshUser, loading }}>
             {!loading && children}
         </AuthContext.Provider>
     );

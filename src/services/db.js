@@ -65,15 +65,16 @@ export function getUser(id) {
 export function seedIfEmpty() {
     if (DB.get('users').length > 0) return;
     const hp = hashPassword('12345678');
+    const now = Date.now();
     DB.set('users',[
-        {id:'seed_1',name:'Leyla Məmmədova',email:'leyla@test.com',password:hp,university:'ADNSU',field:'Dizayn',level:'Qabaqcıl',bio:'Product Designer at Google. Figma enthusiast.',grad:'from-pink-500 to-rose-500',skills:[{n:'Figma',l:'Qabaqcıl'},{n:'UI/UX',l:'Qabaqcıl'},{n:'Prototyping',l:'Orta'}],links:[{t:'Portfolio',v:'behance.net/leyla'},{t:'LinkedIn',v:'linkedin.com/in/leyla'}],views:120,followers:['seed_0','seed_2'],following:['seed_0']},
-        {id:'seed_0',name:'Ayxan Quliyev',email:'ayxan@test.com',password:hp,university:'UNEC',field:'Proqramlaşdırma',level:'Orta',bio:'Full-stack developer student. Love React and Node.js.',grad:'from-brand-500 to-brand-600',skills:[{n:'React',l:'Orta'},{n:'JavaScript',l:'Orta'},{n:'CSS',l:'Qabaqcıl'}],links:[{t:'GitHub',v:'github.com/ayxan'},{t:'Twitter',v:'twitter.com/ayxan'}],views:85,followers:['seed_1'],following:['seed_1','seed_2']},
-        {id:'seed_2',name:'Rəşad Əliyev',email:'reshad@test.com',password:hp,university:'BMU',field:'Proqramlaşdırma',level:'Qabaqcıl',bio:'Data Scientist. Python and ML expert.',grad:'from-blue-500 to-indigo-600',skills:[{n:'Python',l:'Qabaqcıl'},{n:'TensorFlow',l:'Orta'},{n:'SQL',l:'Qabaqcıl'}],links:[{t:'Kaggle',v:'kaggle.com/reshad'}],views:210,followers:['seed_0'],following:['seed_1']},
-        {id:'seed_3',name:'Nigar Hüseynova',email:'nigar@test.com',password:hp,university:'ADA',field:'Marketinq',level:'Orta',bio:'Digital marketing specialist. SEO and Social Media expert.',grad:'from-orange-400 to-red-500',skills:[{n:'SEO',l:'Orta'},{n:'Google Ads',l:'Qabaqcıl'}],links:[],views:45,followers:[],following:[]},
-        {id:'seed_4',name:'Emin Bağırov',email:'emin@test.com',password:hp,university:'ADNSU',field:'Proqramlaşdırma',level:'Başlanğıc',bio:'Junior dev learning the ropes. Java and Spring.',grad:'from-green-500 to-teal-500',skills:[{n:'Java',l:'Başlanğıc'},{n:'Spring',l:'Başlanğıc'}],links:[],views:32,followers:[],following:[]},
-        {id:'seed_5',name:'Səbinə Rəhimova',email:'sabina@test.com',password:hp,university:'ADRA',field:'Dizayn',level:'Orta',bio:'Graphic designer. Illustrator and Photoshop geek.',grad:'from-purple-500 to-indigo-500',skills:[{n:'Illustrator',l:'Qabaqcıl'},{n:'Photoshop',l:'Qabaqcıl'}],links:[],views:78,followers:[],following:[]},
-        {id:'seed_6',name:'Murad Vəliyev',email:'murad@test.com',password:hp,university:'BANM',field:'Proqramlaşdırma',level:'Qabaqcıl',bio:'Cybersecurity expert and software architect.',grad:'from-neutral-700 to-neutral-900',skills:[{n:'C++',l:'Qabaqcıl'},{n:'Cybersecurity',l:'Qabaqcıl'}],links:[],views:145,followers:[],following:[]},
-        {id:'seed_7',name:'Aydan Məmmədova',email:'aydan@test.com',password:hp,university:'ADNSU',field:'Dizayn',level:'Orta',bio:'Interior designer. Focus on minimalist projects.',grad:'from-amber-400 to-orange-500',skills:[{n:'AutoCAD',l:'Orta'},{n:'3ds Max',l:'Orta'}],links:[],views:62,followers:[],following:[]}
+        {id:'seed_1',name:'Leyla Məmmədova',email:'leyla@test.com',password:hp,university:'ADNSU',field:'Dizayn',level:'Qabaqcıl',bio:'Product Designer at Google. Figma enthusiast.',grad:'from-pink-500 to-rose-500',skills:[{n:'Figma',l:'Qabaqcıl'},{n:'UI/UX',l:'Qabaqcıl'},{n:'Prototyping',l:'Orta'}],links:[{t:'Portfolio',v:'behance.net/leyla'},{t:'LinkedIn',v:'linkedin.com/in/leyla'}],views:120,followers:['seed_0','seed_2'],following:['seed_0'],verified:true,createdAt:now},
+        {id:'seed_0',name:'Ayxan Quliyev',email:'ayxan@test.com',password:hp,university:'UNEC',field:'Proqramlaşdırma',level:'Orta',bio:'Full-stack developer student. Love React and Node.js.',grad:'from-brand-500 to-brand-600',skills:[{n:'React',l:'Orta'},{n:'JavaScript',l:'Orta'},{n:'CSS',l:'Qabaqcıl'}],links:[{t:'GitHub',v:'github.com/ayxan'},{t:'Twitter',v:'twitter.com/ayxan'}],views:85,followers:['seed_1'],following:['seed_1','seed_2'],verified:true,createdAt:now},
+        {id:'seed_2',name:'Rəşad Əliyev',email:'reshad@test.com',password:hp,university:'BMU',field:'Proqramlaşdırma',level:'Qabaqcıl',bio:'Data Scientist. Python and ML expert.',grad:'from-blue-500 to-indigo-600',skills:[{n:'Python',l:'Qabaqcıl'},{n:'TensorFlow',l:'Orta'},{n:'SQL',l:'Qabaqcıl'}],links:[{t:'Kaggle',v:'kaggle.com/reshad'}],views:210,followers:['seed_0'],following:['seed_1'],verified:true,createdAt:now},
+        {id:'seed_3',name:'Nigar Hüseynova',email:'nigar@test.com',password:hp,university:'ADA',field:'Marketinq',level:'Orta',bio:'Digital marketing specialist. SEO and Social Media expert.',grad:'from-orange-400 to-red-500',skills:[{n:'SEO',l:'Orta'},{n:'Google Ads',l:'Qabaqcıl'}],links:[],views:45,followers:[],following:[],verified:true,createdAt:now},
+        {id:'seed_4',name:'Emin Bağırov',email:'emin@test.com',password:hp,university:'ADNSU',field:'Proqramlaşdırma',level:'Başlanğıc',bio:'Junior dev learning the ropes. Java and Spring.',grad:'from-green-500 to-teal-500',skills:[{n:'Java',l:'Başlanğıc'},{n:'Spring',l:'Başlanğıc'}],links:[],views:32,followers:[],following:[],verified:true,createdAt:now},
+        {id:'seed_5',name:'Səbinə Rəhimova',email:'sabina@test.com',password:hp,university:'ADRA',field:'Dizayn',level:'Orta',bio:'Graphic designer. Illustrator and Photoshop geek.',grad:'from-purple-500 to-indigo-500',skills:[{n:'Illustrator',l:'Qabaqcıl'},{n:'Photoshop',l:'Qabaqcıl'}],links:[],views:78,followers:[],following:[],verified:true,createdAt:now},
+        {id:'seed_6',name:'Murad Vəliyev',email:'murad@test.com',password:hp,university:'BANM',field:'Proqramlaşdırma',level:'Qabaqcıl',bio:'Cybersecurity expert and software architect.',grad:'from-neutral-700 to-neutral-900',skills:[{n:'C++',l:'Qabaqcıl'},{n:'Cybersecurity',l:'Qabaqcıl'}],links:[],views:145,followers:[],following:[],verified:true,createdAt:now},
+        {id:'seed_7',name:'Aydan Məmmədova',email:'aydan@test.com',password:hp,university:'ADNSU',field:'Dizayn',level:'Orta',bio:'Interior designer. Focus on minimalist projects.',grad:'from-amber-400 to-orange-500',skills:[{n:'AutoCAD',l:'Orta'},{n:'3ds Max',l:'Orta'}],links:[],views:62,followers:[],following:[],verified:true,createdAt:now}
     ]);
     DB.set('projects',[
         {id:'p1',title:'E-ticaret Platforması',desc:'MVC arxitekturası ilə tam funksional e-ticaret saytı. İstifadəçi qeydiyyatı, məhsul kataloqu, səbət və ödəniş sistemi.',authorId:'seed_0',skills:['React','Node.js','UI/UX'],team:'3-5 nəfər',status:'active',createdAt:Date.now()-100000,applicants:[],grad:GRADIENTS[0]},
@@ -162,6 +163,118 @@ export function resetPassword(email, newPassword) {
     DB.set('users', updatedUsers);
     DB.setOne('reset_token', null);
     return { success: true };
+}
+
+/**
+ * Creates a pending user account with verified=false and createdAt timestamp.
+ * Does NOT create a session for the pending user.
+ * @param {Object} userData - User registration data (name, email, password, university, field, etc.)
+ * @returns {{success: boolean, user?: Object, error?: string}}
+ */
+export function createPendingUser(userData) {
+    let users = DB.get('users');
+    
+    // Check if email already exists with a verified account
+    const existingUser = users.find(u => u.email === userData.email);
+    if (existingUser && existingUser.verified) {
+        return { success: false, error: 'email_exists' };
+    }
+    
+    // If existing user is unverified and expired (>24 hours), delete it
+    if (existingUser && !existingUser.verified) {
+        const accountAge = Date.now() - existingUser.createdAt;
+        const twentyFourHours = 24 * 60 * 60 * 1000;
+        if (accountAge > twentyFourHours) {
+            // Remove expired pending user
+            users = users.filter(u => u.email !== userData.email);
+            DB.set('users', users);
+        } else {
+            // Pending user exists and not expired yet
+            return { success: false, error: 'pending_user_exists' };
+        }
+    }
+    
+    // Create new pending user
+    const newUser = {
+        ...userData,
+        id: uid(),
+        verified: false,
+        createdAt: Date.now(),
+        password: hashPassword(userData.password)
+    };
+    
+    users.push(newUser);
+    DB.set('users', users);
+    
+    return { success: true, user: newUser };
+}
+
+/**
+ * Activates a user account by setting verified=true and creates a session.
+ * Also deletes verification data from localStorage.
+ * @param {string} email - User's email address
+ * @returns {{success: boolean, user?: Object, error?: string}}
+ */
+export function activateUser(email) {
+    const users = DB.get('users');
+    const userIndex = users.findIndex(u => u.email === email);
+    
+    if (userIndex === -1) {
+        return { success: false, error: 'user_not_found' };
+    }
+    
+    // Update user to verified=true
+    const updatedUsers = users.map(u => 
+        u.email === email ? { ...u, verified: true } : u
+    );
+    DB.set('users', updatedUsers);
+    
+    const activatedUser = updatedUsers.find(u => u.email === email);
+    
+    // Create session
+    DB.setOne('session', { userId: activatedUser.id });
+    
+    // Delete verification data
+    localStorage.removeItem('lu_verification_' + email);
+    
+    return { success: true, user: activatedUser };
+}
+
+/**
+ * Cleans up expired pending users (accounts older than 24 hours without verification).
+ * Marks them as expired and allows re-registration with the same email.
+ * @returns {{success: boolean, deletedCount: number}}
+ */
+export function cleanupExpiredPendingUsers() {
+    const users = DB.get('users');
+    const twentyFourHours = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    
+    const expiredUsers = users.filter(u => 
+        !u.verified && 
+        u.createdAt && 
+        (now - u.createdAt) > twentyFourHours
+    );
+    
+    if (expiredUsers.length === 0) {
+        return { success: true, deletedCount: 0 };
+    }
+    
+    // Remove expired pending users
+    const filteredUsers = users.filter(u => 
+        u.verified || 
+        !u.createdAt || 
+        (now - u.createdAt) <= twentyFourHours
+    );
+    
+    DB.set('users', filteredUsers);
+    
+    // Also clean up their verification data
+    expiredUsers.forEach(u => {
+        localStorage.removeItem('lu_verification_' + u.email);
+    });
+    
+    return { success: true, deletedCount: expiredUsers.length };
 }
 
 /**

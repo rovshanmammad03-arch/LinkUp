@@ -9,19 +9,24 @@ export default function Login({ onNavigate }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const res = login(email, password);
+        setError('');
+        setLoading(true);
+
+        const res = await login(email, password);
         if (res.success) {
             onNavigate('dashboard');
         } else {
             setError(res.message);
         }
+        setLoading(false);
     };
 
     return (
-        <div className="max-w-md mx-auto px-6 py-12 anim-up">
+        <div className="max-w-md mx-auto px-4 sm:px-6 py-8 sm:py-12 anim-up">
             <div className="text-center mb-8">
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-500 to-purple-500 flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-brand-500/20">
                     <Icon icon="mdi:link-variant" className="text-white text-3xl" />
@@ -30,7 +35,7 @@ export default function Login({ onNavigate }) {
                 <p className="text-neutral-400 text-sm">{t('auth.welcomeBackDesc')}</p>
             </div>
 
-            <div className="glass-card rounded-2xl p-8 border border-white/10 shadow-2xl">
+            <div className="glass-card rounded-2xl p-6 sm:p-8 border border-white/10 shadow-2xl">
                 <form onSubmit={handleSubmit} className="space-y-5">
                     {error && (
                         <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-lg flex items-center gap-2">
@@ -39,24 +44,24 @@ export default function Login({ onNavigate }) {
                     )}
                     <div>
                         <label className="text-xs text-neutral-400 mb-1.5 block">{t('auth.email')}</label>
-                        <input 
-                            type="email" 
-                            className="input-field" 
+                        <input
+                            type="email"
+                            className="input-field"
                             placeholder={t('auth.emailPlaceholder')}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            required 
+                            required
                         />
                     </div>
                     <div>
                         <label className="text-xs text-neutral-400 mb-1.5 block">{t('auth.password')}</label>
-                        <input 
-                            type="password" 
-                            className="input-field" 
+                        <input
+                            type="password"
+                            className="input-field"
                             placeholder="••••••••"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            required 
+                            required
                         />
                     </div>
                     <button
@@ -66,11 +71,19 @@ export default function Login({ onNavigate }) {
                     >
                         {t('forgotPassword.forgotLink')}
                     </button>
-                    <button type="submit" className="btn-primary w-full py-3 mt-4 text-base flex items-center justify-center gap-2 shadow-xl shadow-brand-500/30">
-                        {t('auth.loginBtn')} <Icon icon="mdi:arrow-right" />
+                    <button 
+                        type="submit" 
+                        disabled={loading}
+                        className="btn-primary w-full py-3 mt-4 text-base flex items-center justify-center gap-2 shadow-xl shadow-brand-500/30 disabled:opacity-50"
+                    >
+                        {loading ? (
+                            <><Icon icon="mdi:loading" className="animate-spin" /> Yüklənir...</>
+                        ) : (
+                            <>{t('auth.loginBtn')} <Icon icon="mdi:arrow-right" /></>
+                        )}
                     </button>
                 </form>
-                
+
                 <div className="mt-8 pt-6 border-t border-white/5 text-center">
                     <p className="text-sm text-neutral-500">
                         {t('auth.noAccount')}{' '}
@@ -80,7 +93,7 @@ export default function Login({ onNavigate }) {
                     </p>
                 </div>
             </div>
-            
+
             <button onClick={() => onNavigate('landing')} className="mt-8 text-neutral-500 hover:text-neutral-300 transition-colors text-sm flex items-center justify-center gap-2 mx-auto">
                 <Icon icon="mdi:chevron-left" /> {t('auth.backHome')}
             </button>

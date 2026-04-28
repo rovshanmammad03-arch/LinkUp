@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from './services/supabaseClient';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Navbar from './components/layout/Navbar';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import VerifyEmail from './pages/VerifyEmail';
 import Dashboard from './pages/Dashboard';
 import Discover from './pages/Discover';
 import Profile from './pages/Profile';
@@ -17,10 +19,34 @@ import ForgotPassword from './pages/ForgotPassword';
 import Settings from './pages/Settings';
 
 // Əsas naviqasiya səhifələri — bunlarda geri düyməsi görünmür
-const MAIN_ROUTES = ['dashboard', 'discover', 'messages', 'notifications', 'landing', 'login', 'register', 'forgot-password'];
+const MAIN_ROUTES = ['dashboard', 'discover', 'messages', 'notifications', 'landing', 'login', 'register', 'forgot-password', 'verify-email'];
 
 function AppContent() {
     const { currentUser, loading } = useAuth();
+    
+    // Qlobal profil məlumatlarını yüklə və yerli DB-yə əlavə et
+    useEffect(() => {
+        const fetchProfiles = async () => {
+            try {
+                const { data, error } = await supabase.from('profiles').select('*');
+                if (error) throw error;
+                if (data && data.length > 0) {
+                    const localUsers = JSON.parse(localStorage.getItem('lu_users')) || [];
+                    const localUsersMap = new Map(localUsers.map(u => [u.id, u]));
+                    
+                    data.forEach(profile => {
+                        localUsersMap.set(profile.id, { ...localUsersMap.get(profile.id), ...profile });
+                    });
+                    
+                    localStorage.setItem('lu_users', JSON.stringify(Array.from(localUsersMap.values())));
+                }
+            } catch (err) {
+                console.error("Profillər yüklənərkən xəta:", err);
+            }
+        };
+        fetchProfiles();
+    }, []);
+
     const [currentRoute, setCurrentRoute] = useState(() => {
         const saved = localStorage.getItem('currentRoute');
         if (saved) return saved;
@@ -82,14 +108,33 @@ function AppContent() {
 
     // Route logic
     const renderPage = () => {
-        if (!currentUser && currentRoute !== 'login' && currentRoute !== 'register' && currentRoute !== 'forgot-password') {
+        if (!currentUser && currentRoute !== 'login' && currentRoute !== 'register' && currentRoute !== 'forgot-password' && currentRoute !== 'verify-email') {
             return <Landing onNavigate={handleNavigate} />;
         }
 
         switch (currentRoute) {
             case 'landing': return <Landing onNavigate={handleNavigate} />;
             case 'login': return <Login onNavigate={handleNavigate} />;
-            case 'register': return <Register onNavigate={handleNavigate} onRegisterDone={() => setShowOnboarding(true)} />;
+            case 'register': return (
+                <Register
+                    onNavigate={handleNavigate}
+                    onRegisterDone={() => {
+                        setShowOnboarding(true);
+                        handleNavigate('dashboard');
+                    }}
+                    onPendingVerification={(email) => handleNavigate('verify-email', { email })}
+                />
+            );
+            case 'verify-email': return (
+                <VerifyEmail
+                    email={routeParams?.email || ''}
+                    onVerified={() => {
+                        setShowOnboarding(true);
+                        handleNavigate('dashboard');
+                    }}
+                    onNavigate={handleNavigate}
+                />
+            );
             case 'dashboard': return <Dashboard key={dashboardRefreshKey} onNavigate={handleNavigate} />;
             case 'discover': return <Discover onNavigate={handleNavigate} />;
             case 'profile': return <Profile onNavigate={handleNavigate} params={routeParams} />;
@@ -137,11 +182,11 @@ function AppContent() {
 
 function App() {
     return (
-        <ThemeProvider>
-            <AuthProvider>
+        <AuthProvider>
+            <ThemeProvider>
                 <AppContent />
-            </AuthProvider>
-        </ThemeProvider>
+            </ThemeProvider>
+        </AuthProvider>
     );
 }
 

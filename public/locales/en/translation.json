@@ -405,6 +405,31 @@
     "participant": "Participant",
     "participantsCount": "{{count}} participants"
   },
+  "verification": {
+    "pageTitle": "Verify Your Email",
+    "pageDesc": "We sent a 6-digit code to",
+    "codeLabel": "Verification Code",
+    "codePlaceholder": "Enter 6-digit code",
+    "verifyBtn": "Verify Email",
+    "verifying": "Verifying...",
+    "resendBtn": "Resend Code",
+    "resendCooldown": "Resend in {{seconds}}s",
+    "codeSent": "New code sent!",
+    "timeRemaining": "Code expires in {{time}}",
+    "expired": "Code has expired",
+    "attemptsRemaining": "{{count}} attempts remaining",
+    "errors": {
+      "wrongCode": "Incorrect code. {{count}} attempts remaining.",
+      "expired": "This code has expired. Please request a new one.",
+      "tooManyAttempts": "Too many incorrect attempts. Please request a new code.",
+      "cooldownActive": "Please wait {{seconds}} seconds before requesting a new code.",
+      "sendFailed": "Failed to send verification email. Please try again.",
+      "invalidCode": "Please enter a valid 6-digit code."
+    },
+    "notVerified": "Please verify your email address first.",
+    "resendLink": "Resend verification code",
+    "goToVerify": "Go to verification page"
+  },
   "settingsPage": {
     "title": "Settings",
     "account": "Account",

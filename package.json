@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@iconify/react": "^6.0.2",
+    "@supabase/supabase-js": "^2.105.0",
     "@tailwindcss/postcss": "^4.2.2",
     "i18next": "^26.0.4",
     "i18next-browser-languagedetector": "^8.2.1",

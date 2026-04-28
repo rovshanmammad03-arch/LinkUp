@@ -385,29 +385,29 @@ export default function Profile({ params, onNavigate }) {
                 </div>
 
                 {/* Name row + Actions — below cover, never overlapping */}
-                <div className="flex items-end justify-between pl-32 md:pl-40 pr-2 mb-6 min-h-[3.5rem]">
-                    <div>
-                        <div className="inline-flex items-center gap-2 mb-0.5">
-                            <h1 className="text-xl md:text-2xl font-bold text-neutral-900 dark:text-white truncate max-w-[180px] sm:max-w-none">{targetUser?.name}</h1>
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between pl-[110px] sm:pl-32 md:pl-40 pr-4 mb-6 min-h-[3.5rem] gap-3 sm:gap-4 mt-2 sm:mt-0">
+                    <div className="min-w-0 flex-1">
+                        <div className="inline-flex items-center gap-2 mb-0.5 max-w-full">
+                            <h1 className="text-xl md:text-2xl font-bold text-neutral-900 dark:text-white truncate">{targetUser?.name}</h1>
                             <Icon icon="mdi:check-decagram" className="text-brand-400 text-lg md:text-xl shrink-0" />
                         </div>
-                        <p className="text-neutral-500 text-[11px] md:text-sm font-medium">{translateField(targetUser?.field, t)} · {targetUser?.university}</p>
+                        <p className="text-neutral-500 text-[11px] md:text-sm font-medium truncate">{translateField(targetUser?.field, t)} · {targetUser?.university}</p>
                     </div>
-                    <div className="flex gap-2 shrink-0">
+                    <div className="flex gap-2 shrink-0 w-full sm:w-auto">
                         {isOwnProfile ? (
-                            <Button onClick={openEdit} variant="secondary" size="sm" className="md:size-md">
+                            <Button onClick={openEdit} variant="secondary" size="sm" className="flex-1 sm:flex-none md:size-md justify-center">
                                 <Icon icon="mdi:pencil-outline" className="text-brand-500" />
-                                <span className="hidden sm:inline">{t('profile.editProfile')}</span>
+                                <span className="inline">{t('profile.editProfile')}</span>
                             </Button>
                         ) : (
                             <>
-                                <Button onClick={() => onNavigate('messages', { userId: targetUser.id })} variant="secondary" size="sm" className="md:size-md">
+                                <Button onClick={() => onNavigate('messages', { userId: targetUser.id })} variant="secondary" size="sm" className="flex-1 sm:flex-none md:size-md justify-center px-0">
                                     <Icon icon="mdi:chat-processing-outline" className="text-brand-500 text-lg" />
                                     <span className="hidden sm:inline">{t('profile.startChat')}</span>
                                 </Button>
-                                <Button onClick={() => handleFollow()} variant={isFollowing ? "danger" : "primary"} size="sm" className="md:size-md">
+                                <Button onClick={() => handleFollow()} variant={isFollowing ? "danger" : "primary"} size="sm" className="flex-[2] sm:flex-none md:size-md justify-center">
                                     <Icon icon={isFollowing ? "mdi:account-check" : "mdi:account-plus"} className="text-lg" />
-                                    <span className="hidden sm:inline">{isFollowing ? t('profile.followingStatus') : t('profile.follow')}</span>
+                                    <span className="inline">{isFollowing ? t('profile.followingStatus') : t('profile.follow')}</span>
                                 </Button>
                             </>
                         )}
@@ -946,49 +946,51 @@ export default function Profile({ params, onNavigate }) {
                                         </div>
                                     ))}
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
                                     <input
                                         value={newSkillName}
                                         onChange={e => setNewSkillName(e.target.value)}
-                                        className="flex-1 bg-black/5 dark:bg-[#121212] border border-black/8 dark:border-white/5 rounded-xl px-4 py-2 text-sm text-neutral-900 dark:text-white focus:border-brand-500/50 outline-none"
+                                        className="w-full sm:flex-1 bg-black/5 dark:bg-[#121212] border border-black/8 dark:border-white/5 rounded-xl px-4 py-2 text-sm text-neutral-900 dark:text-white focus:border-brand-500/50 outline-none min-w-0"
                                         placeholder={t('profile.skillNamePlaceholder')}
                                     />
-                                    {/* New Skill Level Custom Dropdown */}
-                                    <div className="relative w-32">
-                                        <button 
-                                            onClick={() => setIsNewSkillLevelOpen(!isNewSkillLevelOpen)}
-                                            className={`w-full h-full bg-black/5 dark:bg-[#121212] border border-black/8 dark:border-white/5 rounded-xl px-4 py-2 text-sm text-neutral-900 dark:text-white flex items-center justify-between hover:border-black/15 dark:hover:border-white/10 ${isNewSkillLevelOpen ? 'border-brand-500/50' : ''}`}
+                                    <div className="flex gap-2 w-full sm:w-auto">
+                                        {/* New Skill Level Custom Dropdown */}
+                                        <div className="relative flex-1 sm:w-32 sm:flex-none">
+                                            <button 
+                                                onClick={() => setIsNewSkillLevelOpen(!isNewSkillLevelOpen)}
+                                                className={`w-full h-full bg-black/5 dark:bg-[#121212] border border-black/8 dark:border-white/5 rounded-xl px-4 py-2 text-sm text-neutral-900 dark:text-white flex items-center justify-between hover:border-black/15 dark:hover:border-white/10 ${isNewSkillLevelOpen ? 'border-brand-500/50' : ''}`}
+                                            >
+                                                <span className="truncate">{translateLevel(newSkillLevel, t)}</span>
+                                                <Icon icon="mdi:chevron-down" className="text-neutral-400 shrink-0" />
+                                            </button>
+                                            
+                                            {isNewSkillLevelOpen && (
+                                                <>
+                                                    <div className="fixed inset-0 z-40" onClick={() => setIsNewSkillLevelOpen(false)} />
+                                                    <div className="absolute bottom-full left-0 w-full sm:w-40 mb-2 bg-white dark:bg-[#121212] border border-black/10 dark:border-white/10 rounded-xl overflow-hidden z-50 shadow-xl dark:shadow-2xl anim-up">
+                                                        {SKILL_LEVELS_AZ.map(l => (
+                                                            <div 
+                                                                key={l}
+                                                                onClick={() => {
+                                                                    setNewSkillLevel(l);
+                                                                    setIsNewSkillLevelOpen(false);
+                                                                }}
+                                                                className={`px-4 py-2.5 text-xs font-bold cursor-pointer transition-all ${newSkillLevel === l ? 'bg-brand-500/10 text-brand-500 dark:text-brand-400' : 'text-neutral-600 dark:text-neutral-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-neutral-900 dark:hover:text-white'}`}
+                                                            >
+                                                                {translateLevel(l, t)}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                        <button
+                                            onClick={addSkill}
+                                            className="w-10 h-10 shrink-0 bg-brand-600 hover:bg-brand-500 text-white rounded-xl flex items-center justify-center transition-all active:scale-95"
                                         >
-                                            <span className="truncate">{translateLevel(newSkillLevel, t)}</span>
-                                            <Icon icon="mdi:chevron-down" className="text-neutral-400 shrink-0" />
+                                            <Icon icon="mdi:plus" className="text-xl" />
                                         </button>
-                                        
-                                        {isNewSkillLevelOpen && (
-                                            <>
-                                                <div className="fixed inset-0 z-40" onClick={() => setIsNewSkillLevelOpen(false)} />
-                                                <div className="absolute bottom-full left-0 w-40 mb-2 bg-white dark:bg-[#121212] border border-black/10 dark:border-white/10 rounded-xl overflow-hidden z-50 shadow-xl dark:shadow-2xl anim-up">
-                                                    {SKILL_LEVELS_AZ.map(l => (
-                                                        <div 
-                                                            key={l}
-                                                            onClick={() => {
-                                                                setNewSkillLevel(l);
-                                                                setIsNewSkillLevelOpen(false);
-                                                            }}
-                                                            className={`px-4 py-2.5 text-xs font-bold cursor-pointer transition-all ${newSkillLevel === l ? 'bg-brand-500/10 text-brand-500 dark:text-brand-400' : 'text-neutral-600 dark:text-neutral-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-neutral-900 dark:hover:text-white'}`}
-                                                        >
-                                                            {translateLevel(l, t)}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </>
-                                        )}
                                     </div>
-                                    <button
-                                        onClick={addSkill}
-                                        className="w-10 h-10 shrink-0 bg-brand-600 hover:bg-brand-500 text-white rounded-xl flex items-center justify-center transition-all active:scale-95"
-                                    >
-                                        <Icon icon="mdi:plus" className="text-xl" />
-                                    </button>
                                 </div>
                             </div>
 
@@ -1003,12 +1005,12 @@ export default function Profile({ params, onNavigate }) {
                                         </div>
                                     ))}
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
                                     {/* Link Type Custom Dropdown */}
-                                    <div className="relative w-32">
+                                    <div className="relative w-full sm:w-32">
                                         <button 
                                             onClick={() => setIsNewLinkTypeOpen(!isNewLinkTypeOpen)}
-                                            className={`w-full h-full bg-black/5 dark:bg-[#121212] border border-black/8 dark:border-white/5 rounded-xl px-4 py-2 text-sm text-neutral-900 dark:text-white flex items-center justify-between hover:border-black/15 dark:hover:border-white/10 ${isNewLinkTypeOpen ? 'border-brand-500/50' : ''}`}
+                                            className={`w-full h-10 bg-black/5 dark:bg-[#121212] border border-black/8 dark:border-white/5 rounded-xl px-4 py-2 text-sm text-neutral-900 dark:text-white flex items-center justify-between hover:border-black/15 dark:hover:border-white/10 ${isNewLinkTypeOpen ? 'border-brand-500/50' : ''}`}
                                         >
                                             <span className="truncate">{newLinkType}</span>
                                             <Icon icon="mdi:chevron-down" className="text-neutral-400 shrink-0" />
@@ -1017,7 +1019,7 @@ export default function Profile({ params, onNavigate }) {
                                         {isNewLinkTypeOpen && (
                                             <>
                                                 <div className="fixed inset-0 z-40" onClick={() => setIsNewLinkTypeOpen(false)} />
-                                                <div className="absolute bottom-full left-0 w-40 mb-2 bg-white dark:bg-[#121212] border border-black/10 dark:border-white/10 rounded-xl overflow-hidden z-50 shadow-xl dark:shadow-2xl anim-up h-48 overflow-y-auto custom-scrollbar">
+                                                <div className="absolute bottom-full left-0 w-full sm:w-40 mb-2 bg-white dark:bg-[#121212] border border-black/10 dark:border-white/10 rounded-xl overflow-hidden z-50 shadow-xl dark:shadow-2xl anim-up h-48 overflow-y-auto custom-scrollbar">
                                                     {LINK_TYPES.map(lt => (
                                                         <div 
                                                             key={lt}
@@ -1034,18 +1036,20 @@ export default function Profile({ params, onNavigate }) {
                                             </>
                                         )}
                                     </div>
-                                    <input
-                                        value={newLinkVal}
-                                        onChange={e => setNewLinkVal(e.target.value)}
-                                        className="flex-1 bg-black/5 dark:bg-[#121212] border border-black/8 dark:border-white/5 rounded-xl px-4 py-2 text-sm text-neutral-900 dark:text-white focus:border-brand-500/50 outline-none"
-                                        placeholder="github.com/username"
-                                    />
-                                    <button
-                                        onClick={addLink}
-                                        className="w-10 h-10 shrink-0 bg-brand-600 hover:bg-brand-500 text-white rounded-xl flex items-center justify-center transition-all active:scale-95"
-                                    >
-                                        <Icon icon="mdi:plus" className="text-xl" />
-                                    </button>
+                                    <div className="flex gap-2 w-full sm:flex-1">
+                                        <input
+                                            value={newLinkVal}
+                                            onChange={e => setNewLinkVal(e.target.value)}
+                                            className="w-full bg-black/5 dark:bg-[#121212] border border-black/8 dark:border-white/5 rounded-xl px-4 py-2 text-sm text-neutral-900 dark:text-white focus:border-brand-500/50 outline-none min-w-0"
+                                            placeholder="github.com/username"
+                                        />
+                                        <button
+                                            onClick={addLink}
+                                            className="w-10 h-10 shrink-0 bg-brand-600 hover:bg-brand-500 text-white rounded-xl flex items-center justify-center transition-all active:scale-95"
+                                        >
+                                            <Icon icon="mdi:plus" className="text-xl" />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

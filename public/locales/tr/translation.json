@@ -405,6 +405,31 @@
     "participant": "Katılımcı",
     "participantsCount": "{{count}} katılımcı"
   },
+  "verification": {
+    "pageTitle": "E-postanızı Doğrulayın",
+    "pageDesc": "6 haneli kod gönderildi:",
+    "codeLabel": "Doğrulama Kodu",
+    "codePlaceholder": "6 haneli kodu girin",
+    "verifyBtn": "E-postayı Doğrula",
+    "verifying": "Doğrulanıyor...",
+    "resendBtn": "Kodu Yeniden Gönder",
+    "resendCooldown": "{{seconds}} saniye sonra gönder",
+    "codeSent": "Yeni kod gönderildi!",
+    "timeRemaining": "Kodun süresi: {{time}}",
+    "expired": "Kodun süresi doldu",
+    "attemptsRemaining": "{{count}} deneme kaldı",
+    "errors": {
+      "wrongCode": "Kod yanlış. {{count}} deneme kaldı.",
+      "expired": "Bu kodun süresi doldu. Yeni kod isteyin.",
+      "tooManyAttempts": "Çok fazla yanlış deneme. Yeni kod isteyin.",
+      "cooldownActive": "Yeni kod istemeden önce {{seconds}} saniye bekleyin.",
+      "sendFailed": "Doğrulama e-postası gönderilemedi. Tekrar deneyin.",
+      "invalidCode": "Lütfen geçerli bir 6 haneli kod girin."
+    },
+    "notVerified": "Lütfen önce e-postanızı doğrulayın.",
+    "resendLink": "Doğrulama kodunu yeniden gönder",
+    "goToVerify": "Doğrulama sayfasına git"
+  },
   "settingsPage": {
     "title": "Ayarlar",
     "account": "Hesap",

@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Icon } from '@iconify/react';
 import { DB, initials } from '../../services/db';
 import { useAuth } from '../../context/AuthContext';
+import CustomSelect from '../common/CustomSelect';
 
 const SUGGESTED_SKILLS = ['Python', 'JavaScript', 'React', 'Figma', 'UI/UX', 'Node.js', 'SMM', 'SEO', 'Flutter', 'Java', 'SQL', 'Photoshop'];
 const LEVELS = ['Başlanğıc', 'Orta', 'Qabaqcıl'];
@@ -100,13 +101,13 @@ export default function OnboardingModal({ onDone }) {
                             onChange={(e) => setSkillName(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && addSkill()}
                         />
-                        <select
-                            className="bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-brand-500/50"
+                        <CustomSelect
                             value={skillLevel}
-                            onChange={(e) => setSkillLevel(e.target.value)}
-                        >
-                            {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
-                        </select>
+                            onChange={(val) => setSkillLevel(val)}
+                            options={LEVELS}
+                            className="w-full bg-transparent text-sm text-white focus:outline-none"
+                            containerClassName="w-32 shrink-0 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 focus-within:border-brand-500/50 transition-colors"
+                        />
                         <button
                             onClick={() => addSkill()}
                             className="w-10 h-10 bg-brand-500 hover:bg-brand-400 rounded-xl flex items-center justify-center transition-colors shrink-0"
