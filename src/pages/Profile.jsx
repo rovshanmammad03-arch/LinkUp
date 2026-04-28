@@ -8,6 +8,7 @@ import ConfirmModal from '../components/common/ConfirmModal';
 import Button from '../components/common/Button';
 import ProjectApplicantsModal from '../components/discover/ProjectApplicantsModal';
 import { useTranslation } from 'react-i18next';
+import { supabase } from '../services/supabaseClient';
 
 const SKILL_LEVEL_KEYS = ['beginner', 'intermediate', 'advanced'];
 const SKILL_LEVELS_AZ = ['Başlanğıc', 'Orta', 'Qabaqcıl'];
@@ -204,18 +205,28 @@ export default function Profile({ params, onNavigate }) {
         setEditOpen(true);
     };
 
-    const saveEdit = () => {
+    const saveEdit = async () => {
+        const updates = { ...form, skills, links };
+
+        // Supabase-ə yaz
+        try {
+            await supabase
+                .from('profiles')
+                .update(updates)
+                .eq('id', currentUser.id);
+        } catch (err) {
+            console.error('Supabase profile update error:', err);
+        }
+
+        // localStorage-ı sinxronlaşdır
         const users = DB.get('users');
         const idx = users.findIndex(u => u.id === currentUser.id);
-        if (idx === -1) return;
-        users[idx] = {
-            ...users[idx],
-            ...form,
-            skills,
-            links,
-        };
-        DB.set('users', users);
-        setCurrentUser({ ...users[idx] });
+        if (idx !== -1) {
+            users[idx] = { ...users[idx], ...updates };
+            DB.set('users', users);
+        }
+
+        setCurrentUser(prev => ({ ...prev, ...updates }));
         setEditOpen(false);
     };
 
@@ -223,16 +234,31 @@ export default function Profile({ params, onNavigate }) {
         if (!isOwnProfile) return;
         const inp = document.createElement('input');
         inp.type = 'file'; inp.accept = 'image/*';
-        inp.onchange = (e) => {
+        inp.onchange = async (e) => {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = (ev) => {
+            reader.onload = async (ev) => {
+                const avatarData = ev.target.result;
+
+                // Supabase-ə yaz
+                try {
+                    await supabase
+                        .from('profiles')
+                        .update({ avatar: avatarData })
+                        .eq('id', currentUser.id);
+                } catch (err) {
+                    console.error('Supabase avatar update error:', err);
+                }
+
+                // localStorage sinxronlaşdır
                 const users = DB.get('users');
                 const idx = users.findIndex(u => u.id === currentUser.id);
-                users[idx].avatar = ev.target.result;
-                DB.set('users', users);
-                setCurrentUser({ ...users[idx] });
+                if (idx !== -1) {
+                    users[idx].avatar = avatarData;
+                    DB.set('users', users);
+                }
+                setCurrentUser(prev => ({ ...prev, avatar: avatarData }));
             };
             reader.readAsDataURL(file);
         };
@@ -243,16 +269,31 @@ export default function Profile({ params, onNavigate }) {
         if (!isOwnProfile) return;
         const inp = document.createElement('input');
         inp.type = 'file'; inp.accept = 'image/*';
-        inp.onchange = (e) => {
+        inp.onchange = async (e) => {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = (ev) => {
+            reader.onload = async (ev) => {
+                const coverData = ev.target.result;
+
+                // Supabase-ə yaz
+                try {
+                    await supabase
+                        .from('profiles')
+                        .update({ cover: coverData })
+                        .eq('id', currentUser.id);
+                } catch (err) {
+                    console.error('Supabase cover update error:', err);
+                }
+
+                // localStorage sinxronlaşdır
                 const users = DB.get('users');
                 const idx = users.findIndex(u => u.id === currentUser.id);
-                users[idx].cover = ev.target.result;
-                DB.set('users', users);
-                setCurrentUser({ ...users[idx] });
+                if (idx !== -1) {
+                    users[idx].cover = coverData;
+                    DB.set('users', users);
+                }
+                setCurrentUser(prev => ({ ...prev, cover: coverData }));
             };
             reader.readAsDataURL(file);
         };
