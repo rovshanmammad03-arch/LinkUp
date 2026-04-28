@@ -118,7 +118,10 @@ function AppContent() {
             case 'register': return (
                 <Register
                     onNavigate={handleNavigate}
-                    onRegisterDone={() => setShowOnboarding(true)}
+                    onRegisterDone={() => {
+                        setShowOnboarding(true);
+                        handleNavigate('dashboard');
+                    }}
                     onPendingVerification={(email) => handleNavigate('verify-email', { email })}
                 />
             );
