@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { DB, getUser, initials, uid, addNotification } from '../services/db';
+import { supabase } from '../services/supabaseClient';
 import { Icon } from '@iconify/react';
 import { useTranslation } from 'react-i18next';
 import AddMemberModal from '../components/messages/AddMemberModal';
@@ -32,45 +33,81 @@ export default function Messages({ params, onNavigate }) {
     const scrollRef = useRef();
     const imageInputRef = useRef();
 
-    const markMessagesRead = (userId, projectId) => {
+    const markMessagesRead = async (userId, projectId) => {
+        // Supabase-də oxunmuş et
+        try {
+            if (projectId) {
+                await supabase
+                    .from('messages')
+                    .update({ read: true })
+                    .eq('project_id', projectId)
+                    .neq('from_user', currentUser?.id)
+                    .eq('read', false);
+            } else if (userId) {
+                await supabase
+                    .from('messages')
+                    .update({ read: true })
+                    .eq('from_user', userId)
+                    .eq('to_user', currentUser?.id)
+                    .eq('read', false);
+            }
+        } catch (err) {
+            console.error('markMessagesRead error:', err);
+        }
+
+        // localStorage da sinxronlaşdır
         const msgs = DB.get('messages');
         const updated = msgs.map(m => {
             if (projectId) {
-                // Qrup mesajları: başqaları tərəfindən göndərilən oxunmamış mesajlar
-                if (m.projectId === projectId && m.from !== currentUser?.id && !m.read) {
+                if (m.projectId === projectId && m.from !== currentUser?.id && !m.read)
                     return { ...m, read: true };
-                }
             } else if (userId) {
-                // Şəxsi mesajlar: həmin istifadəçidən gələn oxunmamış mesajlar
-                if (!m.projectId && m.from === userId && m.to === currentUser?.id && !m.read) {
+                if (!m.projectId && m.from === userId && m.to === currentUser?.id && !m.read)
                     return { ...m, read: true };
-                }
             }
             return m;
         });
         DB.set('messages', updated);
-        // Trigger storage event for same-tab updates
         window.dispatchEvent(new Event('storage'));
     };
 
-    const refreshConvos = () => {
-        // Migration: köhnə mesajlara read sahəsi əlavə et
-        const msgs = DB.get('messages');
-        let needsUpdate = false;
-        const migratedMsgs = msgs.map(m => {
-            if (m.read === undefined) {
-                needsUpdate = true;
-                // Köhnə mesajları oxunmuş say
-                return { ...m, read: true };
+    const refreshConvos = useCallback(async () => {
+        if (!currentUser?.id) return;
+
+        // Supabase-dən mesajları çək
+        let supabaseMsgs = [];
+        try {
+            const { data, error } = await supabase
+                .from('messages')
+                .select('*')
+                .or(`from_user.eq.${currentUser.id},to_user.eq.${currentUser.id},project_id.not.is.null`)
+                .order('ts', { ascending: true });
+            if (!error && data) {
+                // Supabase formatını localStorage formatına çevir
+                supabaseMsgs = data.map(m => ({
+                    id: m.id,
+                    from: m.from_user,
+                    to: m.to_user,
+                    projectId: m.project_id,
+                    text: m.text || '',
+                    image: m.image || '',
+                    postId: m.post_id,
+                    read: m.read,
+                    ts: m.ts,
+                }));
+                // localStorage-ı Supabase ilə sinxronlaşdır
+                DB.set('messages', supabaseMsgs);
             }
-            return m;
-        });
-        if (needsUpdate) {
-            DB.set('messages', migratedMsgs);
+        } catch (err) {
+            console.error('Supabase messages fetch error:', err);
         }
 
-        const userConvos = migratedMsgs.filter(m => !m.projectId && (m.from === currentUser?.id || m.to === currentUser?.id));
+        const msgs = supabaseMsgs.length > 0 ? supabaseMsgs : DB.get('messages');
 
+        // Migration: köhnə mesajlara read sahəsi əlavə et
+        const migratedMsgs = msgs.map(m => m.read === undefined ? { ...m, read: true } : m);
+
+        const userConvos = migratedMsgs.filter(m => !m.projectId && (m.from === currentUser?.id || m.to === currentUser?.id));
         const uniqueUsers = new Set();
         userConvos.forEach(m => {
             uniqueUsers.add(m.from === currentUser?.id ? m.to : m.from);
@@ -90,7 +127,6 @@ export default function Messages({ params, onNavigate }) {
         }
         setConversations(convos.sort((a, b) => (b.lastMsg?.ts || 0) - (a.lastMsg?.ts || 0)));
 
-        // Compute project conversations
         const allProjects = DB.get('projects');
         const myProjects = allProjects.filter(p =>
             p.authorId === currentUser?.id ||
@@ -109,9 +145,30 @@ export default function Messages({ params, onNavigate }) {
         }).sort((a, b) => (b.lastMsg?.ts || a.project.createdAt) - (a.lastMsg?.ts || b.project.createdAt));
 
         setProjectConversations(pConvos);
-    };
+    }, [currentUser?.id, params?.userId]);
 
-    useEffect(() => { refreshConvos(); }, [currentUser, params?.userId, params?.projectId]);
+    useEffect(() => { refreshConvos(); }, [refreshConvos]);
+
+    // Supabase real-time subscription
+    useEffect(() => {
+        if (!currentUser?.id) return;
+
+        const channel = supabase
+            .channel('messages-realtime')
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'messages',
+            }, (payload) => {
+                const m = payload.new;
+                const isForMe = m.to_user === currentUser.id || m.project_id || m.from_user === currentUser.id;
+                if (!isForMe) return;
+                refreshConvos();
+            })
+            .subscribe();
+
+        return () => supabase.removeChannel(channel);
+    }, [currentUser?.id, refreshConvos]);
 
     useEffect(() => {
         if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -129,14 +186,23 @@ export default function Messages({ params, onNavigate }) {
         }
     }).sort((a, b) => a.ts - b.ts);
 
-    const handleSend = () => {
+    const handleSend = async () => {
         if (!msgText.trim()) return;
         if (tab === 'personal' && !selectedUserId) return;
         if (tab === 'projects' && !selectedProjectId) return;
 
+        const msgId = 'm_' + uid();
         const payload = {
-            id: 'm_' + uid(),
+            id: msgId,
             from: currentUser.id,
+            text: msgText.trim(),
+            ts: Date.now(),
+            read: false,
+        };
+
+        const supabasePayload = {
+            id: msgId,
+            from_user: currentUser.id,
             text: msgText.trim(),
             ts: Date.now(),
             read: false,
@@ -144,33 +210,67 @@ export default function Messages({ params, onNavigate }) {
 
         if (tab === 'personal') {
             payload.to = selectedUserId;
+            supabasePayload.to_user = selectedUserId;
         } else {
             payload.projectId = selectedProjectId;
+            supabasePayload.project_id = selectedProjectId;
         }
 
+        // Supabase-ə yaz
+        try {
+            await supabase.from('messages').insert([supabasePayload]);
+        } catch (err) {
+            console.error('Supabase message send error:', err);
+        }
+
+        // localStorage-a da yaz (optimistic update)
         DB.set('messages', [...DB.get('messages'), payload]);
         setMsgText('');
         refreshConvos();
     };
 
-    const handleImageSend = (e) => {
+    const handleImageSend = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
         if (tab === 'personal' && !selectedUserId) return;
         if (tab === 'projects' && !selectedProjectId) return;
 
         const reader = new FileReader();
-        reader.onload = (ev) => {
+        reader.onload = async (ev) => {
+            const msgId = 'm_' + uid();
+            const imageData = ev.target.result;
+
             const payload = {
-                id: 'm_' + uid(),
+                id: msgId,
                 from: currentUser.id,
                 text: '',
-                image: ev.target.result,
+                image: imageData,
                 ts: Date.now(),
                 read: false,
             };
-            if (tab === 'personal') payload.to = selectedUserId;
-            else payload.projectId = selectedProjectId;
+
+            const supabasePayload = {
+                id: msgId,
+                from_user: currentUser.id,
+                text: '',
+                image: imageData,
+                ts: Date.now(),
+                read: false,
+            };
+
+            if (tab === 'personal') {
+                payload.to = selectedUserId;
+                supabasePayload.to_user = selectedUserId;
+            } else {
+                payload.projectId = selectedProjectId;
+                supabasePayload.project_id = selectedProjectId;
+            }
+
+            try {
+                await supabase.from('messages').insert([supabasePayload]);
+            } catch (err) {
+                console.error('Supabase image send error:', err);
+            }
 
             DB.set('messages', [...DB.get('messages'), payload]);
             refreshConvos();
@@ -179,7 +279,7 @@ export default function Messages({ params, onNavigate }) {
         e.target.value = '';
     };
 
-    const handleRemoveMember = (memberId) => {
+    const handleRemoveMember = async (memberId) => {
         if (!selectedProjectId) return;
         const allProjects = DB.get('projects');
         const pIdx = allProjects.findIndex(p => p.id === selectedProjectId);
@@ -190,30 +290,32 @@ export default function Messages({ params, onNavigate }) {
             if (id === memberId) return { id, status: 'rejected' };
             return a;
         });
-
         DB.set('projects', allProjects);
 
-        // Add a system message indicating removal
-        DB.set('messages', [...DB.get('messages'), {
+        const sysMsg = {
             id: 'm_' + uid(),
-            from: 'system',
-            projectId: selectedProjectId,
+            from_user: 'system',
+            project_id: selectedProjectId,
             text: `${getUser(memberId)?.name} qrupdan çıxarıldı.`,
-            ts: Date.now()
-        }]);
-
+            ts: Date.now(),
+            read: true,
+        };
+        try {
+            await supabase.from('messages').insert([sysMsg]);
+        } catch (err) {
+            console.error('System message error:', err);
+        }
+        DB.set('messages', [...DB.get('messages'), { id: sysMsg.id, from: 'system', projectId: selectedProjectId, text: sysMsg.text, ts: sysMsg.ts }]);
         refreshConvos();
     };
 
-    const handleAddMember = (userId) => {
+    const handleAddMember = async (userId) => {
         if (!selectedProjectId) return;
         const allProjects = DB.get('projects');
         const pIdx = allProjects.findIndex(p => p.id === selectedProjectId);
         if (pIdx === -1) return;
 
         const project = allProjects[pIdx];
-
-        // Artıq üzv olub-olmadığını yoxla
         const alreadyMember = project.applicants.some(a => {
             const id = typeof a === 'object' ? a.id : a;
             const status = typeof a === 'object' ? a.status : 'pending';
@@ -224,24 +326,28 @@ export default function Messages({ params, onNavigate }) {
             return;
         }
 
-        // Əlavə et
         allProjects[pIdx] = {
             ...project,
             applicants: [...project.applicants, { id: userId, status: 'accepted' }]
         };
         DB.set('projects', allProjects);
 
-        // Sistem mesajı
         const addedUser = getUser(userId);
-        DB.set('messages', [...DB.get('messages'), {
+        const sysMsg = {
             id: 'm_' + uid(),
-            from: 'system',
-            projectId: selectedProjectId,
+            from_user: 'system',
+            project_id: selectedProjectId,
             text: `${addedUser?.name} qrupa əlavə edildi.`,
-            ts: Date.now()
-        }]);
+            ts: Date.now(),
+            read: true,
+        };
+        try {
+            await supabase.from('messages').insert([sysMsg]);
+        } catch (err) {
+            console.error('System message error:', err);
+        }
+        DB.set('messages', [...DB.get('messages'), { id: sysMsg.id, from: 'system', projectId: selectedProjectId, text: sysMsg.text, ts: sysMsg.ts }]);
 
-        // Bildiriş
         addNotification({
             toUserId: userId,
             fromUserId: currentUser.id,
@@ -255,7 +361,7 @@ export default function Messages({ params, onNavigate }) {
         refreshConvos();
     };
 
-    const handleLeaveGroup = () => {
+    const handleLeaveGroup = async () => {
         if (!selectedProjectId) return;
         const allProjects = DB.get('projects');
         const pIdx = allProjects.findIndex(p => p.id === selectedProjectId);
@@ -266,16 +372,22 @@ export default function Messages({ params, onNavigate }) {
             if (id === currentUser?.id) return { id, status: 'left' };
             return a;
         });
-
         DB.set('projects', allProjects);
 
-        DB.set('messages', [...DB.get('messages'), {
+        const sysMsg = {
             id: 'm_' + uid(),
-            from: 'system',
-            projectId: selectedProjectId,
+            from_user: 'system',
+            project_id: selectedProjectId,
             text: `${currentUser?.name} qrupdan çıxdı.`,
-            ts: Date.now()
-        }]);
+            ts: Date.now(),
+            read: true,
+        };
+        try {
+            await supabase.from('messages').insert([sysMsg]);
+        } catch (err) {
+            console.error('System message error:', err);
+        }
+        DB.set('messages', [...DB.get('messages'), { id: sysMsg.id, from: 'system', projectId: selectedProjectId, text: sysMsg.text, ts: sysMsg.ts }]);
 
         setSelectedProjectId(null);
         setShowManageTeam(false);
