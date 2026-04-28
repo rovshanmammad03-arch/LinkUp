@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from './services/supabaseClient';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Navbar from './components/layout/Navbar';
@@ -22,6 +23,30 @@ const MAIN_ROUTES = ['dashboard', 'discover', 'messages', 'notifications', 'land
 
 function AppContent() {
     const { currentUser, loading } = useAuth();
+    
+    // Qlobal profil məlumatlarını yüklə və yerli DB-yə əlavə et
+    useEffect(() => {
+        const fetchProfiles = async () => {
+            try {
+                const { data, error } = await supabase.from('profiles').select('*');
+                if (error) throw error;
+                if (data && data.length > 0) {
+                    const localUsers = JSON.parse(localStorage.getItem('lu_users')) || [];
+                    const localUsersMap = new Map(localUsers.map(u => [u.id, u]));
+                    
+                    data.forEach(profile => {
+                        localUsersMap.set(profile.id, { ...localUsersMap.get(profile.id), ...profile });
+                    });
+                    
+                    localStorage.setItem('lu_users', JSON.stringify(Array.from(localUsersMap.values())));
+                }
+            } catch (err) {
+                console.error("Profillər yüklənərkən xəta:", err);
+            }
+        };
+        fetchProfiles();
+    }, []);
+
     const [currentRoute, setCurrentRoute] = useState(() => {
         const saved = localStorage.getItem('currentRoute');
         if (saved) return saved;

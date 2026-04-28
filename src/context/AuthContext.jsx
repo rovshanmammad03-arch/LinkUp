@@ -55,11 +55,57 @@ export function AuthProvider({ children }) {
         if (error) {
             return { success: false, message: error.message };
         }
-        return { success: true, user: mapUser(data.user) };
+        
+        const mappedUser = mapUser(data.user);
+        
+        const newUserProfile = {
+            id: mappedUser.id,
+            email: mappedUser.email,
+            name: mappedUser.name || 'İstifadəçi',
+            university: mappedUser.university || '',
+            field: mappedUser.field || '',
+            level: mappedUser.level || 'Başlanğıc',
+            bio: '',
+            grad: 'from-brand-500 to-purple-500',
+            skills: [],
+            links: [],
+            views: 0,
+            followers: [],
+            following: [],
+            verified: false,
+            createdAt: Date.now()
+        };
+
+        // Supabase profiles cədvəlinə əlavə edirik (qlobal olması üçün)
+        try {
+            await supabase.from('profiles').insert([newUserProfile]);
+        } catch (err) {
+            console.error('Supabase profile insert error:', err);
+        }
+
+        // Yerli testlər üçün də localStorage-a əlavə edirik
+        try {
+            const users = JSON.parse(localStorage.getItem('lu_users')) || [];
+            if (!users.find(u => u.id === mappedUser.id)) {
+                users.push(newUserProfile);
+                localStorage.setItem('lu_users', JSON.stringify(users));
+            }
+        } catch (err) {
+            console.error('LocalStorage update error:', err);
+        }
+
+        return { success: true, user: mappedUser };
     };
 
     const logout = async () => {
-        await supabase.auth.signOut();
+        setCurrentUser(null);
+        localStorage.removeItem('currentRoute');
+        localStorage.removeItem('routeParams');
+        try {
+            await supabase.auth.signOut();
+        } catch (error) {
+            console.error("Logout error:", error);
+        }
     };
 
     const refreshUser = async () => {
