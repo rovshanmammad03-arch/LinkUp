@@ -116,7 +116,8 @@ export default function Messages({ params, onNavigate }) {
             setChatMsgs(msgs);
         }
     }, [currentUser?.id]);
-        if (!currentUser?.id) return;
+
+    const refreshConvos = useCallback(async () => {
 
         // Supabase-dən mesajları çək
         let supabaseMsgs = [];
