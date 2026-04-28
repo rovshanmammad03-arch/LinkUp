@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Icon } from '@iconify/react';
 import { DB, initials } from '../../services/db';
 import { useAuth } from '../../context/AuthContext';
+import { supabase } from '../../services/supabaseClient';
 import CustomSelect from '../common/CustomSelect';
 
 const SUGGESTED_SKILLS = ['Python', 'JavaScript', 'React', 'Figma', 'UI/UX', 'Node.js', 'SMM', 'SEO', 'Flutter', 'Java', 'SQL', 'Photoshop'];
@@ -34,16 +35,32 @@ export default function OnboardingModal({ onDone }) {
 
     const removeSkill = (name) => setSkills(skills.filter(s => s.n !== name));
 
-    const handleDone = () => {
-        const users = DB.get('users');
-        const updated = users.map(u => u.id === currentUser.id
-            ? { ...u, avatar, bio, skills, onboardingDone: true }
-            : u
-        );
-        DB.set('users', updated);
-        const updatedUser = { ...currentUser, avatar, bio, skills, onboardingDone: true };
+    const handleDone = async () => {
+        const updates = { avatar, bio, skills, onboardingDone: true };
+
+        // Supabase profiles cədvəlini yenilə (avatar base64 olduğu üçün ayrıca saxlanır)
+        try {
+            await supabase
+                .from('profiles')
+                .update({ bio, skills, onboardingDone: true })
+                .eq('id', currentUser.id);
+        } catch (err) {
+            console.error('Supabase onboarding update error:', err);
+        }
+
+        // localStorage-ı da sinxronlaşdır (avatar daxil)
+        try {
+            const users = DB.get('users');
+            const updated = users.map(u =>
+                u.id === currentUser.id ? { ...u, ...updates } : u
+            );
+            DB.set('users', updated);
+        } catch (err) {
+            console.error('localStorage onboarding update error:', err);
+        }
+
+        const updatedUser = { ...currentUser, ...updates };
         setCurrentUser(updatedUser);
-        DB.setOne('session', { userId: currentUser.id });
         onDone();
     };
 

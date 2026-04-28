@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { isValidEmail } from '../services/verification';
 
-export default function Register({ onNavigate }) {
+export default function Register({ onNavigate, onRegisterDone }) {
     const { t } = useTranslation();
     const { register } = useAuth();
     
@@ -49,7 +49,8 @@ export default function Register({ onNavigate }) {
         }
 
         setLoading(false);
-        onNavigate('verify-email', { email });
+        if (onRegisterDone) onRegisterDone();
+        onNavigate('dashboard');
     };
 
     return (
