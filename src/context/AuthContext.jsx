@@ -94,6 +94,11 @@ export function AuthProvider({ children }) {
             console.error('LocalStorage update error:', err);
         }
 
+        // Qeydiyyat dərhal uğurlu olubsa (email təsdiqi tələb olunmursa), vəziyyəti dərhal yeniləyirik
+        if (data.session) {
+            setCurrentUser(mappedUser);
+        }
+
         return { success: true, user: mappedUser, session: data.session };
     };
 
