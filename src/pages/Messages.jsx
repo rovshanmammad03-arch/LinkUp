@@ -33,6 +33,13 @@ export default function Messages({ params, onNavigate }) {
     const [addMemberError, setAddMemberError] = useState('');
     const scrollRef = useRef();
     const imageInputRef = useRef();
+    const selectedUserIdRef = useRef(selectedUserId);
+    const selectedProjectIdRef = useRef(selectedProjectId);
+    const tabRef = useRef(tab);
+
+    useEffect(() => { selectedUserIdRef.current = selectedUserId; }, [selectedUserId]);
+    useEffect(() => { selectedProjectIdRef.current = selectedProjectId; }, [selectedProjectId]);
+    useEffect(() => { tabRef.current = tab; }, [tab]);
 
     const markMessagesRead = async (userId, projectId) => {
         // Supabase-də oxunmuş et
@@ -209,6 +216,9 @@ export default function Messages({ params, onNavigate }) {
                 table: 'messages',
             }, (payload) => {
                 const m = payload.new;
+                const isForMe = m.to_user === currentUser.id || m.project_id || m.from_user === currentUser.id;
+                if (!isForMe) return;
+
                 const newMsg = {
                     id: m.id,
                     from: m.from_user,
@@ -221,30 +231,30 @@ export default function Messages({ params, onNavigate }) {
                     ts: m.ts,
                 };
 
-                const isForMe = m.to_user === currentUser.id || m.project_id || m.from_user === currentUser.id;
-                if (!isForMe) return;
+                // Ref-lərdən aktiv söhbəti oxu (həmişə ən son dəyər)
+                const activeUserId = selectedUserIdRef.current;
+                const activeProjectId = selectedProjectIdRef.current;
+                const activeTab = tabRef.current;
 
-                // Aktiv söhbətə aiddirsə birbaşa əlavə et (sürətli)
-                const isActivePersonal = !m.project_id &&
-                    ((m.from_user === currentUser.id && m.to_user === selectedUserId) ||
-                     (m.from_user === selectedUserId && m.to_user === currentUser.id));
-                const isActiveProject = m.project_id && m.project_id === selectedProjectId;
+                const isActivePersonal = activeTab === 'personal' && !m.project_id &&
+                    ((m.from_user === currentUser.id && m.to_user === activeUserId) ||
+                     (m.from_user === activeUserId && m.to_user === currentUser.id));
+                const isActiveProject = activeTab === 'projects' && m.project_id && m.project_id === activeProjectId;
 
                 if (isActivePersonal || isActiveProject) {
                     setChatMsgs(prev => {
-                        // Dublikat yoxla (optimistic update-dən)
                         if (prev.find(p => p.id === newMsg.id)) return prev;
                         return [...prev, newMsg];
                     });
                 }
 
-                // Sidebar-ı da yenilə (unread count üçün)
+                // Sidebar unread count yenilə
                 refreshConvos();
             })
             .subscribe();
 
         return () => supabase.removeChannel(channel);
-    }, [currentUser?.id, selectedUserId, selectedProjectId, refreshConvos]);
+    }, [currentUser?.id, refreshConvos]);
 
     useEffect(() => {
         if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
