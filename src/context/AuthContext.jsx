@@ -57,6 +57,11 @@ export function AuthProvider({ children }) {
         }
         
         const mappedUser = mapUser(data.user);
+
+        // Əgər session varsa (email təsdiqi tələb olunmursa), currentUser-i dərhal set et
+        if (data.session) {
+            setCurrentUser(mappedUser);
+        }
         
         const newUserProfile = {
             id: mappedUser.id,
