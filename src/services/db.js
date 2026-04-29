@@ -1,3 +1,5 @@
+import { supabase } from './supabaseClient';
+
 export const DB = {
     get: function(k) { try { return JSON.parse(localStorage.getItem('lu_' + k)) || [] } catch(e) { return [] } },
     set: function(k, v) { try { localStorage.setItem('lu_' + k, JSON.stringify(v)) } catch(e) { console.error('localStorage yazma xətası:', e); throw e; } },
@@ -101,8 +103,8 @@ export function seedIfEmpty() {
 
 export function addNotification({ toUserId, fromUserId, type, text, route, routeParams }) {
     if (!toUserId || !fromUserId || toUserId === fromUserId) return;
-    const notifs = DB.get('notifications');
-    notifs.unshift({
+    
+    const notif = {
         id: 'n_' + uid(),
         toUserId,
         fromUserId,
@@ -112,9 +114,27 @@ export function addNotification({ toUserId, fromUserId, type, text, route, route
         routeParams: routeParams || {},
         read: false,
         ts: Date.now()
-    });
-    // Max 50 notification saxla
+    };
+
+    // localStorage-a yaz (fallback)
+    const notifs = DB.get('notifications');
+    notifs.unshift(notif);
     DB.set('notifications', notifs.slice(0, 50));
+
+    // Supabase-ə yaz (async, gözləmirik)
+    supabase.from('notifications').insert([{
+        id: notif.id,
+        to_user_id: toUserId,
+        from_user_id: fromUserId,
+        type,
+        text,
+        route: notif.route,
+        route_params: notif.routeParams,
+        read: false,
+        ts: notif.ts,
+    }]).then(({ error }) => {
+        if (error) console.error('Supabase notification insert error:', error);
+    });
 }
 
 /**

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { DB, getUser, initials, timeAgo } from '../services/db';
+import { supabase } from '../services/supabaseClient';
 import { Icon } from '@iconify/react';
 import { useTranslation } from 'react-i18next';
 
@@ -19,26 +20,97 @@ export default function Notifications({ onNavigate }) {
   const { t } = useTranslation();
   const [notifications, setNotifications] = useState([]);
 
+  const loadNotifications = async () => {
+    if (!currentUser?.id) return;
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('to_user_id', currentUser.id)
+        .order('ts', { ascending: false })
+        .limit(50);
+
+      if (!error && data) {
+        const mapped = data.map(n => ({
+          id: n.id,
+          toUserId: n.to_user_id,
+          fromUserId: n.from_user_id,
+          type: n.type,
+          text: n.text,
+          route: n.route,
+          routeParams: n.route_params || {},
+          read: n.read,
+          ts: n.ts,
+        }));
+        setNotifications(mapped);
+        // localStorage sinxronlaşdır
+        DB.set('notifications', mapped);
+
+        // Oxunmamışları oxunmuş et
+        const unreadIds = data.filter(n => !n.read).map(n => n.id);
+        if (unreadIds.length > 0) {
+          await supabase
+            .from('notifications')
+            .update({ read: true })
+            .in('id', unreadIds);
+        }
+      }
+    } catch (err) {
+      console.error('Notifications load error:', err);
+      // Fallback: localStorage
+      const all = DB.get('notifications');
+      setNotifications(all.filter(n => n.toUserId === currentUser?.id).sort((a, b) => b.ts - a.ts));
+    }
+  };
+
   useEffect(() => {
-    const all = DB.get('notifications');
-    const mine = all
-      .filter(n => n.toUserId === currentUser?.id)
-      .sort((a, b) => b.ts - a.ts);
-    setNotifications(mine);
+    loadNotifications();
+  }, [currentUser?.id]);
 
-    const updated = all.map(n =>
-      n.toUserId === currentUser?.id ? { ...n, read: true } : n
-    );
-    DB.set('notifications', updated);
-  }, [currentUser]);
+  // Real-time subscription
+  useEffect(() => {
+    if (!currentUser?.id) return;
 
-  const markAllRead = () => {
-    const all = DB.get('notifications');
-    const updated = all.map(n =>
-      n.toUserId === currentUser?.id ? { ...n, read: true } : n
-    );
-    DB.set('notifications', updated);
+    const channel = supabase
+      .channel('notifications-realtime')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+        filter: `to_user_id=eq.${currentUser.id}`,
+      }, (payload) => {
+        const n = payload.new;
+        const newNotif = {
+          id: n.id,
+          toUserId: n.to_user_id,
+          fromUserId: n.from_user_id,
+          type: n.type,
+          text: n.text,
+          route: n.route,
+          routeParams: n.route_params || {},
+          read: n.read,
+          ts: n.ts,
+        };
+        setNotifications(prev => [newNotif, ...prev]);
+      })
+      .subscribe();
+
+    return () => supabase.removeChannel(channel);
+  }, [currentUser?.id]);
+
+  const markAllRead = async () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    try {
+      await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('to_user_id', currentUser.id);
+    } catch (err) {
+      console.error('Mark all read error:', err);
+    }
+    // localStorage sinxronlaşdır
+    const all = DB.get('notifications');
+    DB.set('notifications', all.map(n => n.toUserId === currentUser?.id ? { ...n, read: true } : n));
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;

@@ -51,8 +51,29 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
 
   useEffect(() => {
     if (!currentUser) return;
-    const all = (() => { try { return JSON.parse(localStorage.getItem('lu_notifications')) || []; } catch(e) { return []; } })();
-    setNotifs(all.filter(n => n.toUserId === currentUser.id));
+    // Supabase-dən oxunmamış bildirişləri çək
+    supabase
+      .from('notifications')
+      .select('id, read, to_user_id, from_user_id, type, text, route, route_params, ts')
+      .eq('to_user_id', currentUser.id)
+      .order('ts', { ascending: false })
+      .limit(20)
+      .then(({ data }) => {
+        if (data) {
+          const mapped = data.map(n => ({
+            id: n.id,
+            toUserId: n.to_user_id,
+            fromUserId: n.from_user_id,
+            type: n.type,
+            text: n.text,
+            route: n.route,
+            routeParams: n.route_params || {},
+            read: n.read,
+            ts: n.ts,
+          }));
+          setNotifs(mapped);
+        }
+      });
   }, [currentUser, notifOpen, currentRoute]);
 
   useEffect(() => {
