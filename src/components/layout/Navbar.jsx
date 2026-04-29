@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { Icon } from '@iconify/react';
 import { initials, DB } from '../../services/db';
+import { supabase } from '../../services/supabaseClient';
 import { useTranslation } from 'react-i18next';
 import Tooltip from '../common/Tooltip';
 
@@ -23,6 +24,7 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
   const [langOpen, setLangOpen] = useState(false);
   const [notifs, setNotifs] = useState([]);
   const [unreadMsgCount, setUnreadMsgCount] = useState(0);
+  const [navAvatar, setNavAvatar] = useState(null);
 
   const [supportModalOpen, setSupportModalOpen] = useState(false);
   const [supportSubject, setSupportSubject] = useState('');
@@ -34,6 +36,18 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
 
   const settingsRef = useRef(null);
   const notifRef = useRef(null);
+
+  useEffect(() => {
+    if (!currentUser?.id) return;
+    supabase
+      .from('profiles')
+      .select('avatar')
+      .eq('id', currentUser.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.avatar) setNavAvatar(data.avatar);
+      });
+  }, [currentUser?.id, currentRoute]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -266,7 +280,7 @@ export default function Navbar({ onNavigate, currentRoute, canGoBack, onBack }) 
           {/* Profile */}
           <button onClick={() => onNavigate('profile', {}, true)} className="flex items-center gap-2 pl-1 pr-1 py-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
             <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${currentUser.grad || 'from-brand-500 to-purple-500'} flex items-center justify-center text-[10px] text-white font-bold overflow-hidden border border-black/10 dark:border-white/10`}>
-              {currentUser.avatar ? <img src={currentUser.avatar} className="w-full h-full object-cover" /> : initials(currentUser.name)}
+              {(navAvatar || currentUser.avatar) ? <img src={navAvatar || currentUser.avatar} className="w-full h-full object-cover" /> : initials(currentUser.name)}
             </div>
             <span className="text-sm font-medium hidden sm:inline">{currentUser.name.split(' ')[0]}</span>
           </button>
