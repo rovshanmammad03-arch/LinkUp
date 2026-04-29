@@ -116,9 +116,7 @@ export default function PostCard({ post, index, onDelete, onUpdate, onNavigate }
     };
 
     const handleCommentAdded = () => {
-        const posts = DB.get('posts');
-        const p = posts.find(x => x.id === post.id);
-        if (p) setCommentCount(p.comments?.length || 0);
+        // Comment count will be updated via postsService
     };
 
     const handleCopy = async (code) => {

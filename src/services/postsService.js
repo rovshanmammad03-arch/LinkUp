@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient';
-import { DB, uid } from './db';
+import { uid } from './db';
 
 // Supabase formatını lokal formata çevir
 const mapPost = (p) => ({
@@ -36,11 +36,10 @@ export const postsService = {
                 .select('*')
                 .order('created_at', { ascending: false });
             if (error) throw error;
-            const posts = data.map(mapPost);
-            DB.set('posts', posts);
-            return posts;
+            return data.map(mapPost);
         } catch (err) {
             console.error('postsService.getAll error:', err);
+            // Fallback: localStorage
             return DB.get('posts');
         }
     },
@@ -66,9 +65,6 @@ export const postsService = {
         } catch (err) {
             console.error('postsService.create error:', err);
         }
-        // localStorage-a da yaz
-        const posts = DB.get('posts');
-        DB.set('posts', [newPost, ...posts]);
         return newPost;
     },
 
@@ -78,22 +74,18 @@ export const postsService = {
             const dbUpdates = {};
             if (updates.caption !== undefined) dbUpdates.caption = updates.caption;
             if (updates.image !== undefined) dbUpdates.image = updates.image;
-            const { error } = await supabase
+            const { data, error } = await supabase
                 .from('posts')
                 .update(dbUpdates)
-                .eq('id', postId);
+                .eq('id', postId)
+                .select()
+                .single();
             if (error) throw error;
+            return mapPost(data);
         } catch (err) {
             console.error('postsService.update error:', err);
+            return null;
         }
-        const posts = DB.get('posts');
-        const idx = posts.findIndex(p => p.id === postId);
-        if (idx !== -1) {
-            posts[idx] = { ...posts[idx], ...updates };
-            DB.set('posts', posts);
-            return posts[idx];
-        }
-        return null;
     },
 
     // Post sil
@@ -107,82 +99,85 @@ export const postsService = {
         } catch (err) {
             console.error('postsService.delete error:', err);
         }
-        const posts = DB.get('posts').filter(p => p.id !== postId);
-        DB.set('posts', posts);
     },
 
     // Like toggle
     async toggleLike(postId, userId) {
-        const posts = DB.get('posts');
-        const p = posts.find(x => x.id === postId);
-        if (!p) return null;
-
-        const liked = p.likes.includes(userId);
-        const newLikes = liked
-            ? p.likes.filter(id => id !== userId)
-            : [...p.likes, userId];
-
         try {
+            const { data: post, error: fetchErr } = await supabase
+                .from('posts')
+                .select('likes')
+                .eq('id', postId)
+                .single();
+            if (fetchErr) throw fetchErr;
+
+            const likes = Array.isArray(post.likes) ? post.likes : [];
+            const liked = likes.includes(userId);
+            const newLikes = liked ? likes.filter(id => id !== userId) : [...likes, userId];
+
             const { error } = await supabase
                 .from('posts')
                 .update({ likes: newLikes })
                 .eq('id', postId);
             if (error) throw error;
+
+            return { liked: !liked, likes: newLikes };
         } catch (err) {
             console.error('postsService.toggleLike error:', err);
+            return null;
         }
-
-        const idx = posts.findIndex(x => x.id === postId);
-        posts[idx] = { ...posts[idx], likes: newLikes };
-        DB.set('posts', posts);
-        return { liked: !liked, likes: newLikes };
     },
 
     // Şərh əlavə et
     async addComment(postId, comment) {
-        const posts = DB.get('posts');
-        const p = posts.find(x => x.id === postId);
-        if (!p) return null;
-
-        const newComments = [...(p.comments || []), comment];
-
         try {
-            const { error } = await supabase
+            const { data: post, error: fetchErr } = await supabase
+                .from('posts')
+                .select('comments')
+                .eq('id', postId)
+                .single();
+            if (fetchErr) throw fetchErr;
+
+            const comments = Array.isArray(post.comments) ? post.comments : [];
+            const newComments = [...comments, comment];
+
+            const { data, error } = await supabase
                 .from('posts')
                 .update({ comments: newComments })
-                .eq('id', postId);
+                .eq('id', postId)
+                .select()
+                .single();
             if (error) throw error;
+            return mapPost(data);
         } catch (err) {
             console.error('postsService.addComment error:', err);
+            return null;
         }
-
-        const idx = posts.findIndex(x => x.id === postId);
-        posts[idx] = { ...posts[idx], comments: newComments };
-        DB.set('posts', posts);
-        return posts[idx];
     },
 
     // Şərh sil
     async deleteComment(postId, commentId) {
-        const posts = DB.get('posts');
-        const p = posts.find(x => x.id === postId);
-        if (!p) return null;
-
-        const newComments = p.comments.filter(c => c.id !== commentId);
-
         try {
-            const { error } = await supabase
+            const { data: post, error: fetchErr } = await supabase
+                .from('posts')
+                .select('comments')
+                .eq('id', postId)
+                .single();
+            if (fetchErr) throw fetchErr;
+
+            const newComments = (post.comments || []).filter(c => c.id !== commentId);
+
+            const { data, error } = await supabase
                 .from('posts')
                 .update({ comments: newComments })
-                .eq('id', postId);
+                .eq('id', postId)
+                .select()
+                .single();
             if (error) throw error;
+            return mapPost(data);
         } catch (err) {
             console.error('postsService.deleteComment error:', err);
+            return null;
         }
-
-        const idx = posts.findIndex(x => x.id === postId);
-        posts[idx] = { ...posts[idx], comments: newComments };
-        DB.set('posts', posts);
-        return posts[idx];
     },
 };

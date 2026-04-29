@@ -48,7 +48,7 @@ export default function CommentsModal({ postId, onClose, onCommentAdded }) {
         setReplyingTo(null);
         if (onCommentAdded) onCommentAdded();
 
-        const p = DB.get('posts').find(x => x.id === postId);
+        const p = DB.get('posts').find(x => x.id === postId) || { authorId: null };
         addNotification({
             toUserId: replyingTo ? getUser(replyingTo.commentId)?.id || p?.authorId : p?.authorId,
             fromUserId: currentUser.id,
