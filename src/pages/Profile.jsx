@@ -117,8 +117,28 @@ export default function Profile({ params, onNavigate }) {
         if (isOwnProfile) {
             setTargetUser(currentUser);
         } else {
-            const user = DB.get('users').find(u => u.id === params.userId);
-            setTargetUser(user);
+            // Əvvəlcə localStorage-dan göstər (sürətli)
+            const localUser = DB.get('users').find(u => u.id === params.userId);
+            if (localUser) setTargetUser(localUser);
+
+            // Sonra Supabase-dən ən son məlumatı çək
+            supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', params.userId)
+                .single()
+                .then(({ data, error }) => {
+                    if (!error && data) {
+                        // localStorage-ı yenilə
+                        const users = DB.get('users');
+                        const idx = users.findIndex(u => u.id === data.id);
+                        if (idx !== -1) {
+                            users[idx] = { ...users[idx], ...data };
+                            DB.set('users', users);
+                        }
+                        setTargetUser(prev => ({ ...prev, ...data }));
+                    }
+                });
         }
     }, [params?.userId, currentUser]);
 
@@ -148,14 +168,14 @@ export default function Profile({ params, onNavigate }) {
         });
     }, [targetUser?.id, tab]);
 
-    const handleFollow = (uid) => {
+    const handleFollow = async (uid) => {
         const targetId = uid || targetUser.id;
         if (!currentUser || targetId === currentUser.id) return;
-        
+
         const allUsers = DB.get('users');
         const meIdx = allUsers.findIndex(u => u.id === currentUser.id);
         const targetIdx = allUsers.findIndex(u => u.id === targetId);
-        
+
         if (meIdx === -1 || targetIdx === -1) return;
 
         const isFollowing = allUsers[meIdx].following?.includes(targetId);
@@ -168,18 +188,31 @@ export default function Profile({ params, onNavigate }) {
             allUsers[targetIdx].followers = [...(allUsers[targetIdx].followers || []), currentUser.id];
         }
 
+        // localStorage sinxronlaşdır
         DB.set('users', allUsers);
-        
-        // Update local state for targetUser if we are on their page
+
+        // Supabase-ə yaz
+        try {
+            await Promise.all([
+                supabase.from('profiles')
+                    .update({ following: allUsers[meIdx].following })
+                    .eq('id', currentUser.id),
+                supabase.from('profiles')
+                    .update({ followers: allUsers[targetIdx].followers })
+                    .eq('id', targetId),
+            ]);
+        } catch (err) {
+            console.error('Follow update error:', err);
+        }
+
         if (targetId === targetUser.id) {
             setTargetUser({ ...allUsers[targetIdx] });
         }
-        
-        // Update userList data if modal is open to reflect live changes
+
         if (userList.open) {
-            setUserList(prev => ({ ...prev })); // Trigger re-render
+            setUserList(prev => ({ ...prev }));
         }
-        
+
         refreshUser();
     };
 
