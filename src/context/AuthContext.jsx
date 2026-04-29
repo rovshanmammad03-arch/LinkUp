@@ -17,8 +17,17 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         // Get initial session
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setCurrentUser(mapUser(session?.user));
+        supabase.auth.getSession().then(async ({ data: { session } }) => {
+            if (session?.user) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+                setCurrentUser({ ...mapUser(session.user), ...(profile || {}) });
+            } else {
+                setCurrentUser(null);
+            }
             setLoading(false);
         });
 
