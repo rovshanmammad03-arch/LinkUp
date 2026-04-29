@@ -18,12 +18,35 @@ export default function OnboardingModal({ onDone }) {
     const [skillLevel, setSkillLevel] = useState('Başlanğıc');
     const avatarRef = useRef();
 
-    const handleAvatarChange = (e) => {
+    const handleAvatarChange = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => setAvatar(ev.target.result);
-        reader.readAsDataURL(file);
+
+        if (file.size > 2 * 1024 * 1024) {
+            alert('Şəkil 2MB-dan böyük ola bilməz');
+            return;
+        }
+
+        try {
+            const filePath = `${currentUser.id}/avatar_${Date.now()}.${file.name.split('.').pop()}`;
+            const { error: uploadError } = await supabase.storage
+                .from('avatars')
+                .upload(filePath, file, { upsert: true });
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('avatars')
+                .getPublicUrl(filePath);
+
+            setAvatar(publicUrl);
+        } catch (err) {
+            console.error('Onboarding avatar upload error:', err);
+            // Fallback: base64
+            const reader = new FileReader();
+            reader.onload = (ev) => setAvatar(ev.target.result);
+            reader.readAsDataURL(file);
+        }
     };
 
     const addSkill = (name = skillName) => {

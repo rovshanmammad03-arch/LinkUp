@@ -237,30 +237,45 @@ export default function Profile({ params, onNavigate }) {
         inp.onchange = async (e) => {
             const file = e.target.files[0];
             if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async (ev) => {
-                const avatarData = ev.target.result;
 
-                // Supabase-ə yaz
-                try {
-                    await supabase
-                        .from('profiles')
-                        .update({ avatar: avatarData })
-                        .eq('id', currentUser.id);
-                } catch (err) {
-                    console.error('Supabase avatar update error:', err);
-                }
+            // Fayl ölçüsünü yoxla (max 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Şəkil 2MB-dan böyük ola bilməz');
+                return;
+            }
+
+            try {
+                // Supabase Storage-a yüklə
+                const filePath = `${currentUser.id}/avatar_${Date.now()}.${file.name.split('.').pop()}`;
+                const { error: uploadError } = await supabase.storage
+                    .from('avatars')
+                    .upload(filePath, file, { upsert: true });
+
+                if (uploadError) throw uploadError;
+
+                // Public URL al
+                const { data: { publicUrl } } = supabase.storage
+                    .from('avatars')
+                    .getPublicUrl(filePath);
+
+                // Profiles cədvəlini yenilə
+                await supabase
+                    .from('profiles')
+                    .update({ avatar: publicUrl })
+                    .eq('id', currentUser.id);
 
                 // localStorage sinxronlaşdır
                 const users = DB.get('users');
                 const idx = users.findIndex(u => u.id === currentUser.id);
                 if (idx !== -1) {
-                    users[idx].avatar = avatarData;
+                    users[idx].avatar = publicUrl;
                     DB.set('users', users);
                 }
-                setCurrentUser(prev => ({ ...prev, avatar: avatarData }));
-            };
-            reader.readAsDataURL(file);
+                setCurrentUser(prev => ({ ...prev, avatar: publicUrl }));
+            } catch (err) {
+                console.error('Avatar upload error:', err);
+                alert('Şəkil yüklənərkən xəta baş verdi');
+            }
         };
         inp.click();
     };
@@ -272,30 +287,45 @@ export default function Profile({ params, onNavigate }) {
         inp.onchange = async (e) => {
             const file = e.target.files[0];
             if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async (ev) => {
-                const coverData = ev.target.result;
 
-                // Supabase-ə yaz
-                try {
-                    await supabase
-                        .from('profiles')
-                        .update({ cover: coverData })
-                        .eq('id', currentUser.id);
-                } catch (err) {
-                    console.error('Supabase cover update error:', err);
-                }
+            // Fayl ölçüsünü yoxla (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Şəkil 5MB-dan böyük ola bilməz');
+                return;
+            }
+
+            try {
+                // Supabase Storage-a yüklə
+                const filePath = `${currentUser.id}/cover_${Date.now()}.${file.name.split('.').pop()}`;
+                const { error: uploadError } = await supabase.storage
+                    .from('avatars')
+                    .upload(filePath, file, { upsert: true });
+
+                if (uploadError) throw uploadError;
+
+                // Public URL al
+                const { data: { publicUrl } } = supabase.storage
+                    .from('avatars')
+                    .getPublicUrl(filePath);
+
+                // Profiles cədvəlini yenilə
+                await supabase
+                    .from('profiles')
+                    .update({ cover: publicUrl })
+                    .eq('id', currentUser.id);
 
                 // localStorage sinxronlaşdır
                 const users = DB.get('users');
                 const idx = users.findIndex(u => u.id === currentUser.id);
                 if (idx !== -1) {
-                    users[idx].cover = coverData;
+                    users[idx].cover = publicUrl;
                     DB.set('users', users);
                 }
-                setCurrentUser(prev => ({ ...prev, cover: coverData }));
-            };
-            reader.readAsDataURL(file);
+                setCurrentUser(prev => ({ ...prev, cover: publicUrl }));
+            } catch (err) {
+                console.error('Cover upload error:', err);
+                alert('Şəkil yüklənərkən xəta baş verdi');
+            }
         };
         inp.click();
     };
