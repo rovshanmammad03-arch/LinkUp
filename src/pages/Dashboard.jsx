@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { DB } from '../services/db';
+import { postsService } from '../services/postsService';
 import PostCard from '../components/feed/PostCard';
 import { Icon } from '@iconify/react';
 import { useTranslation } from 'react-i18next';
@@ -14,17 +15,19 @@ export default function Dashboard({ onNavigate }) {
 
     useEffect(() => {
         refreshUser();
-        const allPosts = DB.get('posts').sort((a, b) => b.createdAt - a.createdAt);
-        
-        if (feedType === 'following' && currentUser) {
-            const filteredPosts = allPosts.filter(p => currentUser.following?.includes(p.authorId) || p.authorId === currentUser.id);
-            setPosts(filteredPosts);
-        } else {
-            setPosts(allPosts);
-        }
-        
-        setLoading(false);
-    }, [feedType, currentUser]);
+        const loadPosts = async () => {
+            setLoading(true);
+            const allPosts = await postsService.getAll();
+            if (feedType === 'following' && currentUser) {
+                const myFollowing = Array.isArray(currentUser.following) ? currentUser.following : [];
+                setPosts(allPosts.filter(p => myFollowing.includes(p.authorId) || p.authorId === currentUser.id));
+            } else {
+                setPosts(allPosts);
+            }
+            setLoading(false);
+        };
+        loadPosts();
+    }, [feedType, currentUser?.id]);
 
     const profileCompletion = (u) => {
         if (!u) return 0;

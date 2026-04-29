@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { DB, initials, addNotification } from '../services/db';
+import { postsService } from '../services/postsService';
 import { Icon } from '@iconify/react';
 import { useScrollLock } from '../hooks/useScrollLock';
 import PostCard from '../components/feed/PostCard';
@@ -173,28 +174,27 @@ export default function Profile({ params, onNavigate }) {
 
     useEffect(() => {
         if (!targetUser) return;
-        
-        const allPosts = DB.get('posts');
-        let filtered = [];
-        
-        if (tab === 'posts') {
-            filtered = allPosts.filter(p => p.authorId === targetUser.id);
-        } else if (tab === 'liked') {
-            filtered = allPosts.filter(p => p.likes?.includes(targetUser.id));
-        }
-        
-        setPosts(filtered);
 
-        // Load this user's projects (authored + accepted participant)
-        const allProjects = DB.get('projects');
-        setUserProjects(getParticipantProjects(targetUser.id, allProjects));
+        const loadData = async () => {
+            const allPosts = await postsService.getAll();
+            let filtered = [];
+            if (tab === 'posts') {
+                filtered = allPosts.filter(p => p.authorId === targetUser.id);
+            } else if (tab === 'liked') {
+                filtered = allPosts.filter(p => p.likes?.includes(targetUser.id));
+            }
+            setPosts(filtered);
 
-        // Stats are based on user's own posts, regardless of active tab view
-        setStats({
-            posts: allPosts.filter(p => p.authorId === targetUser.id).length,
-            following: Array.isArray(targetUser.following) ? targetUser.following.length : 0,
-            followers: Array.isArray(targetUser.followers) ? targetUser.followers.length : 0
-        });
+            const allProjects = DB.get('projects');
+            setUserProjects(getParticipantProjects(targetUser.id, allProjects));
+
+            setStats({
+                posts: allPosts.filter(p => p.authorId === targetUser.id).length,
+                following: Array.isArray(targetUser.following) ? targetUser.following.length : 0,
+                followers: Array.isArray(targetUser.followers) ? targetUser.followers.length : 0
+            });
+        };
+        loadData();
     }, [targetUser, tab]);
 
     const handleFollow = async (uid) => {

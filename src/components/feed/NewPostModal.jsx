@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { DB, uid, initials, parseTechnologies } from '../../services/db';
+import { postsService } from '../../services/postsService';
 import { Icon } from '@iconify/react';
 import { useTranslation } from 'react-i18next';
 import Button from '../common/Button';
@@ -250,21 +251,15 @@ export default function NewPostModal({ onClose, onPostCreated }) {
         reader.readAsDataURL(file);
     };
 
-    const handlePost = () => {
+    const handlePost = async () => {
         if (!caption.trim()) return;
-        const posts = DB.get('posts');
-        const newPost = {
-            id: 'post_' + uid(),
+        await postsService.create({
             authorId: currentUser.id,
             caption,
             type: postType,
             image,
             metadata,
-            likes: [],
-            comments: [],
-            createdAt: Date.now()
-        };
-        DB.set('posts', [newPost, ...posts]);
+        });
         if (onPostCreated) onPostCreated();
         onClose();
     };

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Icon } from '@iconify/react';
 import { getUser, timeAgo, initials, DB, addNotification } from '../../services/db';
+import { postsService } from '../../services/postsService';
 import CommentsModal from './CommentsModal';
 import SharePostModal from './SharePostModal';
 import { useScrollLock } from '../../hooks/useScrollLock';
@@ -83,39 +84,26 @@ export default function PostCard({ post, index, onDelete, onUpdate, onNavigate }
 
     useScrollLock(showComments || showDeleteModal || showEditModal || showShareModal);
 
-    const handleEditPost = () => {
-        const posts = DB.get('posts');
-        const pIndex = posts.findIndex(p => p.id === post.id);
-        if (pIndex > -1) {
-            posts[pIndex].caption = editCaption;
-            posts[pIndex].image = editImage;
-            DB.set('posts', posts);
-            if (onUpdate) onUpdate({ ...posts[pIndex] });
-        }
+    const handleEditPost = async () => {
+        const updated = await postsService.update(post.id, { caption: editCaption, image: editImage });
+        if (updated && onUpdate) onUpdate(updated);
         setShowEditModal(false);
     };
 
-    const handleDeletePost = () => {
-        const posts = DB.get('posts');
-        const updatedPosts = posts.filter(p => p.id !== post.id);
-        DB.set('posts', updatedPosts);
+    const handleDeletePost = async () => {
+        await postsService.delete(post.id);
         if (onDelete) onDelete(post.id);
         setShowDropdown(false);
         setShowDeleteModal(false);
     };
 
-    const toggleLike = () => {
+    const toggleLike = async () => {
         if (!currentUser) return;
-        const posts = DB.get('posts');
-        const p = posts.find(x => x.id === post.id);
-        if (!p) return;
-        
-        if (!p.likes) p.likes = [];
-        const idx = p.likes.indexOf(currentUser.id);
-        if (idx === -1) {
-            p.likes.push(currentUser.id);
-            setLiked(true);
-            setLikeCount(prev => prev + 1);
+        const result = await postsService.toggleLike(post.id, currentUser.id);
+        if (!result) return;
+        setLiked(result.liked);
+        setLikeCount(result.likes.length);
+        if (result.liked) {
             addNotification({
                 toUserId: post.authorId,
                 fromUserId: currentUser.id,
@@ -124,12 +112,7 @@ export default function PostCard({ post, index, onDelete, onUpdate, onNavigate }
                 route: 'profile',
                 routeParams: { userId: currentUser.id },
             });
-        } else {
-            p.likes.splice(idx, 1);
-            setLiked(false);
-            setLikeCount(prev => prev - 1);
         }
-        DB.set('posts', posts);
     };
 
     const handleCommentAdded = () => {

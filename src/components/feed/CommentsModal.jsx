@@ -1,13 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Icon } from '@iconify/react';
-import { DB, getUser, timeAgo, initials, addNotification } from '../../services/db';
+import { DB, getUser, timeAgo, initials, addNotification, uid } from '../../services/db';
+import { postsService } from '../../services/postsService';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { useTranslation } from 'react-i18next';
-
-function uid() {
-    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-}
 
 export default function CommentsModal({ postId, onClose, onCommentAdded }) {
     const { currentUser } = useAuth();
@@ -32,32 +29,28 @@ export default function CommentsModal({ postId, onClose, onCommentAdded }) {
         if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
     }, [post]);
 
-    const submitComment = (e) => {
+    const submitComment = async (e) => {
         e.preventDefault();
         const trimmed = text.trim();
         if (!trimmed || !currentUser) return;
 
-        const posts = DB.get('posts');
-        const p = posts.find(x => x.id === postId);
-        if (!p) return;
-        if (!p.comments) p.comments = [];
-
-        p.comments.push({
+        const comment = {
             id: uid(),
             userId: currentUser.id,
             text: trimmed,
             ts: Date.now(),
             parentId: replyingTo?.commentId || null,
-        });
+        };
 
-        DB.set('posts', posts);
+        const updated = await postsService.addComment(postId, comment);
+        if (updated) setPost(updated);
         setText('');
         setReplyingTo(null);
-        loadPost();
         if (onCommentAdded) onCommentAdded();
 
+        const p = DB.get('posts').find(x => x.id === postId);
         addNotification({
-            toUserId: replyingTo ? getUser(replyingTo.commentId)?.id || p.authorId : p.authorId,
+            toUserId: replyingTo ? getUser(replyingTo.commentId)?.id || p?.authorId : p?.authorId,
             fromUserId: currentUser.id,
             type: replyingTo ? 'reply' : 'comment',
             text: replyingTo ? 'şərhinə cavab verdi' : 'paylaşımına şərh yazdı',
@@ -66,13 +59,9 @@ export default function CommentsModal({ postId, onClose, onCommentAdded }) {
         });
     };
 
-    const deleteComment = (commentId) => {
-        const posts = DB.get('posts');
-        const p = posts.find(x => x.id === postId);
-        if (!p) return;
-        p.comments = p.comments.filter(c => c.id !== commentId);
-        DB.set('posts', posts);
-        loadPost();
+    const deleteComment = async (commentId) => {
+        const updated = await postsService.deleteComment(postId, commentId);
+        if (updated) setPost(updated);
         if (onCommentAdded) onCommentAdded();
     };
 
