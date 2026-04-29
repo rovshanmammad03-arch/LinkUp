@@ -191,7 +191,16 @@ export default function Profile({ params, onNavigate }) {
         // localStorage sinxronlaşdır
         DB.set('users', allUsers);
 
-        // Supabase-ə yaz
+        // UI-ı dərhal yenilə (optimistic)
+        setCurrentUser(prev => ({ ...prev, following: allUsers[meIdx].following }));
+        if (targetId === targetUser.id) {
+            setTargetUser({ ...allUsers[targetIdx] });
+        }
+        if (userList.open) {
+            setUserList(prev => ({ ...prev }));
+        }
+
+        // Supabase-ə yaz (arxa planda)
         try {
             await Promise.all([
                 supabase.from('profiles')
@@ -204,16 +213,6 @@ export default function Profile({ params, onNavigate }) {
         } catch (err) {
             console.error('Follow update error:', err);
         }
-
-        if (targetId === targetUser.id) {
-            setTargetUser({ ...allUsers[targetIdx] });
-        }
-
-        if (userList.open) {
-            setUserList(prev => ({ ...prev }));
-        }
-
-        refreshUser();
     };
 
     const openUserList = (type) => {

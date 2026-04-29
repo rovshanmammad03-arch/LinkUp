@@ -110,7 +110,14 @@ export function AuthProvider({ children }) {
 
     const refreshUser = async () => {
         const { data: { user } } = await supabase.auth.getUser();
-        setCurrentUser(mapUser(user));
+        if (!user) return;
+        // profiles cədvəlindən də məlumat çək
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+        setCurrentUser({ ...mapUser(user), ...(profile || {}) });
     };
 
     return (
