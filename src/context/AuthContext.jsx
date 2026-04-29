@@ -16,22 +16,7 @@ export function AuthProvider({ children }) {
     };
 
     useEffect(() => {
-        // Get initial session
-        supabase.auth.getSession().then(async ({ data: { session } }) => {
-            if (session?.user) {
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .single();
-                setCurrentUser({ ...mapUser(session.user), ...(profile || {}) });
-            } else {
-                setCurrentUser(null);
-            }
-            setLoading(false);
-        });
-
-        // Listen for auth changes
+        // onAuthStateChange həm initial session-ı, həm də dəyişiklikləri idarə edir
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             if (session?.user) {
                 const { data: profile } = await supabase
