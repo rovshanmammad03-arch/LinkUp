@@ -263,12 +263,13 @@ export default function NewPostModal({ onClose, onPostCreated }) {
                 image,
                 metadata,
             });
-            if (onPostCreated) onPostCreated();
-            onClose();
         } catch (err) {
             console.error('Post create error:', err);
         } finally {
             setPosting(false);
+            // Xəta olsa belə ekranı bağla və yenilə
+            if (onPostCreated) onPostCreated();
+            onClose();
         }
     };
 
