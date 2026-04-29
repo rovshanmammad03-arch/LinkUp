@@ -239,6 +239,18 @@ export default function Profile({ params, onNavigate }) {
                     .update({ followers: newTargetFollowers })
                     .eq('id', targetId),
             ]);
+
+            // Follow bildirişi göndər
+            if (!isFollowing) {
+                addNotification({
+                    toUserId: targetId,
+                    fromUserId: currentUser.id,
+                    type: 'follow',
+                    text: 'sizi izləməyə başladı',
+                    route: 'profile',
+                    routeParams: { userId: currentUser.id },
+                });
+            }
         } catch (err) {
             console.error('Follow update error:', err);
             // Xəta olarsa geri al
