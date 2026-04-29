@@ -192,10 +192,10 @@ export default function Profile({ params, onNavigate }) {
         // Stats are based on user's own posts, regardless of active tab view
         setStats({
             posts: allPosts.filter(p => p.authorId === targetUser.id).length,
-            following: targetUser.following?.length || 0,
-            followers: targetUser.followers?.length || 0
+            following: Array.isArray(targetUser.following) ? targetUser.following.length : 0,
+            followers: Array.isArray(targetUser.followers) ? targetUser.followers.length : 0
         });
-    }, [targetUser?.id, tab]);
+    }, [targetUser, tab]);
 
     const handleFollow = async (uid) => {
         const targetId = uid || targetUser?.id;
