@@ -1277,7 +1277,7 @@ export default function Profile({ params, onNavigate }) {
                                 const u = DB.get('users').find(x => x.id === uid);
                                 if (!u) return null;
                                 const isMe = u.id === currentUser?.id;
-                                const isFollowed = currentUser?.following?.includes(u.id);
+                                const isFollowed = myFollowing.includes(u.id);
                                 
                                 return (
                                     <div key={uid} className="flex items-center justify-between gap-3 p-2 rounded-2xl hover:bg-black/5 dark:hover:bg-white/[0.02] transition-colors group">
