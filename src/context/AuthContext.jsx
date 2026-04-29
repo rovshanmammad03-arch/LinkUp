@@ -23,8 +23,17 @@ export function AuthProvider({ children }) {
         });
 
         // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setCurrentUser(mapUser(session?.user));
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            if (session?.user) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+                setCurrentUser({ ...mapUser(session.user), ...(profile || {}) });
+            } else {
+                setCurrentUser(null);
+            }
             setLoading(false);
         });
 
@@ -40,7 +49,18 @@ export function AuthProvider({ children }) {
         if (error) {
             return { success: false, message: error.message };
         }
-        return { success: true, user: mapUser(data.user) };
+
+        // profiles cədvəlindən əlavə məlumatları çək
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', data.user.id)
+            .single();
+
+        const fullUser = { ...mapUser(data.user), ...(profile || {}) };
+        setCurrentUser(fullUser);
+
+        return { success: true, user: fullUser };
     };
 
     const register = async (email, password, additionalData) => {

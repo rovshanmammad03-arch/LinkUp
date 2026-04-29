@@ -169,49 +169,56 @@ export default function Profile({ params, onNavigate }) {
     }, [targetUser?.id, tab]);
 
     const handleFollow = async (uid) => {
-        const targetId = uid || targetUser.id;
-        if (!currentUser || targetId === currentUser.id) return;
+        const targetId = uid || targetUser?.id;
+        if (!currentUser || !targetId || targetId === currentUser.id) return;
 
-        const allUsers = DB.get('users');
-        const meIdx = allUsers.findIndex(u => u.id === currentUser.id);
-        const targetIdx = allUsers.findIndex(u => u.id === targetId);
+        const myFollowing = Array.isArray(currentUser.following) ? currentUser.following : [];
+        const targetFollowers = Array.isArray(targetUser?.followers) ? targetUser.followers : [];
+        const isFollowing = myFollowing.includes(targetId);
 
-        if (meIdx === -1 || targetIdx === -1) return;
+        const newMyFollowing = isFollowing
+            ? myFollowing.filter(id => id !== targetId)
+            : [...myFollowing, targetId];
 
-        const isFollowing = allUsers[meIdx].following?.includes(targetId);
+        const newTargetFollowers = isFollowing
+            ? targetFollowers.filter(id => id !== currentUser.id)
+            : [...targetFollowers, currentUser.id];
 
-        if (isFollowing) {
-            allUsers[meIdx].following = allUsers[meIdx].following.filter(id => id !== targetId);
-            allUsers[targetIdx].followers = allUsers[targetIdx].followers?.filter(id => id !== currentUser.id) || [];
-        } else {
-            allUsers[meIdx].following = [...(allUsers[meIdx].following || []), targetId];
-            allUsers[targetIdx].followers = [...(allUsers[targetIdx].followers || []), currentUser.id];
+        // UI-ı dərhal yenilə (optimistic)
+        setCurrentUser(prev => ({ ...prev, following: newMyFollowing }));
+        if (targetId === targetUser?.id) {
+            setTargetUser(prev => ({ ...prev, followers: newTargetFollowers }));
         }
 
         // localStorage sinxronlaşdır
+        const allUsers = DB.get('users');
+        const meIdx = allUsers.findIndex(u => u.id === currentUser.id);
+        const targetIdx = allUsers.findIndex(u => u.id === targetId);
+        if (meIdx !== -1) { allUsers[meIdx].following = newMyFollowing; }
+        if (targetIdx !== -1) { allUsers[targetIdx].followers = newTargetFollowers; }
         DB.set('users', allUsers);
 
-        // UI-ı dərhal yenilə (optimistic)
-        setCurrentUser(prev => ({ ...prev, following: allUsers[meIdx].following }));
-        if (targetId === targetUser.id) {
-            setTargetUser({ ...allUsers[targetIdx] });
-        }
-        if (userList.open) {
-            setUserList(prev => ({ ...prev }));
-        }
-
-        // Supabase-ə yaz (arxa planda)
+        // Supabase-ə yaz
         try {
             await Promise.all([
                 supabase.from('profiles')
-                    .update({ following: allUsers[meIdx].following })
+                    .update({ following: newMyFollowing })
                     .eq('id', currentUser.id),
                 supabase.from('profiles')
-                    .update({ followers: allUsers[targetIdx].followers })
+                    .update({ followers: newTargetFollowers })
                     .eq('id', targetId),
             ]);
         } catch (err) {
             console.error('Follow update error:', err);
+            // Xəta olarsa geri al
+            setCurrentUser(prev => ({ ...prev, following: myFollowing }));
+            if (targetId === targetUser?.id) {
+                setTargetUser(prev => ({ ...prev, followers: targetFollowers }));
+            }
+        }
+
+        if (userList.open) {
+            setUserList(prev => ({ ...prev }));
         }
     };
 
