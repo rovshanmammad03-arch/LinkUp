@@ -16,18 +16,15 @@ export function AuthProvider({ children }) {
     };
 
     useEffect(() => {
-        // onAuthStateChange həm initial session-ı, həm də dəyişiklikləri idarə edir
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            if (session?.user) {
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .single();
-                setCurrentUser({ ...mapUser(session.user), ...(profile || {}) });
-            } else {
-                setCurrentUser(null);
-            }
+        // Get initial session
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setCurrentUser(mapUser(session?.user));
+            setLoading(false);
+        });
+
+        // Listen for auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setCurrentUser(mapUser(session?.user));
             setLoading(false);
         });
 
@@ -43,18 +40,7 @@ export function AuthProvider({ children }) {
         if (error) {
             return { success: false, message: error.message };
         }
-
-        // profiles cədvəlindən əlavə məlumatları çək
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', data.user.id)
-            .single();
-
-        const fullUser = { ...mapUser(data.user), ...(profile || {}) };
-        setCurrentUser(fullUser);
-
-        return { success: true, user: fullUser };
+        return { success: true, user: mapUser(data.user) };
     };
 
     const register = async (email, password, additionalData) => {
@@ -124,14 +110,7 @@ export function AuthProvider({ children }) {
 
     const refreshUser = async () => {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        // profiles cədvəlindən də məlumat çək
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-        setCurrentUser({ ...mapUser(user), ...(profile || {}) });
+        setCurrentUser(mapUser(user));
     };
 
     return (
