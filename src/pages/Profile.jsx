@@ -94,6 +94,7 @@ export default function Profile({ params, onNavigate }) {
     const [selectedPost, setSelectedPost] = useState(null);
     const [userList, setUserList] = useState({ open: false, type: '', data: [] });
     const [targetUser, setTargetUser] = useState(null);
+    const [myFollowing, setMyFollowing] = useState([]);
 
     // Edit form state
     const [form, setForm] = useState({});
@@ -112,6 +113,19 @@ export default function Profile({ params, onNavigate }) {
     useScrollLock(editOpen || !!selectedPost || userList.open || !!projectToDeleteId || !!selectedApplicantsProject);
 
     const isOwnProfile = !params?.userId || params.userId === currentUser?.id;
+
+    // Cari istifadəçinin following siyahısını Supabase-dən çək
+    useEffect(() => {
+        if (!currentUser?.id) return;
+        supabase
+            .from('profiles')
+            .select('following, followers')
+            .eq('id', currentUser.id)
+            .single()
+            .then(({ data }) => {
+                if (data) setMyFollowing(Array.isArray(data.following) ? data.following : []);
+            });
+    }, [currentUser?.id]);
 
     useEffect(() => {
         if (isOwnProfile) {
@@ -172,7 +186,6 @@ export default function Profile({ params, onNavigate }) {
         const targetId = uid || targetUser?.id;
         if (!currentUser || !targetId || targetId === currentUser.id) return;
 
-        const myFollowing = Array.isArray(currentUser.following) ? currentUser.following : [];
         const targetFollowers = Array.isArray(targetUser?.followers) ? targetUser.followers : [];
         const isFollowing = myFollowing.includes(targetId);
 
@@ -185,17 +198,20 @@ export default function Profile({ params, onNavigate }) {
             : [...targetFollowers, currentUser.id];
 
         // UI-ı dərhal yenilə (optimistic)
-        setCurrentUser(prev => ({ ...prev, following: newMyFollowing }));
+        setMyFollowing(newMyFollowing);
         if (targetId === targetUser?.id) {
             setTargetUser(prev => ({ ...prev, followers: newTargetFollowers }));
+        }
+        if (userList.open) {
+            setUserList(prev => ({ ...prev }));
         }
 
         // localStorage sinxronlaşdır
         const allUsers = DB.get('users');
         const meIdx = allUsers.findIndex(u => u.id === currentUser.id);
         const targetIdx = allUsers.findIndex(u => u.id === targetId);
-        if (meIdx !== -1) { allUsers[meIdx].following = newMyFollowing; }
-        if (targetIdx !== -1) { allUsers[targetIdx].followers = newTargetFollowers; }
+        if (meIdx !== -1) allUsers[meIdx].following = newMyFollowing;
+        if (targetIdx !== -1) allUsers[targetIdx].followers = newTargetFollowers;
         DB.set('users', allUsers);
 
         // Supabase-ə yaz
@@ -211,14 +227,10 @@ export default function Profile({ params, onNavigate }) {
         } catch (err) {
             console.error('Follow update error:', err);
             // Xəta olarsa geri al
-            setCurrentUser(prev => ({ ...prev, following: myFollowing }));
+            setMyFollowing(myFollowing);
             if (targetId === targetUser?.id) {
                 setTargetUser(prev => ({ ...prev, followers: targetFollowers }));
             }
-        }
-
-        if (userList.open) {
-            setUserList(prev => ({ ...prev }));
         }
     };
 
@@ -448,7 +460,7 @@ export default function Profile({ params, onNavigate }) {
 
     if (!targetUser) return <div className="p-20 text-center text-neutral-500">{t('profile.loading')}</div>;
 
-    const isFollowing = currentUser?.following?.includes(targetUser.id);
+    const isFollowing = myFollowing.includes(targetUser.id);
 
     return (
         <>
