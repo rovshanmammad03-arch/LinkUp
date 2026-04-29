@@ -266,6 +266,7 @@ export default function Profile({ params, onNavigate }) {
         setUserList({
             open: true,
             type: type === 'followers' ? t('profile.followersTitle') : t('profile.followingTitle'),
+            listType: type,
             data: ids
         });
     };
@@ -1297,7 +1298,7 @@ export default function Profile({ params, onNavigate }) {
                                             </div>
                                         </div>
                                         
-                                        {!isMe && (
+                                        {!isMe && userList.listType !== 'followers' && (
                                             <button 
                                                 onClick={() => handleFollow(u.id)}
                                                 className={`px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all ${isFollowed ? 'bg-black/5 dark:bg-white/5 text-neutral-500 dark:text-neutral-400 border border-black/10 dark:border-white/10' : 'bg-brand-500 text-white shadow-lg shadow-brand-500/20'}`}
