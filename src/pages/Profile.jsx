@@ -129,7 +129,22 @@ export default function Profile({ params, onNavigate }) {
 
     useEffect(() => {
         if (isOwnProfile) {
+            // Əvvəlcə currentUser-i göstər
             setTargetUser(currentUser);
+            // Sonra Supabase-dən tam profil məlumatını çək
+            if (currentUser?.id) {
+                supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', currentUser.id)
+                    .single()
+                    .then(({ data, error }) => {
+                        if (!error && data) {
+                            setTargetUser(prev => ({ ...prev, ...data }));
+                            setMyFollowing(Array.isArray(data.following) ? data.following : []);
+                        }
+                    });
+            }
         } else {
             // Əvvəlcə localStorage-dan göstər (sürətli)
             const localUser = DB.get('users').find(u => u.id === params.userId);
