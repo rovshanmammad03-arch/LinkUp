@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { DB, uid, GRADIENTS } from '../services/db';
+import { projectsService } from '../services/projectsService';
 import { Icon } from '@iconify/react';
 import { useTranslation } from 'react-i18next';
 import Button from '../components/common/Button';
@@ -32,20 +33,22 @@ export default function NewProject({ onNavigate, params }) {
 
     useEffect(() => {
         if (isEditing) {
-            const projects = DB.get('projects');
-            const projectToEdit = projects.find(p => p.id === params.projectId);
-            if (projectToEdit && projectToEdit.authorId === currentUser.id) {
-                setTitle(projectToEdit.title || '');
-                setDesc(projectToEdit.desc || '');
-                setSkills(projectToEdit.skills ? projectToEdit.skills.join(', ') : '');
-                setProjectType(projectToEdit.projectType || 'Startap');
-                setStage(projectToEdit.stage || 'Yalnız İdeya');
-                setDocumentUrl(projectToEdit.documentUrl || '');
-                setDocumentFile(projectToEdit.documentFile || null);
-                setSelectedGrad(projectToEdit.grad || GRADIENTS[0]);
-            } else {
-                onNavigate('discover');
-            }
+            projectsService.getAll().then(projects => {
+                const projectToEdit = projects.find(p => p.id === params.projectId);
+                if (projectToEdit && projectToEdit.authorId === currentUser.id) {
+                    setTitle(projectToEdit.title || '');
+                    setDesc(projectToEdit.desc || '');
+                    setSkills(projectToEdit.skills ? projectToEdit.skills.join(', ') : '');
+                    setProjectType(projectToEdit.projectType || 'Startap');
+                    setStage(projectToEdit.stage || 'Yalnız İdeya');
+                    setDocumentUrl(projectToEdit.documentUrl || '');
+                    setDocumentFile(projectToEdit.documentFile || null);
+                    setSelectedGrad(projectToEdit.grad || GRADIENTS[0]);
+                    setRoleSlots(projectToEdit.roleSlots || []);
+                } else {
+                    onNavigate('discover');
+                }
+            });
         }
     }, [isEditing, params, currentUser, onNavigate]);
 
@@ -70,47 +73,36 @@ export default function NewProject({ onNavigate, params }) {
         setRoleSlots(prev => prev.filter(slot => slot.id !== id));
     };
 
-    const handleCreate = () => {
+    const handleCreate = async () => {
         if (!title.trim() || !desc.trim()) return;
 
-        const projects = DB.get('projects');
-        
         if (isEditing) {
-            const pIdx = projects.findIndex(p => p.id === params.projectId);
-            if (pIdx !== -1) {
-                projects[pIdx] = {
-                    ...projects[pIdx],
-                    title: title.trim(),
-                    desc: desc.trim(),
-                    skills: skills.split(',').map(s => s.trim()).filter(s => s),
-                    projectType: projectType,
-                    stage: stage,
-                    documentUrl: documentUrl.trim(),
-                    documentFile: documentFile,
-                    grad: selectedGrad
-                };
-                DB.set('projects', projects);
-            }
+            await projectsService.update(params.projectId, {
+                title: title.trim(),
+                desc: desc.trim(),
+                skills: skills.split(',').map(s => s.trim()).filter(s => s),
+                projectType,
+                stage,
+                documentUrl: documentUrl.trim(),
+                documentFile,
+                grad: selectedGrad,
+                roleSlots,
+            });
         } else {
-            const newProject = {
-                id: 'p_' + uid(),
+            await projectsService.create({
                 title: title.trim(),
                 desc: desc.trim(),
                 authorId: currentUser.id,
                 skills: skills.split(',').map(s => s.trim()).filter(s => s),
-                projectType: projectType,
-                stage: stage,
+                projectType,
+                stage,
                 documentUrl: documentUrl.trim(),
-                documentFile: documentFile,
-                status: 'active',
-                createdAt: Date.now(),
-                applicants: [],
+                documentFile,
                 grad: selectedGrad,
-                roleSlots: roleSlots
-            };
-            DB.set('projects', [newProject, ...projects]);
+                roleSlots,
+            });
         }
-        
+
         onNavigate('discover');
     };
 

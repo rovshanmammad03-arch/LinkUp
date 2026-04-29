@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { DB, getUser, initials, addNotification } from '../services/db';
+import { projectsService } from '../services/projectsService';
 import { Icon } from '@iconify/react';
 import ProjectApplicantsModal from '../components/discover/ProjectApplicantsModal';
 import ConfirmModal from '../components/common/ConfirmModal';
@@ -58,8 +59,8 @@ export default function Discover({ onNavigate }) {
 
     useEffect(() => {
         setUsers(DB.get('users').filter(u => u.id !== currentUser?.id));
-        setProjects(DB.get('projects'));
-    }, [currentUser]);
+        projectsService.getAll().then(setProjects);
+    }, [currentUser?.id]);
 
     // Get unique fields for the dropdown
     const availableFields = ['all', ...new Set(users.map(u => u.field))];
@@ -101,16 +102,12 @@ export default function Discover({ onNavigate }) {
         onNavigate('messages', { userId: targetUserId });
     };
 
-    const handleApply = (projectId) => {
+    const handleApply = async (projectId) => {
         if (!currentUser) return;
-        const allProjects = DB.get('projects');
-        const pIdx = allProjects.findIndex(p => p.id === projectId);
-        if (pIdx === -1) return;
+        const project = projects.find(p => p.id === projectId);
+        if (!project) return;
 
-        if (!allProjects[pIdx].applicants) allProjects[pIdx].applicants = [];
-
-        // Support both old (string[]) and new (object[]) applicant format
-        const alreadyApplied = allProjects[pIdx].applicants.some(a =>
+        const alreadyApplied = project.applicants?.some(a =>
             (typeof a === 'object' ? a.id : a) === currentUser.id
         );
         if (alreadyApplied) {
@@ -118,53 +115,47 @@ export default function Discover({ onNavigate }) {
             return;
         }
 
-        const roleSlots = normalizeRoleSlots(allProjects[pIdx]);
-
-        // If project has role slots, open slot selection modal
+        const roleSlots = normalizeRoleSlots(project);
         if (roleSlots.length > 0) {
             const openSlots = getOpenSlots(roleSlots);
             setApplySlotModal({ projectId, openSlots });
             return;
         }
 
-        // No role slots — old behaviour: apply directly
-        allProjects[pIdx].applicants.push({ id: currentUser.id, status: 'pending' });
-        DB.set('projects', allProjects);
-        setProjects([...allProjects]);
-        showToast(t('discover.project.applySuccess'), 'success');
-
-        addNotification({
-            toUserId: allProjects[pIdx].authorId,
-            fromUserId: currentUser.id,
-            type: 'project_apply',
-            text: `"${allProjects[pIdx].title}" layihənizə müraciət etdi`,
-            route: 'discover',
-            routeParams: {},
-        });
+        const updated = await projectsService.apply(projectId, { id: currentUser.id, status: 'pending' });
+        if (updated) {
+            setProjects(prev => prev.map(p => p.id === projectId ? updated : p));
+            showToast(t('discover.project.applySuccess'), 'success');
+            addNotification({
+                toUserId: project.authorId,
+                fromUserId: currentUser.id,
+                type: 'project_apply',
+                text: `"${project.title}" layihənizə müraciət etdi`,
+                route: 'discover',
+                routeParams: {},
+            });
+        }
     };
 
-    const handleApplyWithSlot = (projectId, slotId) => {
+    const handleApplyWithSlot = async (projectId, slotId) => {
         if (!currentUser) return;
-        const allProjects = DB.get('projects');
-        const pIdx = allProjects.findIndex(p => p.id === projectId);
-        if (pIdx === -1) return;
+        const project = projects.find(p => p.id === projectId);
+        if (!project) return;
 
-        if (!allProjects[pIdx].applicants) allProjects[pIdx].applicants = [];
-
-        allProjects[pIdx].applicants.push({ id: currentUser.id, status: 'pending', roleSlot: slotId });
-        DB.set('projects', allProjects);
-        setProjects([...allProjects]);
-        setApplySlotModal(null);
-        showToast(t('discover.project.applySuccess'), 'success');
-
-        addNotification({
-            toUserId: allProjects[pIdx].authorId,
-            fromUserId: currentUser.id,
-            type: 'project_apply',
-            text: `"${allProjects[pIdx].title}" layihənizə müraciət etdi`,
-            route: 'discover',
-            routeParams: {},
-        });
+        const updated = await projectsService.apply(projectId, { id: currentUser.id, status: 'pending', roleSlot: slotId });
+        if (updated) {
+            setProjects(prev => prev.map(p => p.id === projectId ? updated : p));
+            setApplySlotModal(null);
+            showToast(t('discover.project.applySuccess'), 'success');
+            addNotification({
+                toUserId: project.authorId,
+                fromUserId: currentUser.id,
+                type: 'project_apply',
+                text: `"${project.title}" layihənizə müraciət etdi`,
+                route: 'discover',
+                routeParams: {},
+            });
+        }
     };
 
     const handleDeleteProject = (projectId) => {
@@ -172,40 +163,24 @@ export default function Discover({ onNavigate }) {
         setOpenOptionsId(null);
     };
 
-    const confirmDelete = () => {
-        const allProjects = DB.get('projects');
-        const updated = allProjects.filter(p => p.id !== projectToDeleteId);
-        DB.set('projects', updated);
-        setProjects(updated);
-        // Layihəyə aid showcases-ləri sil
-        const allShowcases = DB.get('showcases');
-        DB.set('showcases', allShowcases.filter(s => s.projectId !== projectToDeleteId));
-        // Layihəyə aid qrup mesajlarını sil
-        const allMessages = DB.get('messages');
-        DB.set('messages', allMessages.filter(m => m.projectId !== projectToDeleteId));
+    const confirmDelete = async () => {
+        await projectsService.delete(projectToDeleteId);
+        setProjects(prev => prev.filter(p => p.id !== projectToDeleteId));
         setProjectToDeleteId(null);
     };
 
-    const handleToggleStatus = (projectId) => {
-        const allProjects = DB.get('projects');
-        const pIdx = allProjects.findIndex(p => p.id === projectId);
-        if (pIdx === -1) return;
-
-        // active → closed, completed → active (sadə keçidlər)
-        const current = allProjects[pIdx].status;
-        allProjects[pIdx].status = current === 'active' ? 'closed' : 'active';
-        DB.set('projects', allProjects);
-        setProjects([...allProjects]);
+    const handleToggleStatus = async (projectId) => {
+        const project = projects.find(p => p.id === projectId);
+        if (!project) return;
+        const newStatus = project.status === 'active' ? 'closed' : 'active';
+        const updated = await projectsService.update(projectId, { status: newStatus });
+        if (updated) setProjects(prev => prev.map(p => p.id === projectId ? updated : p));
         setOpenOptionsId(null);
     };
 
-    const handleCompleteProject = (projectId) => {
-        const allProjects = DB.get('projects');
-        const pIdx = allProjects.findIndex(p => p.id === projectId);
-        if (pIdx === -1) return;
-        allProjects[pIdx].status = 'completed';
-        DB.set('projects', allProjects);
-        setProjects([...allProjects]);
+    const handleCompleteProject = async (projectId) => {
+        const updated = await projectsService.update(projectId, { status: 'completed' });
+        if (updated) setProjects(prev => prev.map(p => p.id === projectId ? updated : p));
         setOpenOptionsId(null);
     };
 

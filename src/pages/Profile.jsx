@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { DB, initials, addNotification } from '../services/db';
 import { postsService } from '../services/postsService';
+import { projectsService } from '../services/projectsService';
 import { Icon } from '@iconify/react';
 import { useScrollLock } from '../hooks/useScrollLock';
 import PostCard from '../components/feed/PostCard';
@@ -185,7 +186,7 @@ export default function Profile({ params, onNavigate }) {
             }
             setPosts(filtered);
 
-            const allProjects = DB.get('projects');
+            const allProjects = await projectsService.getAll();
             setUserProjects(getParticipantProjects(targetUser.id, allProjects));
 
             setStats({
@@ -409,60 +410,42 @@ export default function Profile({ params, onNavigate }) {
         inp.click();
     };
 
-    const handleToggleProjectStatus = (projectId) => {
-        const allProjects = DB.get('projects');
-        const pIdx = allProjects.findIndex(p => p.id === projectId);
-        if (pIdx === -1) return;
-        const current = allProjects[pIdx].status;
-        allProjects[pIdx].status = current === 'active' ? 'closed' : 'active';
-        DB.set('projects', allProjects);
-        setUserProjects(getParticipantProjects(targetUser.id, allProjects));
+    const handleToggleProjectStatus = async (projectId) => {
+        const project = userProjects.find(p => p.id === projectId);
+        if (!project) return;
+        const newStatus = project.status === 'active' ? 'closed' : 'active';
+        const updated = await projectsService.update(projectId, { status: newStatus });
+        if (updated) setUserProjects(prev => prev.map(p => p.id === projectId ? updated : p));
     };
 
-    const handleCompleteProject = (projectId) => {
-        const allProjects = DB.get('projects');
-        const pIdx = allProjects.findIndex(p => p.id === projectId);
-        if (pIdx === -1) return;
-        allProjects[pIdx].status = 'completed';
-        DB.set('projects', allProjects);
-        setUserProjects(getParticipantProjects(targetUser.id, allProjects));
+    const handleCompleteProject = async (projectId) => {
+        const updated = await projectsService.update(projectId, { status: 'completed' });
+        if (updated) setUserProjects(prev => prev.map(p => p.id === projectId ? updated : p));
     };
 
-    const confirmDeleteProject = () => {
-        const allProjects = DB.get('projects');
-        const updated = allProjects.filter(p => p.id !== projectToDeleteId);
-        DB.set('projects', updated);
-        setUserProjects(getParticipantProjects(targetUser?.id, updated));
-        // Layihəyə aid showcases-ləri sil
-        const orphanShowcases = DB.get('showcases');
-        DB.set('showcases', orphanShowcases.filter(s => s.projectId !== projectToDeleteId));
-        // Layihəyə aid qrup mesajlarını sil
-        const allMessages = DB.get('messages');
-        DB.set('messages', allMessages.filter(m => m.projectId !== projectToDeleteId));
+    const confirmDeleteProject = async () => {
+        await projectsService.delete(projectToDeleteId);
+        setUserProjects(prev => prev.filter(p => p.id !== projectToDeleteId));
         setProjectToDeleteId(null);
     };
 
-    const handleApply = (projectId) => {
+    const handleApply = async (projectId) => {
         if (!currentUser) return;
-        const allProjects = DB.get('projects');
-        const pIdx = allProjects.findIndex(p => p.id === projectId);
-        if (pIdx === -1) return;
-        if (!allProjects[pIdx].applicants) allProjects[pIdx].applicants = [];
-        const alreadyApplied = allProjects[pIdx].applicants.some(a =>
-            (typeof a === 'object' ? a.id : a) === currentUser.id
-        );
-        if (alreadyApplied) return;
-        allProjects[pIdx].applicants.push({ id: currentUser.id, status: 'pending' });
-        DB.set('projects', allProjects);
-        setUserProjects(getParticipantProjects(targetUser.id, allProjects));
-        addNotification({
-            toUserId: allProjects[pIdx].authorId,
-            fromUserId: currentUser.id,
-            type: 'project_apply',
-            text: `"${allProjects[pIdx].title}" layihənizə müraciət etdi`,
-            route: 'discover',
-            routeParams: {},
-        });
+        const updated = await projectsService.apply(projectId, { id: currentUser.id, status: 'pending' });
+        if (updated) {
+            setUserProjects(prev => prev.map(p => p.id === projectId ? updated : p));
+            const project = userProjects.find(p => p.id === projectId);
+            if (project) {
+                addNotification({
+                    toUserId: project.authorId,
+                    fromUserId: currentUser.id,
+                    type: 'project_apply',
+                    text: `"${project.title}" layihənizə müraciət etdi`,
+                    route: 'discover',
+                    routeParams: {},
+                });
+            }
+        }
     };
 
     const addSkill = () => {

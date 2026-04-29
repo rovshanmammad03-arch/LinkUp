@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { getUser, initials, DB, addNotification } from '../../services/db';
+import { getUser, initials, DB, addNotification, uid } from '../../services/db';
+import { supabase } from '../../services/supabaseClient';
+import { projectsService } from '../../services/projectsService';
 import { acceptApplicantWithSlot, normalizeRoleSlots } from '../../services/roleSlotUtils';
 import { Icon } from '@iconify/react';
 import { useScrollLock } from '../../hooks/useScrollLock';
@@ -26,13 +28,8 @@ export default function ProjectApplicantsModal({ project, onClose, onNavigate, o
         setTimeout(() => setToast(null), 3500);
     };
 
-    const handleAccept = (applicantId) => {
-        const allProjects = DB.get('projects');
-        const pIdx = allProjects.findIndex(p => p.id === project.id);
-        if (pIdx === -1) return;
-
-        // Müraciətin roleSlot sahəsini tap
-        const applicantEntry = allProjects[pIdx].applicants.find(a => {
+    const handleAccept = async (applicantId) => {
+        const applicantEntry = project.applicants?.find(a => {
             const id = typeof a === 'object' ? a.id : a;
             return id === applicantId;
         });
@@ -40,63 +37,55 @@ export default function ProjectApplicantsModal({ project, onClose, onNavigate, o
             ? (applicantEntry.roleSlot ?? null)
             : null;
 
-        // Rol yuvası məntiqini tətbiq et
-        const currentSlots = normalizeRoleSlots(allProjects[pIdx]);
+        const currentSlots = normalizeRoleSlots(project);
         const { updatedSlots, slotClosed, closedSlotCategory } = acceptApplicantWithSlot(currentSlots, roleSlotId);
 
-        // Müraciətin statusunu yenilə
-        allProjects[pIdx].applicants = allProjects[pIdx].applicants.map(a => {
+        const newApplicants = (project.applicants || []).map(a => {
             const id = typeof a === 'object' ? a.id : a;
             if (id === applicantId) return { id, status: 'accepted', roleSlot: roleSlotId };
             return typeof a === 'object' ? a : { id: a, status: 'pending' };
         });
 
-        // Yenilənmiş rol yuvalarını layihəyə yaz
-        allProjects[pIdx].roleSlots = updatedSlots;
+        const updated = await projectsService.update(project.id, {
+            applicants: newApplicants,
+            roleSlots: updatedSlots,
+        });
 
-        DB.set('projects', allProjects);
-
-        // Yuva bağlandıqda toast bildirişi göstər
         if (slotClosed && closedSlotCategory) {
             showToast(`"${closedSlotCategory}" yuvası dolduruldu`);
         }
 
-        // Send System Message to Group
-        const msgs = DB.get('messages');
-        msgs.push({
-            id: 'm_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
-            from: 'system',
-            projectId: project.id,
+        // Sistem mesajı
+        await supabase.from('messages').insert([{
+            id: 'm_' + uid(),
+            from_user: 'system',
+            project_id: project.id,
             text: `${getUser(applicantId)?.name} qrupa qatıldı!`,
-            ts: Date.now()
-        });
-        DB.set('messages', msgs);
+            ts: Date.now(),
+            read: true,
+        }]);
 
         addNotification({
             toUserId: applicantId,
             fromUserId: project.authorId,
             type: 'project_accept',
-            text: `"${project.title}" layihəsinə müraciətiniz qəbul edildi. Qrup çatına daxil ola bilərsiniz.`,
+            text: `"${project.title}" layihəsinə müraciətiniz qəbul edildi.`,
             route: 'messages',
             routeParams: { projectId: project.id },
         });
 
-        if (onProjectUpdated) onProjectUpdated(allProjects[pIdx]);
+        if (onProjectUpdated && updated) onProjectUpdated(updated);
     };
 
-    const handleReject = (applicantId) => {
-        const allProjects = DB.get('projects');
-        const pIdx = allProjects.findIndex(p => p.id === project.id);
-        if (pIdx === -1) return;
-
-        allProjects[pIdx].applicants = allProjects[pIdx].applicants.map(a => {
+    const handleReject = async (applicantId) => {
+        const newApplicants = (project.applicants || []).map(a => {
             const id = typeof a === 'object' ? a.id : a;
             if (id === applicantId) return { id, status: 'rejected' };
             return typeof a === 'object' ? a : { id: a, status: 'pending' };
         });
 
-        DB.set('projects', allProjects);
-        if (onProjectUpdated) onProjectUpdated(allProjects[pIdx]);
+        const updated = await projectsService.update(project.id, { applicants: newApplicants });
+        if (onProjectUpdated && updated) onProjectUpdated(updated);
     };
 
     const statusBadge = (status) => {

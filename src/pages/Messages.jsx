@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { DB, getUser, initials, uid, addNotification } from '../services/db';
 import { supabase } from '../services/supabaseClient';
+import { projectsService } from '../services/projectsService';
 import { Icon } from '@iconify/react';
 import { useTranslation } from 'react-i18next';
 import AddMemberModal from '../components/messages/AddMemberModal';
@@ -172,7 +173,7 @@ export default function Messages({ params, onNavigate }) {
         }
         setConversations(convos.sort((a, b) => (b.lastMsg?.ts || 0) - (a.lastMsg?.ts || 0)));
 
-        const allProjects = DB.get('projects');
+        const allProjects = await projectsService.getAll();
         const myProjects = allProjects.filter(p =>
             p.authorId === currentUser?.id ||
             (p.applicants && p.applicants.some(a => {
@@ -365,16 +366,15 @@ export default function Messages({ params, onNavigate }) {
 
     const handleRemoveMember = async (memberId) => {
         if (!selectedProjectId) return;
-        const allProjects = DB.get('projects');
-        const pIdx = allProjects.findIndex(p => p.id === selectedProjectId);
-        if (pIdx === -1) return;
+        const project = projectConversations.find(c => c.project.id === selectedProjectId)?.project;
+        if (!project) return;
 
-        allProjects[pIdx].applicants = allProjects[pIdx].applicants.map(a => {
+        const newApplicants = (project.applicants || []).map(a => {
             const id = typeof a === 'object' ? a.id : a;
             if (id === memberId) return { id, status: 'rejected' };
             return a;
         });
-        DB.set('projects', allProjects);
+        await projectsService.update(selectedProjectId, { applicants: newApplicants });
 
         const sysMsg = {
             id: 'm_' + uid(),
@@ -395,12 +395,10 @@ export default function Messages({ params, onNavigate }) {
 
     const handleAddMember = async (userId) => {
         if (!selectedProjectId) return;
-        const allProjects = DB.get('projects');
-        const pIdx = allProjects.findIndex(p => p.id === selectedProjectId);
-        if (pIdx === -1) return;
+        const project = projectConversations.find(c => c.project.id === selectedProjectId)?.project;
+        if (!project) return;
 
-        const project = allProjects[pIdx];
-        const alreadyMember = project.applicants.some(a => {
+        const alreadyMember = (project.applicants || []).some(a => {
             const id = typeof a === 'object' ? a.id : a;
             const status = typeof a === 'object' ? a.status : 'pending';
             return id === userId && status === 'accepted';
@@ -410,11 +408,8 @@ export default function Messages({ params, onNavigate }) {
             return;
         }
 
-        allProjects[pIdx] = {
-            ...project,
-            applicants: [...project.applicants, { id: userId, status: 'accepted' }]
-        };
-        DB.set('projects', allProjects);
+        const newApplicants = [...(project.applicants || []), { id: userId, status: 'accepted' }];
+        await projectsService.update(selectedProjectId, { applicants: newApplicants });
 
         const addedUser = getUser(userId);
         const sysMsg = {
@@ -447,16 +442,15 @@ export default function Messages({ params, onNavigate }) {
 
     const handleLeaveGroup = async () => {
         if (!selectedProjectId) return;
-        const allProjects = DB.get('projects');
-        const pIdx = allProjects.findIndex(p => p.id === selectedProjectId);
-        if (pIdx === -1) return;
+        const project = projectConversations.find(c => c.project.id === selectedProjectId)?.project;
+        if (!project) return;
 
-        allProjects[pIdx].applicants = allProjects[pIdx].applicants.map(a => {
+        const newApplicants = (project.applicants || []).map(a => {
             const id = typeof a === 'object' ? a.id : a;
             if (id === currentUser?.id) return { id, status: 'left' };
             return a;
         });
-        DB.set('projects', allProjects);
+        await projectsService.update(selectedProjectId, { applicants: newApplicants });
 
         const sysMsg = {
             id: 'm_' + uid(),
