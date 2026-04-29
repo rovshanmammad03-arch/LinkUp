@@ -241,6 +241,7 @@ export default function NewPostModal({ onClose, onPostCreated }) {
     const [postType, setPostType] = useState('other');
     const [image, setImage] = useState('');
     const [metadata, setMetadata] = useState({});
+    const [posting, setPosting] = useState(false);
     const fileInputRef = useRef(null);
 
     const handleFileChange = (e) => {
@@ -252,22 +253,29 @@ export default function NewPostModal({ onClose, onPostCreated }) {
     };
 
     const handlePost = async () => {
-        if (!caption.trim()) return;
-        await postsService.create({
-            authorId: currentUser.id,
-            caption,
-            type: postType,
-            image,
-            metadata,
-        });
-        if (onPostCreated) onPostCreated();
-        onClose();
+        if (!caption.trim() || posting) return;
+        setPosting(true);
+        try {
+            await postsService.create({
+                authorId: currentUser.id,
+                caption,
+                type: postType,
+                image,
+                metadata,
+            });
+            if (onPostCreated) onPostCreated();
+            onClose();
+        } catch (err) {
+            console.error('Post create error:', err);
+        } finally {
+            setPosting(false);
+        }
     };
 
     const isPublishDisabled = () => {
         if (!caption.trim()) return true;
         if (postType === 'code') return !metadata.code?.trim();
-        if (postType === 'design') return !image && !metadata.designLink?.trim();
+        if (postType === 'design') return !image && !metadata.designLink?.trim() && !metadata.tools?.length;
         if (postType === 'project') return !metadata.projectName?.trim();
         if (postType === 'learned') return !metadata.topic?.trim();
         return false;
@@ -284,11 +292,11 @@ export default function NewPostModal({ onClose, onPostCreated }) {
                 <span className="text-sm font-semibold text-neutral-900 dark:text-white">{t('newPost.title')}</span>
                 <Button
                     onClick={handlePost}
-                    disabled={isPublishDisabled()}
+                    disabled={isPublishDisabled() || posting}
                     variant="primary"
                     size="sm"
                 >
-                    {t('newPost.publish')}
+                    {posting ? 'Göndərilir...' : t('newPost.publish')}
                 </Button>
             </div>
 
